@@ -595,7 +595,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </div>
-    <!-- 分组切换 chips：全部 + 各分组，当前分组高亮 -->
+    <!-- 分组切换 chips：仅各分组，当前分组高亮（无分组时显示占位提示） -->
     <div class="chips-scroll" id="group-chips" style="padding:0 16px 12px;"></div>
     <div class="cloth-grid" id="group-grid"></div>
   </section>
@@ -900,7 +900,7 @@ function saveState(){
   }
 }
 
-/* 当前上下文：当前分组 id（0=全部），上传预选分组 */
+/* 当前上下文：当前分组 id（0=无分组空态），上传预选分组 */
 let currentGroupId = 0;
 let uploadPresetGroup = null;
 
@@ -916,7 +916,7 @@ function toast(msg){
 }
 
 function groupName(id){
-  if(id === 0) return '全部衣物';
+  // 已移除「全部」概念：id 0 仅作无分组空态兜底，孤儿衣物按「未分组」显示
   const g = state.groups.find(x=>x.id===id);
   return g ? g.name : '未分组';
 }
@@ -955,7 +955,7 @@ function showTabBar(show){
 /* 底部导航点击 */
 function navTo(idx){
   if(idx===0){ showScreen('screen-home'); setTab(0); }
-  else if(idx===1){ openGroup(0); }
+  else if(idx===1){ state.groups.length ? openGroup(state.groups[0].id) : openGroup(0); }
   else if(idx===2){ openUpload(null); }
   else if(idx===3){ renderMine(); showScreen('screen-mine'); setTab(3); }
 }
@@ -1096,15 +1096,15 @@ function renderHome(){
   renderGrid(state.clothes, 'home-grid');
 }
 
-function renderGrid(items, containerId){
+function renderGrid(items, containerId, emptyHtml){
   const el = $(containerId);
   if(!items.length){
-    el.innerHTML = '<div class="empty" style="grid-column:1/-1;"><span class="empty-emoji">🌿</span><span class="empty-text">衣橱空空，去上传第一件衣物吧</span><button class="btn btn-primary press" onclick="openUpload(null)">去上传</button></div>';
+    el.innerHTML = emptyHtml || '<div class="empty" style="grid-column:1/-1;"><span class="empty-emoji">🌿</span><span class="empty-text">衣橱空空，去上传第一件衣物吧</span><button class="btn btn-primary press" onclick="openUpload(null)">去上传</button></div>';
     return;
   }
   el.innerHTML = items.map(c=>{
     const g = groupName(c.group);
-    // 有真实图片 → 照片铺满；无图 → 保留 emoji+色块占位（一处修改，主页/分组/全部视图共用）
+    // 有真实图片 → 照片铺满；无图 → 保留 emoji+色块占位（一处修改，主页/分组视图共用）
     const thumb = c.img
       ? '<div class="cloth-thumb has-img"><img src="' + c.img + '" alt="' + c.name + '" loading="lazy"></div>'
       : '<div class="cloth-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>';
@@ -1114,7 +1114,7 @@ function renderGrid(items, containerId){
       '<div class="cloth-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
     '</button>';
   }).join('');
-  // 长按删除 + 短按轻提示：渲染后统一绑定（主页/分组/全部三处共用，一处生效）
+  // 长按删除 + 短按轻提示：渲染后统一绑定（主页/分组共用，一处生效）
   el.querySelectorAll('.cloth-card').forEach(card=>{
     attachClothLongPress(card, Number(card.dataset.id));
   });
@@ -1223,9 +1223,13 @@ function confirmDeleteCloth(id){
 }
 
 /* ---------- 6. 分组详情 ---------- */
-/* 分组详情页：分组切换 chips（全部 + 各分组，当前高亮） */
+/* 分组详情页：分组切换 chips（仅各分组，当前高亮；无分组时显示占位提示，非 chip） */
 function renderGroupChips(){
-  let h = '<button class="chip' + (currentGroupId===0 ? ' active' : '') + ' press" onclick="openGroup(0)"><span class="chip-emoji">🧺</span>全部</button>';
+  if(!state.groups.length){
+    $('group-chips').innerHTML = '<span style="color:var(--ink-faint);font-size:12px;">暂无分组，点右上角 + 创建</span>';
+    return;
+  }
+  let h = '';
   state.groups.forEach(g=>{
     h += '<button class="chip' + (currentGroupId===g.id ? ' active' : '') + ' press" onclick="openGroup(' + g.id + ')"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
   });
@@ -1236,7 +1240,8 @@ function openGroup(gid){
   currentGroupId = gid;
   renderGroupChips();
   if(gid===0){
-    $('group-title').textContent = '全部衣物';
+    // 空态兜底：无任何分组时进入「我的衣橱」空态（不再展示「全部衣物」）
+    $('group-title').textContent = '我的衣橱';
     $('group-badge').textContent = '🧺';
   }else{
     const g = state.groups.find(x=>x.id===gid);
@@ -1245,8 +1250,11 @@ function openGroup(gid){
     $('group-badge').textContent = g.emoji;
   }
   uploadPresetGroup = gid===0 ? null : gid;
-  const items = gid===0 ? state.clothes : state.clothes.filter(c=>c.group===gid);
-  renderGrid(items, 'group-grid');
+  if(gid===0){
+    renderGrid([], 'group-grid', '<div class="empty" style="grid-column:1/-1;"><span class="empty-emoji">🧺</span><span class="empty-text">衣橱空空，去创建分组并上传吧</span><button class="btn btn-primary press" onclick="openSheet(\'sheet-group\')">去创建分组</button></div>');
+  }else{
+    renderGrid(state.clothes.filter(c=>c.group===gid), 'group-grid');
+  }
   showScreen('screen-group');
   setTab(1);
 }
@@ -1530,7 +1538,7 @@ function confirmDelete(gid){
   state.clothes.forEach(c=>{ if(c.group===gid) c.group = (state.groups[0] && state.groups[0].id!==gid) ? state.groups[0].id : 0; });
   state.groups = state.groups.filter(g=>g.id!==gid);
   saveState();
-  if(currentGroupId===gid) currentGroupId = 0;
+  if(currentGroupId===gid) currentGroupId = state.groups.length ? state.groups[0].id : 0;
   renderGroupManage();
   renderHome();
   toast('已删除分组');
