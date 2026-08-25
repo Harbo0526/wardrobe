@@ -285,6 +285,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 }
 .cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+/* 真实照片卡：img 铺满缩略区 */
+.cloth-thumb.has-img{overflow:hidden;border:none;}
+.cloth-thumb.has-img img{width:100%;height:100%;object-fit:cover;display:block;}
 
 /* ============ 8. 分组详情页 ============ */
 .group-title-wrap{display:flex;align-items:center;gap:8px;}
@@ -333,6 +336,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .preview-badge{
   font-size:11px;color:#fff;padding:3px 10px;border-radius:var(--r-chip);
 }
+.preview-filled img{max-width:100%;max-height:280px;object-fit:contain;display:block;border-radius:12px;}
 
 /* 分组选择 chips（上传表单内） */
 .chips-wrap{margin:0 16px 16px;}
@@ -548,7 +552,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="upload-wrap">
       <!-- 相册 / 相机 双通道（核心触点） -->
       <div class="dual-row">
-        <button class="dual-btn album press" onclick="pickImage('album')">
+        <button class="dual-btn album press" onclick="document.getElementById('albumInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="5" width="18" height="14" rx="3"/>
             <circle cx="8.5" cy="10" r="1.6"/>
@@ -557,7 +561,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <span class="dual-label">相册</span>
           <span class="dual-sub">从相册选择照片</span>
         </button>
-        <button class="dual-btn camera press" onclick="pickImage('camera')">
+        <button class="dual-btn camera press" onclick="document.getElementById('cameraInput').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
             <circle cx="12" cy="14" r="3.5"/>
@@ -566,6 +570,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <span class="dual-sub">拍照上传</span>
         </button>
       </div>
+
+      <!-- 真实文件输入通道（隐藏）：相册 / 相机 -->
+      <input type="file" id="albumInput" accept="image/*" hidden>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
 
       <!-- 预览图区 -->
       <div class="upload-preview" id="upload-preview">
@@ -585,7 +593,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <label>备注</label>
           <textarea class="input" id="up-note" placeholder="穿搭灵感、尺码、季节…（可选）"></textarea>
         </div>
-        <button class="btn btn-primary press" type="submit">保存到衣橱</button>
+        <button class="btn btn-primary press" type="submit" id="up-submit">保存到衣橱</button>
       </form>
     </div>
   </section>
@@ -799,7 +807,21 @@ function loadState(){
   return defaultState();
 }
 function saveState(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  const data = JSON.stringify(state);
+  try{
+    localStorage.setItem(LS_KEY, data);
+    return true;
+  }catch(e){
+    // 配额溢出：显式回滚旧值，避免半写入损坏已有数据
+    if(e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')){
+      try{
+        const prev = localStorage.getItem(LS_KEY);
+        if(prev){ localStorage.setItem(LS_KEY, prev); }
+      }catch(e2){}
+      toast('本地空间不足（约5MB），请换更小图片或优先接入 GitHub 同步');
+    }
+    return false;
+  }
 }
 
 /* 当前上下文：当前分组 id（0=全部），上传预选分组 */
@@ -1001,8 +1023,12 @@ function renderGrid(items, containerId){
   }
   el.innerHTML = items.map(c=>{
     const g = groupName(c.group);
+    // 有真实图片 → 照片铺满；无图 → 保留 emoji+色块占位（一处修改，主页/分组/全部视图共用）
+    const thumb = c.img
+      ? '<div class="cloth-thumb has-img"><img src="' + c.img + '" alt="' + c.name + '" loading="lazy"></div>'
+      : '<div class="cloth-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>';
     return '<button class="cloth-card press" onclick="showCloth(' + c.id + ')">' +
-      '<div class="cloth-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>' +
+      thumb +
       '<div class="cloth-name">' + c.name + '</div>' +
       '<div class="cloth-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
     '</button>';
@@ -1046,18 +1072,20 @@ function openUploadWithGroup(){
 }
 
 /* ---------- 7. 上传页 ---------- */
-let selectedChannel = null; // 'album' | 'camera' | null
-let selectedEmoji = null;
-let selectedTint = null;
+let pendingImage = null;       // 压缩后的 dataURL（所见即存储；null 表示无图，允许提交走占位）
 let upSelectedGroup = null;
 
 function openUpload(presetGroup){
   // 重置表单
   $('up-name').value = '';
   $('up-note').value = '';
-  selectedChannel = null;
-  selectedEmoji = null;
-  selectedTint = null;
+  pendingImage = null;
+  // 清空文件输入 value，允许重复选择同一文件
+  $('albumInput').value = '';
+  $('cameraInput').value = '';
+  // 提交按钮复位
+  const sb = $('up-submit');
+  if(sb){ sb.disabled = false; sb.textContent = '保存到衣橱'; }
   uploadPresetGroup = presetGroup || null;
   upSelectedGroup = presetGroup || (state.groups.length ? state.groups[0].id : null);
   $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
@@ -1079,27 +1107,110 @@ function selectUpGroup(gid, el){
   el.classList.add('active');
 }
 
-/* 模拟选择图片：相册 / 相机 */
-function pickImage(channel){
-  selectedChannel = channel;
-  const emoji = rand(PHOTO_EMOJIS);
-  selectedEmoji = emoji;
-  selectedTint = TINT_MAP[emoji] || '#EAF5EC';
+/* 真实选图：相册 / 相机 双通道（替代原模拟选图逻辑） */
+function handleImageSelected(file, source){
+  if(!file) return;
+  if(!file.type || !file.type.startsWith('image/')){
+    toast('请选择图片文件');
+    return;
+  }
 
-  const label = channel==='album' ? '相册' : '相机';
-  const badgeColor = channel==='album' ? 'var(--primary)' : 'var(--accent)';
-  const fileName = channel==='album'
-    ? 'IMG_' + Date.now().toString().slice(-10) + '.jpg'
-    : 'CAM_' + Date.now().toString().slice(-10) + '.jpg';
+  // 1) 原始对象 URL 立即预览，快速反馈
+  const rawUrl = URL.createObjectURL(file);
+  showPreviewImg(rawUrl, source);
+  toast('已从' + source + '选好照片，正在处理…');
 
-  $('upload-preview').innerHTML =
-    '<div class="preview-filled" style="background:' + selectedTint + ';">' +
-      '<span class="preview-emoji">' + emoji + '</span>' +
-      '<span class="preview-file">' + fileName + '</span>' +
-      '<span class="preview-badge" style="background:' + badgeColor + ';">已通过' + label + '选择</span>' +
-    '</div>';
-  toast('已从' + label + '选好照片 ✓');
+  // 2) 压缩中 loading：禁用提交按钮 + 文案
+  const sb = $('up-submit');
+  if(sb){ sb.disabled = true; sb.textContent = '处理中…'; }
+
+  // 3) 异步压缩，成功才替换为压缩结果（所见即存储）
+  compressImage(file).then(dataURL=>{
+    pendingImage = dataURL;
+    URL.revokeObjectURL(rawUrl);
+    showPreviewImg(dataURL, source);
+    if(sb){ sb.disabled = false; sb.textContent = '保存到衣橱'; }
+    toast('已从' + source + '选好照片 ✓');
+  }).catch(()=>{
+    pendingImage = null;
+    URL.revokeObjectURL(rawUrl);
+    $('upload-preview').innerHTML = '<span id="preview-placeholder">图片处理失败，请重试</span>';
+    if(sb){ sb.disabled = false; sb.textContent = '保存到衣橱'; }
+    toast('图片处理失败，请重试');
+  });
 }
+
+/* 预览区：显示 <img>（原始 or 压缩后 dataURL）+ 来源角标 */
+function showPreviewImg(src, source){
+  const badge = source
+    ? '<span class="preview-badge" style="background:' + (source==='相机' ? 'var(--accent)' : 'var(--primary)') + ';">已通过' + source + '选择</span>'
+    : '';
+  $('upload-preview').innerHTML =
+    '<div class="preview-filled">' +
+      '<img src="' + src + '" alt="衣物预览">' +
+      badge +
+    '</div>';
+}
+
+/* 压缩图片：最长边 800px，JPEG 0.72；>300KB 自动降质 0.6→0.5，仍超则保持 0.5 结果。返回 Promise<dataURL> */
+function compressImage(file){
+  return new Promise((resolve, reject)=>{
+    const MAX_EDGE = 800;
+    const MAX_BYTES = 300 * 1024;
+
+    function drawAndCompress(img, cleanup){
+      try{
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        if(!w || !h){ throw new Error('无法读取图片尺寸'); }
+        const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+        const cw = Math.max(1, Math.round(w * scale));
+        const ch = Math.max(1, Math.round(h * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+
+        let out = null;
+        [0.72, 0.6, 0.5].some(q=>{
+          out = canvas.toDataURL('image/jpeg', q);
+          // base64 长度 ≈ 字节数 × 1.33
+          return out.length * 3 / 4 <= MAX_BYTES;
+        });
+        resolve(out);
+      }catch(err){ reject(err); }
+      finally{ if(cleanup){ try{ cleanup(); }catch(e){} } }
+    }
+
+    // 优先 createImageBitmap：自动按 EXIF 方向解码（保证手机拍照方向正确）
+    function loadViaImage(){
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = ()=>{ URL.revokeObjectURL(url); drawAndCompress(img, null); };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('图片解码失败')); };
+      img.src = url;
+    }
+
+    if(typeof createImageBitmap === 'function'){
+      createImageBitmap(file, {imageOrientation:'from-image'}).then(
+        bmp => drawAndCompress(bmp, ()=>bmp.close()),
+        ()=>loadViaImage()
+      ).catch(err=>reject(err));
+    }else{
+      loadViaImage();
+    }
+  });
+}
+
+/* 文件输入 change 绑定：相册 / 相机 → 统一处理 */
+$('albumInput').addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(f) handleImageSelected(f, '相册');
+});
+$('cameraInput').addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(f) handleImageSelected(f, '相机');
+});
 
 function goBackFromUpload(){
   if(state.user){ goHome(); }else{ showScreen('screen-auth'); }
@@ -1109,7 +1220,6 @@ function submitUpload(e){
   e.preventDefault();
   const name = $('up-name').value.trim();
   if(!name){ toast('请填写衣物名称'); return false; }
-  if(!selectedChannel){ toast('请先通过相册或相机选择照片'); return false; }
   if(!upSelectedGroup){ toast('请选择分组'); return false; }
 
   const note = $('up-note').value.trim();
@@ -1118,11 +1228,26 @@ function submitUpload(e){
     name: name,
     group: upSelectedGroup,
     note: note,
-    emoji: selectedEmoji || groupEmoji(upSelectedGroup),
-    tint: selectedTint || TINT_MAP[groupEmoji(upSelectedGroup)] || '#EAF5EC'
+    img: pendingImage || null,                    // 无图允许提交，走占位
+    emoji: groupEmoji(upSelectedGroup),
+    tint: TINT_MAP[groupEmoji(upSelectedGroup)] || '#EAF5EC'
   };
+
+  const prevLen = state.clothes.length;
   state.clothes.unshift(cloth);
-  saveState();
+
+  // 持久化：配额溢出时 saveState 已回滚旧值并 toast；这里同步回滚内存
+  if(!saveState()){
+    state.clothes.splice(0, state.clothes.length - prevLen);
+    return false;
+  }
+
+  // 上传成功：清空待存图、重置文件输入与预览区
+  pendingImage = null;
+  $('albumInput').value = '';
+  $('cameraInput').value = '';
+  $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
+
   toast('已存入衣橱 ✓');
   openGroup(upSelectedGroup);
   return false;
