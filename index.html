@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<!--
+  电子衣橱 · PWA 移动端原型
+  ====================================================
+  设计系统：清新田园系（fresh countryside）
+    主绿 #8FD3A8 / 按压深绿 #6FB98A / 天蓝 #7EC8E3 / 背景 #FAFCF7
+    文字 #2E4A3A / 次文字 #6B8A78 / 弱文字 #7C9B8B / 分割线 #E3EFE6
+    点缀(≤5%)：暖黄 #FFD97A / 浅樱 #F4A6B8
+  基准：375px 移动端优先，桌面居中手机外壳观感（max-width:430px）
+  类型：mobile-app 原型模板 + 单页 SPA 式交互
+  全部代码内联，无外部依赖；localStorage 做简单持久化
+  ====================================================
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>电子衣橱 · 我的私人在线衣橱</title>
+<style>
+/* ============ 1. 设计令牌 ============ */
+:root{
+  --primary:#8FD3A8;
+  --primary-deep:#6FB98A;
+  --primary-soft:#EAF5EC;
+  --accent:#7EC8E3;
+  --accent-deep:#5FAFCF;
+  --accent-soft:#E9F5FB;
+  --bg:#FAFCF7;
+  --card:#FFFFFF;
+  --group-bg:#F2F9F1;
+  --ink:#2E4A3A;
+  --ink-sub:#6B8A78;
+  --ink-faint:#7C9B8B; /* 弱文字：加深以保证 12px 小字达 WCAG AA */
+  --line:#E3EFE6;
+  --success:#58B368;
+  --danger:#E86A5E;
+  --warm:#FFD97A;
+  --cherry:#F4A6B8;
+  --shadow-card:0 1px 3px rgba(46,74,58,.08);
+  --shadow-sheet:0 4px 12px rgba(46,74,58,.10);
+  --shadow-modal:0 8px 24px rgba(46,74,58,.14);
+  --r-btn:20px;
+  --r-card:16px;
+  --r-input:12px;
+  --r-chip:999px;
+  --r-sheet:20px;
+  --font:-apple-system,"PingFang SC","Segoe UI",Roboto,sans-serif;
+  --space:16px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+
+/* ============ 2. 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:var(--font);
+  background:#E8EEE7; /* 桌面外框底色 */
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+input,textarea{font-family:inherit;border:none;outline:none;color:var(--ink);}
+::-webkit-scrollbar{width:0;height:0;}
+
+/* ============ 3. 手机外壳容器 ============ */
+.phone-shell{
+  position:relative;
+  max-width:430px;
+  margin:0 auto;
+  height:100dvh;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+@media (min-width:520px){
+  .phone-shell{
+    margin:24px auto;
+    height:calc(100dvh - 48px);
+    border-radius:36px;
+    box-shadow:var(--shadow-modal), 0 0 0 10px #F7FAF5;
+  }
+}
+
+/* ============ 4. 通用组件 ============ */
+/* 按压动效：所有可点元素（需求#9） */
+.press{transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease, opacity .15s;}
+.press:active{transform:translateY(2px) scale(.98);}
+
+/* 主按钮 */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;height:48px;border-radius:var(--r-btn);
+  font-size:16px;font-weight:600;letter-spacing:.5px;
+}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:active{background:var(--primary-deep);}
+.btn-secondary{background:#fff;color:var(--ink);border:1.5px solid var(--primary);}
+.btn-secondary:active{background:var(--primary-soft);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:active{background:#D35A4F;}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-accent:active{background:var(--accent-deep);}
+.btn[disabled]{opacity:.5;pointer-events:none;}
+
+/* 小按钮（行内） */
+.btn-sm{display:flex;align-items:center;justify-content:center;height:40px;width:auto;padding:0 20px;font-size:14px;border-radius:var(--r-btn);}
+
+/* 卡片 */
+.card{
+  background:var(--card);
+  border-radius:var(--r-card);
+  box-shadow:var(--shadow-card);
+  padding:16px;
+}
+.card-title{font-size:16px;font-weight:600;line-height:22px;color:var(--ink);}
+
+/* chip 分组标签 */
+.chip{
+  min-height:44px;           /* 触控热区 ≥44px（min-height + padding 方案） */
+  padding:0 16px;
+  border-radius:var(--r-chip);
+  font-size:13px;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  white-space:nowrap;
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--ink-sub);
+  margin:2px 3px;
+}
+.chip .chip-emoji{font-size:15px;}
+.chip.active{background:var(--primary-soft);border-color:transparent;color:var(--primary-deep);font-weight:600;}
+.chip.manage{border:1px dashed var(--primary);color:var(--primary-deep);background:var(--group-bg);}
+.chips-scroll{
+  display:flex;overflow-x:auto;padding:2px 16px;
+  scrollbar-width:none;
+}
+.chips-scroll::-webkit-scrollbar{display:none;}
+
+/* 表单输入 */
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13px;color:var(--ink-sub);margin-bottom:8px;font-weight:500;}
+.input{
+  width:100%;height:48px;border-radius:var(--r-input);
+  background:#fff;border:1.5px solid var(--line);
+  padding:0 14px;font-size:15px;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 2px rgba(143,211,168,.25);}
+textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
+
+/* 列表行 */
+.row{
+  display:flex;align-items:center;gap:12px;
+  width:100%;min-height:56px;padding:12px 0;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+}
+.row:last-child{border-bottom:none;}
+.row .row-main{flex:1;min-width:0;}
+.row .row-title{font-size:15px;color:var(--ink);font-weight:500;}
+.row .row-sub{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.row-chev{color:var(--ink-faint);font-size:14px;}
+
+/* Toast */
+#toast{
+  position:absolute;left:50%;bottom:calc(96px + var(--safe-b));
+  transform:translate(-50%,12px);
+  background:rgba(46,74,58,.92);color:#fff;
+  font-size:13px;padding:10px 18px;border-radius:var(--r-chip);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+  z-index:200;max-width:80%;text-align:center;
+}
+#toast.show{opacity:1;transform:translate(-50%,0);}
+
+/* 空状态 */
+.empty{
+  padding:48px 16px;text-align:center;color:var(--ink-faint);
+}
+.empty .empty-emoji{font-size:40px;display:block;margin-bottom:10px;}
+.empty .empty-text{font-size:14px;color:var(--ink-sub);}
+.empty .btn{margin-top:20px;max-width:200px;}
+
+/* 表情贴纸（登录页装饰，克制使用） */
+.sticker{position:absolute;pointer-events:none;user-select:none;z-index:1;}
+
+/* ============ 5. 屏幕容器与切换 ============ */
+.screen{
+  flex:1;display:none;
+  flex-direction:column;
+  overflow-y:auto;
+  padding-bottom:calc(76px + var(--safe-b)); /* 给底部导航留白 */
+  animation:none;
+}
+.screen.active{display:flex;animation:fadeIn .25s ease;}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(4px);}
+  to{opacity:1;transform:none;}
+}
+.screen-head{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 10px;
+  background:rgba(250,252,247,.92);
+  backdrop-filter:blur(6px);
+}
+.screen-head .title{font-size:18px;font-weight:700;line-height:24px;}
+.screen-head .back{
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;color:var(--ink);
+  font-size:20px;margin-left:-10px;
+}
+.screen-head .back:active{background:var(--primary-soft);}
+.head-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-card);
+}
+.head-btn:active{background:var(--accent-deep);}
+
+/* 顶部标题栏（登录态页面内小标题） */
+.sec-title{font-size:14px;font-weight:600;color:var(--ink-sub);padding:4px 16px 8px;}
+
+/* ============ 6. 登录 / 注册页 ============ */
+.screen-auth{padding:0 16px;justify-content:center;padding-bottom:40px;}
+.auth-hero{position:relative;text-align:center;padding:36px 16px 28px;}
+.auth-logo{
+  width:64px;height:64px;margin:0 auto 16px;
+  border-radius:20px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-card);
+}
+.auth-logo svg{width:34px;height:34px;}
+.auth-title{font-size:22px;font-weight:700;line-height:28px;}
+.auth-sub{font-size:13px;color:var(--ink-sub);margin-top:8px;line-height:18px;}
+.auth-card{padding:20px 16px;}
+.auth-switch{
+  display:flex;background:var(--group-bg);border-radius:var(--r-input);
+  padding:4px;margin-bottom:20px;
+}
+.auth-switch button{
+  flex:1;height:40px;border-radius:10px;font-size:14px;font-weight:500;color:var(--ink-sub);
+}
+.auth-switch button.active{background:#fff;color:var(--primary-deep);font-weight:600;box-shadow:var(--shadow-card);}
+.auth-tip{text-align:center;font-size:12px;color:var(--ink-faint);margin-top:16px;line-height:18px;}
+.auth-foot{margin-top:24px;text-align:center;font-size:12px;color:var(--ink-faint);}
+
+/* ============ 7. 衣橱主页 ============ */
+.home-head{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 16px 6px;
+}
+.home-greet{font-size:22px;font-weight:700;line-height:28px;}
+.home-date{font-size:12px;color:var(--ink-faint);margin-top:4px;}
+.avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;flex-shrink:0;
+}
+.home-stats{padding:4px 16px 12px;font-size:13px;color:var(--ink-sub);}
+.home-stats b{color:var(--ink);font-weight:600;}
+
+/* 衣物网格 */
+.cloth-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding:4px 16px 16px;
+}
+.cloth-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  padding:12px;
+  box-shadow:var(--shadow-card);
+  text-align:left;width:100%;
+}
+.cloth-card:active{background:var(--group-bg);}
+.cloth-thumb{
+  height:96px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;margin-bottom:10px;
+  border:1px solid rgba(46,74,58,.04);
+}
+.cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+
+/* ============ 8. 分组详情页 ============ */
+.group-title-wrap{display:flex;align-items:center;gap:8px;}
+.group-badge{
+  width:28px;height:28px;border-radius:9px;
+  background:var(--primary-soft);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;
+}
+
+/* ============ 9. 上传页 ============ */
+.upload-wrap{padding:8px 16px 24px;}
+.dual-row{display:flex;gap:12px;margin-bottom:16px;}
+.dual-btn{
+  flex:1;height:88px;border-radius:var(--r-btn);
+  color:#fff;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  box-shadow:var(--shadow-card);
+}
+.dual-btn svg{width:32px;height:32px;}
+.dual-btn .dual-label{font-size:14px;font-weight:600;}
+.dual-btn .dual-sub{font-size:11px;opacity:.85;}
+.dual-btn.album{background:var(--primary);}
+.dual-btn.album:active{background:var(--primary-deep);}
+.dual-btn.camera{background:var(--accent);}
+.dual-btn.camera:active{background:var(--accent-deep);}
+
+/* 预览图区 */
+.upload-preview{
+  border:1.5px dashed var(--primary);
+  border-radius:var(--r-card);
+  min-height:120px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink-faint);font-size:13px;
+  margin-bottom:16px;overflow:hidden;
+  background:var(--group-bg);
+  transition:border-color .15s ease;
+}
+.preview-filled{
+  width:100%;min-height:120px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:16px;
+}
+.preview-emoji{font-size:44px;line-height:1;}
+.preview-file{font-size:12px;color:var(--ink-sub);}
+.preview-badge{
+  font-size:11px;color:#fff;padding:3px 10px;border-radius:var(--r-chip);
+}
+
+/* 分组选择 chips（上传表单内） */
+.chips-wrap{margin:0 16px 16px;}
+
+/* ============ 10. 我的 / 设置页 ============ */
+.profile-card{
+  display:flex;align-items:center;gap:14px;
+  margin:16px 16px 12px;
+}
+.profile-avatar{
+  width:56px;height:56px;border-radius:18px;
+  background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;flex-shrink:0;
+}
+.profile-name{font-size:18px;font-weight:700;}
+.profile-meta{font-size:12px;color:var(--ink-faint);margin-top:4px;}
+.mine-card{margin:0 16px 12px;padding:8px 16px;}
+.mine-card .card-title{padding:8px 0 4px;}
+
+/* 同步状态 */
+.sync-card{background:var(--group-bg);}
+.sync-status{font-size:12px;color:var(--ink-sub);margin-top:6px;line-height:18px;}
+.sync-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;vertical-align:1px;}
+
+/* ============ 11. 底部导航 ============ */
+.tab-bar{
+  position:absolute;left:0;right:0;bottom:0;
+  height:calc(56px + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  background:#fff;
+  border-top:1px solid var(--line);
+  display:flex;align-items:stretch;
+  z-index:50;
+  box-shadow:0 -2px 8px rgba(46,74,58,.04);
+}
+.tab-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+  color:var(--ink-sub);
+  font-size:11px;font-weight:500;
+}
+.tab-item svg{width:24px;height:24px;}
+.tab-item.active{color:var(--primary-deep);}
+
+/* ============ 12. 底部 Sheet 弹层 ============ */
+.overlay{
+  position:absolute;inset:0;z-index:100;
+  background:rgba(46,74,58,.35);
+  display:flex;align-items:flex-end;
+  opacity:0;visibility:hidden;
+  transition:opacity .22s ease, visibility .22s ease;
+}
+.overlay.show{opacity:1;visibility:visible;}
+.sheet{
+  width:100%;max-height:72%;
+  background:var(--bg);
+  border-radius:var(--r-sheet) var(--r-sheet) 0 0;
+  box-shadow:var(--shadow-sheet);
+  padding:8px 16px calc(20px + var(--safe-b));
+  transform:translateY(24px);
+  transition:transform .22s ease;
+  overflow-y:auto;
+}
+.overlay.show .sheet{transform:none;}
+.sheet-handle{
+  width:36px;height:4px;border-radius:2px;
+  background:var(--line);margin:4px auto 10px;
+}
+.sheet-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 0 12px;
+}
+.sheet-head h3{font-size:16px;font-weight:600;}
+.sheet-close{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--group-bg);color:var(--ink-sub);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+}
+.sheet-close:active{background:var(--line);}
+
+/* 分组管理 */
+.gm-row{
+  display:flex;align-items:center;gap:10px;
+  min-height:56px;padding:8px 4px;
+  border-bottom:1px solid var(--line);
+}
+.gm-row:last-of-type{border-bottom:none;}
+.gm-emoji{width:36px;height:36px;border-radius:12px;background:var(--group-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.gm-name{flex:1;font-size:15px;color:var(--ink);font-weight:500;}
+.gm-count{font-size:12px;color:var(--ink-faint);margin-right:4px;}
+.gm-act{font-size:12px;color:var(--ink-sub);padding:6px 8px;border-radius:8px;}
+.gm-act:active{background:var(--primary-soft);}
+.gm-act.del{color:var(--danger);}
+.gm-act.del:active{background:#FCEAE8;}
+.gm-add-title{font-size:13px;color:var(--ink-sub);font-weight:600;margin:16px 0 8px;}
+.emoji-picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.emoji-opt{
+  width:44px;height:44px;border-radius:12px; /* 触控热区 ≥44px */
+  background:#fff;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.emoji-opt.active{background:var(--primary-soft);border-color:var(--primary);}
+.emoji-opt:active{transform:translateY(2px) scale(.95);}
+
+/* ============ 13. 修改密码 / 登录 Sheet ============ */
+.pw-tip{font-size:12px;color:var(--ink-faint);line-height:18px;margin:-6px 0 16px;}
+
+/* ============ 14. 隐藏工具类 ============ */
+[hidden]{display:none !important;}
+</style>
+</head>
+<body>
+<div class="phone-shell" id="phone">
+
+  <!-- ============ 屏 1：登录 / 注册 ============ -->
+  <section class="screen screen-auth active" id="screen-auth">
+    <span class="sticker" style="top:60px;left:26px;font-size:30px;">🌸</span>
+    <span class="sticker" style="top:150px;right:32px;font-size:24px;">🌿</span>
+
+    <div class="auth-hero">
+      <div class="auth-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3c-1.5 2.5-4 4-7 4 0 4 2 7 5 8.5V21h4v-5.5c3-1.5 5-4.5 5-8.5-3 0-5.5-1.5-7-4z"/>
+        </svg>
+      </div>
+      <div class="auth-title" id="auth-title">嗨，欢迎回来</div>
+      <div class="auth-sub">把今天的穿搭，交给你的私人小衣橱</div>
+    </div>
+
+    <div class="card auth-card">
+      <!-- 登录 / 注册 切换 -->
+      <div class="auth-switch">
+        <button class="active" id="tab-login" onclick="switchAuthMode('login')">登录</button>
+        <button id="tab-register" onclick="switchAuthMode('register')">注册</button>
+      </div>
+
+      <form id="form-login" onsubmit="return doLogin(event)">
+        <div class="field">
+          <label>用户名</label>
+          <input class="input" id="login-name" placeholder="输入用户名" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input class="input" id="login-pass" type="password" placeholder="输入密码" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary press" type="submit">登 录</button>
+        <div class="auth-tip">演示账号：任意用户名，密码 123456</div>
+      </form>
+
+      <form id="form-register" hidden onsubmit="return doRegister(event)">
+        <div class="field">
+          <label>用户名</label>
+          <input class="input" id="reg-name" placeholder="设置用户名（至少 2 个字符）" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input class="input" id="reg-pass" type="password" placeholder="设置密码（至少 6 位）" autocomplete="new-password">
+        </div>
+        <div class="field">
+          <label>确认密码</label>
+          <input class="input" id="reg-pass2" type="password" placeholder="再次输入密码" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary press" type="submit">注 册 并 登 录</button>
+      </form>
+    </div>
+
+    <div class="auth-foot">轻量 · 免费 · 数据自主可控 · 支持 GitHub 同步</div>
+  </section>
+
+  <!-- ============ 屏 2：衣橱主页 ============ -->
+  <section class="screen" id="screen-home">
+    <div class="home-head">
+      <div style="flex:1;">
+        <div class="home-greet" id="home-greet">午后好，小绿</div>
+        <div class="home-date" id="home-date">2026年8月25日 · 星期二</div>
+      </div>
+      <div class="avatar" id="home-avatar">绿</div>
+    </div>
+    <div class="home-stats" id="home-stats"></div>
+
+    <!-- 分组导航 chips -->
+    <div class="sec-title">我的分组</div>
+    <div class="chips-scroll" id="home-chips"></div>
+
+    <div class="sec-title" style="margin-top:6px;">最近收藏</div>
+    <div class="cloth-grid" id="home-grid"></div>
+  </section>
+
+  <!-- ============ 屏 3：分组详情 ============ -->
+  <section class="screen" id="screen-group">
+    <div class="screen-head">
+      <button class="back press" onclick="goHome()">‹</button>
+      <div class="group-title-wrap">
+        <span class="group-badge" id="group-badge">👕</span>
+        <span class="title" id="group-title">上衣</span>
+      </div>
+      <button class="head-btn press" onclick="openUploadWithGroup()" title="上传衣物">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div class="cloth-grid" id="group-grid"></div>
+  </section>
+
+  <!-- ============ 屏 4：上传页 ============ -->
+  <section class="screen" id="screen-upload">
+    <div class="screen-head">
+      <button class="back press" onclick="goBackFromUpload()">‹</button>
+      <span class="title">上传新衣物</span>
+      <span style="width:44px;"></span>
+    </div>
+
+    <div class="upload-wrap">
+      <!-- 相册 / 相机 双通道（核心触点） -->
+      <div class="dual-row">
+        <button class="dual-btn album press" onclick="pickImage('album')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="3"/>
+            <circle cx="8.5" cy="10" r="1.6"/>
+            <path d="M3 17l5-4 4 3 4-4 5 4"/>
+          </svg>
+          <span class="dual-label">相册</span>
+          <span class="dual-sub">从相册选择照片</span>
+        </button>
+        <button class="dual-btn camera press" onclick="pickImage('camera')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+            <circle cx="12" cy="14" r="3.5"/>
+          </svg>
+          <span class="dual-label">相机</span>
+          <span class="dual-sub">拍照上传</span>
+        </button>
+      </div>
+
+      <!-- 预览图区 -->
+      <div class="upload-preview" id="upload-preview">
+        <span id="preview-placeholder">选择照片后，这里会显示预览</span>
+      </div>
+
+      <form id="form-upload" onsubmit="return submitUpload(event)">
+        <div class="field">
+          <label>衣物名称</label>
+          <input class="input" id="up-name" placeholder="如：奶油白T恤">
+        </div>
+        <div class="field">
+          <label>选择分组</label>
+        </div>
+        <div class="chips-scroll" id="up-chips" style="padding:0 0 16px;"></div>
+        <div class="field">
+          <label>备注</label>
+          <textarea class="input" id="up-note" placeholder="穿搭灵感、尺码、季节…（可选）"></textarea>
+        </div>
+        <button class="btn btn-primary press" type="submit">保存到衣橱</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ 屏 5：我的 / 设置 ============ -->
+  <section class="screen" id="screen-mine">
+    <div class="screen-head"><span class="title">我的</span><span style="width:44px;"></span></div>
+
+    <div class="card profile-card">
+      <div class="profile-avatar" id="mine-avatar">绿</div>
+      <div>
+        <div class="profile-name" id="mine-name">小绿</div>
+        <div class="profile-meta" id="mine-meta">加入于 2026-08-25</div>
+      </div>
+    </div>
+
+    <!-- 数据同步 -->
+    <div class="card sync-card">
+      <div class="card-title">数据同步</div>
+      <div class="row">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+          <path d="M4 12a8 8 0 0 1 14.5-4.5"/><path d="M20 12a8 8 0 0 1-14.5 4.5"/>
+          <path d="M18 3v5h-5M6 21v-5h5"/>
+        </svg>
+        <div class="row-main">
+          <div class="row-title">GitHub 同步</div>
+          <div class="sync-status"><span class="dot"></span><span id="sync-status">尚未同步</span></div>
+        </div>
+        <button class="btn-sm btn-accent press" onclick="doSync()" id="sync-btn">立即同步</button>
+      </div>
+    </div>
+
+    <!-- 账号与设置 -->
+    <div class="card mine-card">
+      <div class="card-title">账号与设置</div>
+      <div class="row press" onclick="openSheet('sheet-pw')">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;">
+          <rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+        </svg>
+        <div class="row-main"><div class="row-title">修改密码</div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <div class="row press" onclick="openSheet('sheet-forgot')">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/>
+        </svg>
+        <div class="row-main"><div class="row-title">忘记密码 / 重置</div><div class="row-sub">查询账号并重置密码</div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <div class="row press" onclick="showAbout()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;">
+          <circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/>
+        </svg>
+        <div class="row-main"><div class="row-title">关于电子衣橱</div><div class="row-sub">v1.0 · 轻量免费 PWA</div></div>
+        <span class="row-chev">›</span>
+      </div>
+    </div>
+
+    <div style="padding:8px 16px 0;">
+      <button class="btn btn-danger press" onclick="doLogout()">退出登录</button>
+    </div>
+  </section>
+
+  <!-- ============ 底部导航（登录态展示） ============ -->
+  <nav class="tab-bar" id="tab-bar" hidden>
+    <button class="tab-item press active" data-tab="0" onclick="navTo(0)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+      <span>首页</span>
+    </button>
+    <button class="tab-item press" data-tab="1" onclick="navTo(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="1.8"/><rect x="13" y="13" width="7.5" height="7.5" rx="1.8"/></svg>
+      <span>衣橱</span>
+    </button>
+    <button class="tab-item press" data-tab="2" onclick="navTo(2)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      <span>上传</span>
+    </button>
+    <button class="tab-item press" data-tab="3" onclick="navTo(3)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.6-3.6 4.4-5.2 7.5-5.2s5.9 1.6 7.5 5.2"/></svg>
+      <span>我的</span>
+    </button>
+  </nav>
+
+  <!-- ============ Sheet：分组管理 ============ -->
+  <div class="overlay" id="sheet-group" onclick="closeSheetOnBg(event,'sheet-group')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>分组管理</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-group')">✕</button>
+      </div>
+      <div class="gm-list" id="gm-list"></div>
+      <div class="gm-add-title">＋ 添加新分组</div>
+      <div class="field"><input class="input" id="gm-name" placeholder="分组名称，如：针织衫"></div>
+      <div class="emoji-picker" id="gm-emoji"></div>
+      <button class="btn btn-primary press" onclick="addGroup()">添加分组</button>
+    </div>
+  </div>
+
+  <!-- ============ Sheet：修改密码 ============ -->
+  <div class="overlay" id="sheet-pw" onclick="closeSheetOnBg(event,'sheet-pw')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>修改密码</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-pw')">✕</button>
+      </div>
+      <form onsubmit="return changePassword(event)">
+        <div class="field">
+          <label>当前密码</label>
+          <input class="input" id="pw-old" type="password" placeholder="输入当前密码">
+        </div>
+        <div class="field">
+          <label>新密码</label>
+          <input class="input" id="pw-new" type="password" placeholder="至少 6 位">
+        </div>
+        <div class="field">
+          <label>确认新密码</label>
+          <input class="input" id="pw-new2" type="password" placeholder="再次输入新密码">
+        </div>
+        <div class="pw-tip">修改后请记得同步到 GitHub，以免丢失</div>
+        <button class="btn btn-primary press" type="submit">确认修改</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ Sheet：忘记密码 / 重置 ============ -->
+  <div class="overlay" id="sheet-forgot" onclick="closeSheetOnBg(event,'sheet-forgot')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>忘记密码 / 重置</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-forgot')">✕</button>
+      </div>
+      <div class="field">
+        <label>用户名</label>
+        <input class="input" id="fg-name" placeholder="输入要查询的用户名">
+      </div>
+      <button class="btn btn-secondary press" onclick="queryUser()">查询用户</button>
+      <div id="fg-result" style="display:none;margin-top:16px;"></div>
+      <form id="fg-reset-form" hidden onsubmit="return resetPassword(event)">
+        <div class="field" style="margin-top:16px;">
+          <label>设置新密码</label>
+          <input class="input" id="fg-new" type="password" placeholder="至少 6 位">
+        </div>
+        <div class="field">
+          <label>确认新密码</label>
+          <input class="input" id="fg-new2" type="password" placeholder="再次输入新密码">
+        </div>
+        <div class="pw-tip">密码经加盐哈希存储不可反查；演示环境仅支持重置当前设备已注册账号</div>
+        <button class="btn btn-primary press" type="submit">重置密码</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+</div>
+
+<script>
+/* ============================================================
+   电子衣橱 · 原型交互逻辑（中文注释）
+   ============================================================ */
+
+/* ---------- 1. 数据层 ---------- */
+const LS_KEY = 'wardrobe.demo.v1';
+
+const DEFAULT_GROUPS = [
+  {id:1, name:'上衣',   emoji:'👕'},
+  {id:2, name:'下装',   emoji:'👖'},
+  {id:3, name:'运动鞋', emoji:'👟'},
+  {id:4, name:'篮球鞋', emoji:'🏀'},
+  {id:5, name:'外套',   emoji:'🧥'},
+  {id:6, name:'连衣裙', emoji:'👗'},
+  {id:7, name:'配饰',   emoji:'🧣'},
+];
+
+const DEFAULT_CLOTHES = [
+  {id:101, name:'奶油白T恤',   group:1, note:'日常通勤', emoji:'👕', tint:'#EAF5EC'},
+  {id:102, name:'雾蓝直筒裤',   group:2, note:'百搭裤装', emoji:'👖', tint:'#E9F5FB'},
+  {id:103, name:'轻量跑鞋',     group:3, note:'跑步日',   emoji:'👟', tint:'#FFF6E0'},
+  {id:104, name:'实战篮球鞋',   group:4, note:'球场专用', emoji:'🏀', tint:'#F6EEDF'},
+  {id:105, name:'牛仔外套',     group:5, note:'春秋叠穿', emoji:'🧥', tint:'#EAF2E8'},
+  {id:106, name:'碎花连衣裙',   group:6, note:'周末出游', emoji:'👗', tint:'#FBEFF0'},
+  {id:107, name:'草编遮阳帽',   group:7, note:'防晒',     emoji:'🧢', tint:'#F6F1E7'},
+  {id:108, name:'针织围巾',     group:7, note:'冬季',     emoji:'🧣', tint:'#E9F0F4'},
+];
+
+const TINT_MAP = {
+  '👕':'#EAF5EC','👖':'#E9F5FB','👟':'#FFF6E0','🏀':'#F6EEDF',
+  '🧥':'#EAF2E8','👗':'#FBEFF0','🧢':'#F6F1E7','🧣':'#E9F0F4',
+  '👜':'#F3EFE6','🥾':'#F2ECDF','👒':'#FFF3D6','🎽':'#EAF5F4'
+};
+const PHOTO_EMOJIS = ['👕','👖','👟','🧥','👗','🧢','👜','🧣','🥾'];
+
+let state = loadState();
+
+function defaultState(){
+  return {
+    user:null,                       // {name, salt, hash, createdAt}（加盐哈希，不落明文）
+    groups:JSON.parse(JSON.stringify(DEFAULT_GROUPS)),
+    clothes:JSON.parse(JSON.stringify(DEFAULT_CLOTHES)),
+    lastSync:null                    // 上次同步时间戳
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const s = JSON.parse(raw); if(s && s.groups) return s; }
+  }catch(e){}
+  return defaultState();
+}
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* 当前上下文：当前分组 id（0=全部），上传预选分组 */
+let currentGroupId = 0;
+let uploadPresetGroup = null;
+
+/* ---------- 2. 通用工具 ---------- */
+const $ = id => document.getElementById(id);
+
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function groupName(id){
+  if(id === 0) return '全部衣物';
+  const g = state.groups.find(x=>x.id===id);
+  return g ? g.name : '未分组';
+}
+function groupEmoji(id){
+  const g = state.groups.find(x=>x.id===id);
+  return g ? g.emoji : '👕';
+}
+function countInGroup(id){
+  return state.clothes.filter(c=>c.group===id).length;
+}
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ---------- 3. 屏幕导航 ---------- */
+const SCREENS = ['screen-auth','screen-home','screen-group','screen-upload','screen-mine'];
+
+function showScreen(id){
+  SCREENS.forEach(s=>$(s).classList.remove('active'));
+  $(id).classList.add('active');
+  // 回到顶部
+  const el = $(id);
+  requestAnimationFrame(()=>{ el.scrollTop = 0; });
+}
+
+/* 底部导航高亮 */
+function setTab(idx){
+  document.querySelectorAll('.tab-item').forEach((t,i)=>{
+    t.classList.toggle('active', i===idx);
+  });
+}
+
+/* 登录态显示 tab 栏 */
+function showTabBar(show){
+  $('tab-bar').hidden = !show;
+}
+
+/* 底部导航点击 */
+function navTo(idx){
+  if(idx===0){ showScreen('screen-home'); setTab(0); }
+  else if(idx===1){ openGroup(0); }
+  else if(idx===2){ openUpload(null); }
+  else if(idx===3){ renderMine(); showScreen('screen-mine'); setTab(3); }
+}
+
+/* ---------- 4. 登录 / 注册 ---------- */
+let authMode = 'login';
+function switchAuthMode(mode){
+  authMode = mode;
+  $('tab-login').classList.toggle('active', mode==='login');
+  $('tab-register').classList.toggle('active', mode==='register');
+  $('form-login').hidden = mode!=='login';
+  $('form-register').hidden = mode!=='register';
+  $('auth-title').textContent = mode==='login' ? '嗨，欢迎回来' : '加入你的私人衣橱';
+}
+
+/* ---------- 密码哈希 ----------
+   生产环境必须走 Web Crypto / HTTPS（crypto.subtle 仅在安全上下文可用）。
+   file:// 协议下自动降级为内置 djb2 同步哈希（仅演示用途）。 */
+function isWebCryptoAvailable(){
+  return typeof crypto !== 'undefined'
+    && typeof crypto.getRandomValues === 'function'
+    && typeof crypto.subtle === 'object' && crypto.subtle
+    && typeof crypto.subtle.digest === 'function';
+}
+/* 生成 16 字节随机盐（base64）；降级时用伪随机串 */
+function generateSalt(){
+  if(isWebCryptoAvailable()){
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return btoa(String.fromCharCode.apply(null, bytes));
+  }
+  let s = '';
+  const pool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  for(let i=0;i<22;i++) s += pool[Math.floor(Math.random()*pool.length)];
+  return s;
+}
+/* 内置 djb2 同步哈希：仅在无 Web Crypto 时使用（演示降级） */
+function djb2Hex(text){
+  let h = 5381;
+  for(let i=0;i<text.length;i++){
+    h = ((h << 5) + h + text.charCodeAt(i)) >>> 0;
+  }
+  return 'djb2:' + h.toString(16);
+}
+/* 计算密码哈希：优先 SHA-256，返回带算法前缀的字符串 */
+async function hashPassword(pass, salt){
+  const data = salt + '::' + pass;
+  if(isWebCryptoAvailable()){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+    const arr = Array.from(new Uint8Array(buf));
+    return 'sha256:' + arr.map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  return djb2Hex(data);
+}
+/* 创建用户：加盐哈希存储，密码绝不明文保存 */
+async function createUser(name, pass){
+  const salt = generateSalt();
+  const hash = await hashPassword(pass, salt);
+  return {name, salt, hash, createdAt:new Date().toISOString()};
+}
+
+async function doLogin(e){
+  e.preventDefault();
+  const name = $('login-name').value.trim();
+  const pass = $('login-pass').value;
+  if(!name){ toast('请输入用户名'); return false; }
+  if(!pass){ toast('请输入密码'); return false; }
+
+  // 已有注册用户：用同盐重算哈希比对；否则演示密码 123456
+  if(state.user){
+    if(state.user.name !== name){ toast('用户名或密码不正确'); return false; }
+    const hash = await hashPassword(pass, state.user.salt);
+    if(hash !== state.user.hash){
+      toast('用户名或密码不正确');
+      return false;
+    }
+  }else if(pass !== '123456'){
+    toast('演示密码为 123456');
+    return false;
+  }
+
+  if(!state.user) state.user = await createUser(name, pass);
+  saveState();
+  enterApp();
+  toast('欢迎回来，' + state.user.name + ' ✓');
+  return false;
+}
+
+async function doRegister(e){
+  e.preventDefault();
+  const name = $('reg-name').value.trim();
+  const p1 = $('reg-pass').value;
+  const p2 = $('reg-pass2').value;
+  if(name.length < 2){ toast('用户名至少 2 个字符'); return false; }
+  if(p1.length < 6){ toast('密码至少 6 位'); return false; }
+  if(p1 !== p2){ toast('两次密码不一致'); return false; }
+
+  state.user = await createUser(name, p1);
+  saveState();
+  enterApp();
+  toast('注册成功，欢迎加入 ✓');
+  return false;
+}
+
+/* 进入登录态主界面 */
+function enterApp(){
+  showTabBar(true);
+  renderHome();
+  showScreen('screen-home');
+  setTab(0);
+}
+
+/* ---------- 5. 衣橱主页 ---------- */
+function renderHome(){
+  // 问候语
+  const h = new Date().getHours();
+  const greet = h<11 ? '早上好' : (h<14 ? '中午好' : (h<18 ? '午后好' : '晚上好'));
+  $('home-greet').textContent = greet + '，' + (state.user ? state.user.name : '小绿');
+  $('home-avatar').textContent = (state.user ? state.user.name : '小绿').charAt(0);
+  $('home-date').textContent = new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+  $('home-stats').innerHTML = '共 <b>' + state.clothes.length + '</b> 件衣物 · <b>' + state.groups.length + '</b> 个分组';
+
+  // 分组 chips
+  let chipsHtml = '<button class="chip active press" onclick="openGroup(0)">全部</button>';
+  state.groups.forEach(g=>{
+    chipsHtml += '<button class="chip press" onclick="openGroup(' + g.id + ')"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
+  });
+  chipsHtml += '<button class="chip manage press" onclick="openSheet(\'sheet-group\')">＋ 管理</button>';
+  $('home-chips').innerHTML = chipsHtml;
+
+  // 衣物网格（全部预览）
+  renderGrid(state.clothes, 'home-grid');
+}
+
+function renderGrid(items, containerId){
+  const el = $(containerId);
+  if(!items.length){
+    el.innerHTML = '<div class="empty" style="grid-column:1/-1;"><span class="empty-emoji">🌿</span><span class="empty-text">衣橱空空，去上传第一件衣物吧</span><button class="btn btn-primary press" onclick="openUpload(null)">去上传</button></div>';
+    return;
+  }
+  el.innerHTML = items.map(c=>{
+    const g = groupName(c.group);
+    return '<button class="cloth-card press" onclick="showCloth(' + c.id + ')">' +
+      '<div class="cloth-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>' +
+      '<div class="cloth-name">' + c.name + '</div>' +
+      '<div class="cloth-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
+    '</button>';
+  }).join('');
+}
+
+/* 点击衣物卡 → 轻提示 */
+function showCloth(id){
+  const c = state.clothes.find(x=>x.id===id);
+  if(!c) return;
+  toast('「' + c.name + '」 · ' + groupName(c.group) + (c.note ? ' · ' + c.note : ''));
+}
+
+/* ---------- 6. 分组详情 ---------- */
+function openGroup(gid){
+  currentGroupId = gid;
+  if(gid===0){
+    $('group-title').textContent = '全部衣物';
+    $('group-badge').textContent = '🧺';
+  }else{
+    const g = state.groups.find(x=>x.id===gid);
+    if(!g){ toast('分组不存在'); return; }
+    $('group-title').textContent = g.name;
+    $('group-badge').textContent = g.emoji;
+  }
+  uploadPresetGroup = gid===0 ? null : gid;
+  const items = gid===0 ? state.clothes : state.clothes.filter(c=>c.group===gid);
+  renderGrid(items, 'group-grid');
+  showScreen('screen-group');
+  setTab(1);
+}
+function goHome(){
+  renderHome();
+  showScreen('screen-home');
+  setTab(0);
+}
+
+/* 分组详情右上 +：带分组跳上传 */
+function openUploadWithGroup(){
+  openUpload(currentGroupId===0 ? null : currentGroupId);
+}
+
+/* ---------- 7. 上传页 ---------- */
+let selectedChannel = null; // 'album' | 'camera' | null
+let selectedEmoji = null;
+let selectedTint = null;
+let upSelectedGroup = null;
+
+function openUpload(presetGroup){
+  // 重置表单
+  $('up-name').value = '';
+  $('up-note').value = '';
+  selectedChannel = null;
+  selectedEmoji = null;
+  selectedTint = null;
+  uploadPresetGroup = presetGroup || null;
+  upSelectedGroup = presetGroup || (state.groups.length ? state.groups[0].id : null);
+  $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
+
+  // 分组 chips
+  let chips = '';
+  state.groups.forEach(g=>{
+    const act = (g.id===upSelectedGroup) ? ' active' : '';
+    chips += '<button class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(' + g.id + ',this)"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
+  });
+  $('up-chips').innerHTML = chips || '<span style="color:var(--ink-faint);font-size:13px;">请先在「分组管理」创建分组</span>';
+
+  showScreen('screen-upload');
+  setTab(2);
+}
+function selectUpGroup(gid, el){
+  upSelectedGroup = gid;
+  document.querySelectorAll('#up-chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* 模拟选择图片：相册 / 相机 */
+function pickImage(channel){
+  selectedChannel = channel;
+  const emoji = rand(PHOTO_EMOJIS);
+  selectedEmoji = emoji;
+  selectedTint = TINT_MAP[emoji] || '#EAF5EC';
+
+  const label = channel==='album' ? '相册' : '相机';
+  const badgeColor = channel==='album' ? 'var(--primary)' : 'var(--accent)';
+  const fileName = channel==='album'
+    ? 'IMG_' + Date.now().toString().slice(-10) + '.jpg'
+    : 'CAM_' + Date.now().toString().slice(-10) + '.jpg';
+
+  $('upload-preview').innerHTML =
+    '<div class="preview-filled" style="background:' + selectedTint + ';">' +
+      '<span class="preview-emoji">' + emoji + '</span>' +
+      '<span class="preview-file">' + fileName + '</span>' +
+      '<span class="preview-badge" style="background:' + badgeColor + ';">已通过' + label + '选择</span>' +
+    '</div>';
+  toast('已从' + label + '选好照片 ✓');
+}
+
+function goBackFromUpload(){
+  if(state.user){ goHome(); }else{ showScreen('screen-auth'); }
+}
+
+function submitUpload(e){
+  e.preventDefault();
+  const name = $('up-name').value.trim();
+  if(!name){ toast('请填写衣物名称'); return false; }
+  if(!selectedChannel){ toast('请先通过相册或相机选择照片'); return false; }
+  if(!upSelectedGroup){ toast('请选择分组'); return false; }
+
+  const note = $('up-note').value.trim();
+  const cloth = {
+    id: Date.now(),
+    name: name,
+    group: upSelectedGroup,
+    note: note,
+    emoji: selectedEmoji || groupEmoji(upSelectedGroup),
+    tint: selectedTint || TINT_MAP[groupEmoji(upSelectedGroup)] || '#EAF5EC'
+  };
+  state.clothes.unshift(cloth);
+  saveState();
+  toast('已存入衣橱 ✓');
+  openGroup(upSelectedGroup);
+  return false;
+}
+
+/* ---------- 8. 分组管理 Sheet ---------- */
+const GM_EMOJI_POOL = ['👕','👖','👟','🏀','🧥','🧢','👗','👜','🧣','👒','🥾','🎽'];
+let gmEmoji = '👕';
+let renamingId = null;
+
+function openSheet(id){
+  if(id==='sheet-group') renderGroupManage();
+  $(id).classList.add('show');
+}
+function closeSheet(id){ $(id).classList.remove('show'); }
+function closeSheetOnBg(e,id){ if(e.target===$(id)) closeSheet(id); }
+
+function renderGroupManage(){
+  renamingId = null;
+  gmEmoji = '👕';
+  $('gm-name').value = '';
+
+  // emoji 选择器
+  $('gm-emoji').innerHTML = GM_EMOJI_POOL.map(e=>{
+    return '<button class="emoji-opt press' + (e===gmEmoji?' active':'') + '" onclick="pickGmEmoji(\'' + e + '\',this)">' + e + '</button>';
+  }).join('');
+
+  // 分组列表
+  $('gm-list').innerHTML = state.groups.map(g=>{
+    const cnt = countInGroup(g.id);
+    return '<div class="gm-row" data-gid="' + g.id + '">' +
+      '<span class="gm-emoji">' + g.emoji + '</span>' +
+      (renamingId===g.id
+        ? '<input class="input" style="height:40px;flex:1;" value="' + g.name + '" id="rename-input-' + g.id + '">'
+        : '<span class="gm-name">' + g.name + '</span>') +
+      '<span class="gm-count">' + cnt + '件</span>' +
+      (renamingId===g.id
+        ? '<button class="gm-act press" style="color:var(--success);" onclick="saveRename(' + g.id + ')">保存</button>'
+        : '<button class="gm-act press" onclick="startRename(' + g.id + ')">重命名</button>') +
+      '<button class="gm-act del press" id="del-' + g.id + '" onclick="confirmDelete(' + g.id + ')">删除</button>' +
+    '</div>';
+  }).join('');
+}
+
+function pickGmEmoji(e, el){
+  gmEmoji = e;
+  document.querySelectorAll('#gm-emoji .emoji-opt').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function addGroup(){
+  const name = $('gm-name').value.trim();
+  if(!name){ toast('请输入分组名称'); return; }
+  const id = Date.now();
+  state.groups.push({id, name, emoji:gmEmoji});
+  saveState();
+  renderGroupManage();
+  renderHome();
+  toast('已添加分组「' + name + '」✓');
+}
+
+function startRename(gid){
+  renamingId = gid;
+  renderGroupManage();
+  const inp = $('rename-input-' + gid);
+  if(inp){ inp.focus(); inp.select(); }
+}
+function saveRename(gid){
+  const inp = $('rename-input-' + gid);
+  const name = inp ? inp.value.trim() : '';
+  if(!name){ toast('名称不能为空'); return; }
+  const g = state.groups.find(x=>x.id===gid);
+  if(g) g.name = name;
+  saveState();
+  renderGroupManage();
+  renderHome();
+  toast('已重命名 ✓');
+}
+
+/* 删除分组：两次点击确认（第一次变红为确认态） */
+function confirmDelete(gid){
+  const btn = $('del-' + gid);
+  if(btn.dataset.armed !== '1'){
+    btn.dataset.armed = '1';
+    btn.textContent = '确认删除？';
+    toast('再点一次确认删除该分组');
+    return;
+  }
+  // 分组内衣物移入「未分组」：简化处理为并入第一个分组或保留原组标记
+  state.clothes.forEach(c=>{ if(c.group===gid) c.group = (state.groups[0] && state.groups[0].id!==gid) ? state.groups[0].id : 0; });
+  state.groups = state.groups.filter(g=>g.id!==gid);
+  saveState();
+  if(currentGroupId===gid) currentGroupId = 0;
+  renderGroupManage();
+  renderHome();
+  toast('已删除分组');
+}
+
+/* ---------- 9. 修改密码 ---------- */
+async function changePassword(e){
+  e.preventDefault();
+  const oldP = $('pw-old').value;
+  const n1 = $('pw-new').value;
+  const n2 = $('pw-new2').value;
+  if(!state.user){ toast('请先登录'); return false; }
+  // 校验当前密码：同盐重算哈希比对
+  const oldHash = await hashPassword(oldP, state.user.salt);
+  if(oldHash !== state.user.hash){ toast('当前密码不正确'); return false; }
+  if(n1.length < 6){ toast('新密码至少 6 位'); return false; }
+  if(n1 !== n2){ toast('两次新密码不一致'); return false; }
+  // 更新：重新加盐 + 哈希
+  const salt = generateSalt();
+  state.user.salt = salt;
+  state.user.hash = await hashPassword(n1, salt);
+  saveState();
+  closeSheet('sheet-pw');
+  $('pw-old').value = $('pw-new').value = $('pw-new2').value = '';
+  toast('密码已更新 ✓');
+  return false;
+}
+
+/* ---------- 9.5 忘记密码 / 重置（演示） ---------- */
+let fgUserName = null;
+function queryUser(){
+  const name = $('fg-name').value.trim();
+  if(!name){ toast('请输入用户名'); return; }
+  const el = $('fg-result');
+  el.style.display = 'block';
+  if(state.user && state.user.name === name){
+    const d = new Date(state.user.createdAt);
+    el.innerHTML = '<div class="card" style="padding:12px;background:var(--group-bg);">' +
+      '<div class="row-title">用户「' + name + '」存在 ✓</div>' +
+      '<div class="row-sub">注册时间：' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}) + '</div>' +
+      '<div class="row-sub" style="margin-top:8px;">密码以「盐 + SHA-256 哈希」存储，不可反查明文。忘记密码可通过下方重置新密码。</div>' +
+    '</div>';
+    fgUserName = name;
+    $('fg-reset-form').hidden = false;
+  }else{
+    el.innerHTML = '<div class="card" style="padding:12px;background:#FCEAE8;">' +
+      '<div class="row-title" style="color:var(--danger);">未找到用户「' + name + '」</div>' +
+      '<div class="row-sub">请检查用户名是否正确，或先回到登录页注册。</div>' +
+    '</div>';
+    fgUserName = null;
+    $('fg-reset-form').hidden = true;
+  }
+}
+function resetPassword(e){
+  e.preventDefault();
+  if(!fgUserName){ toast('请先查询用户'); return false; }
+  const n1 = $('fg-new').value;
+  const n2 = $('fg-new2').value;
+  if(n1.length < 6){ toast('新密码至少 6 位'); return false; }
+  if(n1 !== n2){ toast('两次新密码不一致'); return false; }
+  // 演示：仅重置当前设备已注册账号（该原型为单用户本地存储）
+  if(state.user && state.user.name === fgUserName){
+    (async ()=>{
+      const salt = generateSalt();
+      state.user.salt = salt;
+      state.user.hash = await hashPassword(n1, salt);
+      saveState();
+      closeSheet('sheet-forgot');
+      $('fg-name').value = '';
+      $('fg-new').value = $('fg-new2').value = '';
+      $('fg-result').style.display = 'none';
+      $('fg-reset-form').hidden = true;
+      toast('密码已重置 ✓');
+    })();
+  }else{
+    toast('该用户未注册，无法重置');
+  }
+  return false;
+}
+
+/* ---------- 10. 我的页 / 同步 / 退出 ---------- */
+function renderMine(){
+  const u = state.user || {name:'小绿', createdAt:new Date().toISOString()};
+  $('mine-avatar').textContent = u.name.charAt(0);
+  $('mine-name').textContent = u.name;
+  const d = new Date(u.createdAt);
+  $('mine-meta').textContent = '加入于 ' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' · ' + state.clothes.length + ' 件衣物';
+  renderSyncStatus();
+}
+
+function renderSyncStatus(){
+  const el = $('sync-status');
+  if(state.lastSync){
+    el.innerHTML = '<span class="dot"></span>上次同步：' + state.lastSync;
+  }else{
+    el.innerHTML = '<span class="dot"></span>尚未同步，数据仅保存在本设备';
+  }
+}
+
+function doSync(){
+  const btn = $('sync-btn');
+  btn.textContent = '同步中…';
+  btn.style.opacity = .7;
+  setTimeout(()=>{
+    state.lastSync = new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+    saveState();
+    renderSyncStatus();
+    btn.textContent = '立即同步';
+    btn.style.opacity = 1;
+    toast('已同步到 GitHub ✓');
+  }, 900);
+}
+
+function showAbout(){
+  toast('电子衣橱 v1.0 · 轻量 · 免费 · 数据自主可控');
+}
+
+function doLogout(){
+  state.user = null;
+  saveState();
+  showTabBar(false);
+  $('tab-bar').querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  $('form-login').querySelector('input').value = '';
+  $('login-pass').value = '';
+  switchAuthMode('login');
+  showScreen('screen-auth');
+  toast('已退出登录');
+}
+
+/* ---------- 11. 启动 ---------- */
+(async function init(){
+  // 兼容旧版本：localStorage 若存有明文 pass，则迁移为加盐哈希（密码绝不明文保留）
+  if(state.user && state.user.pass && !state.user.hash){
+    const legacy = state.user;
+    state.user = await createUser(legacy.name, legacy.pass);
+    if(legacy.createdAt) state.user.createdAt = legacy.createdAt;
+    saveState();
+  }
+  // 已登录 → 进入主页；否则登录页
+  if(state.user){
+    enterApp();
+  }else{
+    showTabBar(false);
+    showScreen('screen-auth');
+  }
+})();
+</script>
+</body>
+</html>
