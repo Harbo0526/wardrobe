@@ -190,8 +190,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   flex:1;display:none;
   flex-direction:column;
   overflow-y:auto;
-  padding-bottom:calc(76px + var(--safe-b)); /* 给底部导航留白 */
+  padding-bottom:0; /* 底部留白改由 ::after spacer 撑开（flex 滚动容器 padding 常被忽略导致最后一行被 tab-bar 遮挡） */
   animation:none;
+}
+/* 滚动内容底部 spacer：真实撑开滚动空间，避免最后一行被绝对定位 tab-bar 遮挡（auth 居中页排除） */
+.screen:not(.screen-auth)::after{
+  content:'';display:block;flex-shrink:0;
+  height:calc(88px + var(--safe-b));
 }
 .screen.active{display:flex;animation:fadeIn .25s ease;}
 @keyframes fadeIn{
@@ -304,6 +309,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   text-align:left;width:100%;
 }
 .cloth-card:active{background:var(--group-bg);}
+/* 长按删除：按住约 480ms 的轻微视觉反馈 */
+.cloth-card.longpressing{opacity:.72;transform:scale(.96);}
 .cloth-thumb{
   height:96px;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
@@ -444,6 +451,28 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   display:flex;align-items:center;justify-content:center;font-size:14px;
 }
 .sheet-close:active{background:var(--line);}
+
+/* 删除衣物确认 */
+.del-item{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-card);padding:14px;margin-bottom:14px;
+}
+.del-thumb{
+  width:52px;height:52px;border-radius:10px;flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+}
+.del-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.del-info{min-width:0;}
+.del-name{font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.del-group{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.del-warn{
+  font-size:13px;color:var(--danger);line-height:1.5;
+  background:rgba(232,106,94,.08);border-radius:10px;
+  padding:10px 12px;margin-bottom:16px;
+}
+.del-actions{display:flex;gap:10px;}
+.del-actions .btn{flex:1;}
 
 /* 分组管理 */
 .gm-row{
@@ -779,6 +808,23 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     </div>
   </div>
 
+  <!-- ============ Sheet：删除衣物确认 ============ -->
+  <div class="overlay" id="sheet-del" onclick="closeSheetOnBg(event,'sheet-del')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>删除衣物</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-del')">✕</button>
+      </div>
+      <div class="del-item" id="del-item"></div>
+      <div class="del-warn">删除后不可恢复，确定要删除这件衣物吗？</div>
+      <div class="del-actions">
+        <button class="btn btn-secondary press" onclick="closeSheet('sheet-del')">取消</button>
+        <button class="btn btn-danger press" onclick="confirmDeleteCloth(delPendingId)">确认删除</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast"></div>
 </div>
@@ -1062,12 +1108,16 @@ function renderGrid(items, containerId){
     const thumb = c.img
       ? '<div class="cloth-thumb has-img"><img src="' + c.img + '" alt="' + c.name + '" loading="lazy"></div>'
       : '<div class="cloth-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>';
-    return '<button class="cloth-card press" onclick="showCloth(' + c.id + ')">' +
+    return '<button class="cloth-card press" data-id="' + c.id + '">' +
       thumb +
       '<div class="cloth-name">' + c.name + '</div>' +
       '<div class="cloth-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
     '</button>';
   }).join('');
+  // 长按删除 + 短按轻提示：渲染后统一绑定（主页/分组/全部三处共用，一处生效）
+  el.querySelectorAll('.cloth-card').forEach(card=>{
+    attachClothLongPress(card, Number(card.dataset.id));
+  });
 }
 
 /* 点击衣物卡 → 轻提示 */
@@ -1075,6 +1125,101 @@ function showCloth(id){
   const c = state.clothes.find(x=>x.id===id);
   if(!c) return;
   toast('「' + c.name + '」 · ' + groupName(c.group) + (c.note ? ' · ' + c.note : ''));
+}
+
+/* ---------- 长按删除衣物 ---------- */
+let delPendingId = null;   // 待删除衣物 id（sheet-del 确认用）
+
+/* 为衣物卡绑定长按手势：600ms 弹出删除确认；短按仍走 showCloth，二者不冲突 */
+function attachClothLongPress(el, clothId){
+  let timer = null;
+  let feedbackTimer = null;
+  let startX = 0, startY = 0;
+  let suppressClick = false;
+
+  function cancel(){
+    if(timer){ clearTimeout(timer); timer = null; }
+    if(feedbackTimer){ clearTimeout(feedbackTimer); feedbackTimer = null; }
+    el.classList.remove('longpressing');
+  }
+  function begin(x, y){
+    if(timer) return;
+    startX = x; startY = y;
+    suppressClick = false;
+    // 约 480ms 给轻微视觉反馈，600ms 触发删除确认
+    feedbackTimer = setTimeout(function(){ el.classList.add('longpressing'); }, 480);
+    timer = setTimeout(function(){
+      timer = null;
+      suppressClick = true;             // 阻止随后的 click 触发 showCloth
+      el.classList.remove('longpressing');
+      openDelSheet(clothId);
+    }, 600);
+  }
+  function move(x, y){
+    if(!timer) return;
+    if(Math.abs(x-startX) > 10 || Math.abs(y-startY) > 10){ cancel(); } // 视为滚动/取消
+  }
+
+  // 触屏
+  el.addEventListener('touchstart', function(e){
+    const t = e.touches && e.touches[0];
+    begin(t ? t.clientX : 0, t ? t.clientY : 0);
+  }, {passive:true});
+  el.addEventListener('touchmove', function(e){
+    const t = e.touches && e.touches[0];
+    if(t) move(t.clientX, t.clientY);
+  }, {passive:true});
+  el.addEventListener('touchend', function(){ cancel(); }, {passive:true});
+  el.addEventListener('touchcancel', function(){ cancel(); }, {passive:true});
+  // 桌面
+  el.addEventListener('mousedown', function(e){ begin(e.clientX, e.clientY); });
+  el.addEventListener('mousemove', function(e){ move(e.clientX, e.clientY); });
+  el.addEventListener('mouseup', function(){ cancel(); });
+  el.addEventListener('mouseleave', function(){ cancel(); });
+  // 短按 → showCloth；长按后 suppressClick 拦截
+  el.addEventListener('click', function(){
+    if(suppressClick){ suppressClick = false; return; }
+    showCloth(clothId);
+  });
+}
+
+/* 打开删除确认 Sheet（长按触发） */
+function openDelSheet(id){
+  const c = state.clothes.find(x=>x.id===id);
+  if(!c) return;
+  delPendingId = id;
+  const g = groupName(c.group);
+  const thumb = c.img
+    ? '<div class="del-thumb"><img src="' + c.img + '" alt=""></div>'
+    : '<div class="del-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>';
+  $('del-item').innerHTML = thumb +
+    '<div class="del-info">' +
+      '<div class="del-name">' + c.name + '</div>' +
+      '<div class="del-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
+    '</div>';
+  openSheet('sheet-del');
+}
+
+/* 确认删除：过滤 → 持久化（失败回滚）→ 关 Sheet → 按当前页刷新 */
+function confirmDeleteCloth(id){
+  const c = state.clothes.find(x=>x.id===id);
+  if(!c) return false;
+  const name = c.name;
+  const prevClothes = state.clothes;
+  state.clothes = state.clothes.filter(x=>x.id!==id);
+  if(!saveState()){
+    state.clothes = prevClothes;          // 回滚内存，避免不一致
+    toast('删除失败，请重试');
+    return false;
+  }
+  closeSheet('sheet-del');
+  delPendingId = null;
+  toast('已删除「' + name + '」');
+  // 按当前页面刷新
+  const cur = SCREENS.find(s=>$(s).classList.contains('active')) || 'screen-home';
+  if(cur==='screen-group'){ openGroup(currentGroupId); }
+  else if(cur==='screen-home'){ renderHome(); }
+  return false;
 }
 
 /* ---------- 6. 分组详情 ---------- */
