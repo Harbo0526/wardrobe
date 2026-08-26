@@ -324,11 +324,24 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   font-size:42px;margin-bottom:10px;
   border:1px solid rgba(46,74,58,.04);
 }
-.cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px;}
+.cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;padding-right:26px;}
 /* 真实照片卡：img 铺满缩略区 */
 .cloth-thumb.has-img{overflow:hidden;border:none;}
 .cloth-thumb.has-img img{width:100%;height:100%;object-fit:cover;display:block;}
+/* 衣物卡右下角「三个点」菜单按钮 */
+.cloth-more{
+  position:absolute;right:6px;bottom:6px;width:34px;height:34px;
+  border-radius:10px;background:rgba(255,255,255,.9);
+  border:1px solid rgba(46,74,58,.08);
+  box-shadow:0 1px 3px rgba(46,74,58,.15);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink-sub);font-size:16px;line-height:1;
+  -webkit-tap-highlight-color:transparent;
+}
+.cloth-more:active{background:var(--primary-soft);}
+/* 卡片定位容器（让右下角按钮能绝对定位） */
+.cloth-card{position:relative;}
 
 /* ============ 8. 分组详情页 ============ */
 .group-title-wrap{display:flex;align-items:center;gap:8px;}
@@ -484,6 +497,31 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 }
 .del-actions{display:flex;gap:10px;}
 .del-actions .btn{flex:1;}
+
+/* 衣物操作菜单（三个点 → 编辑/删除） */
+.cm-item{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-card);padding:14px;margin-bottom:14px;
+}
+.cm-thumb{
+  width:52px;height:52px;border-radius:10px;flex-shrink:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+}
+.cm-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.cm-info{min-width:0;}
+.cm-name{font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cm-group{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.cm-list{display:flex;flex-direction:column;gap:10px;}
+.cm-btn{
+  display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-btn);padding:15px 16px;font-size:15px;
+  color:var(--ink);text-align:left;width:100%;
+}
+.cm-btn:active{background:var(--group-bg);}
+.cm-ico{font-size:20px;}
+.cm-btn.cm-danger{color:var(--danger);}
 
 /* 分组管理 */
 .gm-row{
@@ -860,6 +898,26 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     </div>
   </div>
 
+  <!-- ============ Sheet：衣物操作菜单（三个点 → 编辑/删除） ============ -->
+  <div class="overlay" id="sheet-cloth-menu" onclick="closeSheetOnBg(event,'sheet-cloth-menu')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>衣物操作</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-cloth-menu')">✕</button>
+      </div>
+      <div class="cm-item" id="cm-item"></div>
+      <div class="cm-list">
+        <button class="cm-btn press" onclick="editClothFromMenu()">
+          <span class="cm-ico">✏️</span><span>编辑</span>
+        </button>
+        <button class="cm-btn cm-danger press" onclick="delClothFromMenu()">
+          <span class="cm-ico">🗑️</span><span>删除</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast"></div>
 </div>
@@ -882,7 +940,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.2.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1167,11 +1225,25 @@ function renderGrid(items, containerId, emptyHtml){
       thumb +
       '<div class="cloth-name">' + c.name + '</div>' +
       '<div class="cloth-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
+      '<span class="cloth-more" data-more="' + c.id + '" title="更多操作">⋮</span>' +
     '</button>';
   }).join('');
-  // 长按删除 + 短按轻提示：渲染后统一绑定（主页/分组共用，一处生效）
+  // 长按删除 + 短按轻提示 + 右下角「三个点」菜单：渲染后统一绑定（主页/分组共用，一处生效）
   el.querySelectorAll('.cloth-card').forEach(card=>{
     attachClothLongPress(card, Number(card.dataset.id));
+  });
+  el.querySelectorAll('.cloth-more').forEach(more=>{
+    // 阻止事件冒泡到卡片，避免触发卡片短按/长按逻辑
+    ['touchstart','mousedown','click'].forEach(evt=>{
+      more.addEventListener(evt, function(e){
+        e.stopPropagation();
+        e.preventDefault();
+      }, {passive:false});
+    });
+    // 独立点击 → 打开衣物操作菜单
+    more.addEventListener('click', function(e){
+      openClothMenu(Number(more.dataset.more));
+    });
   });
 }
 
@@ -1283,6 +1355,40 @@ function confirmDeleteCloth(id){
   return false;
 }
 
+/* ---------- 衣物操作菜单（三个点 → 编辑/删除） ---------- */
+let clothMenuId = null;   // 当前操作菜单对应的衣物 id
+
+/* 点击「三个点」→ 打开操作菜单（编辑/删除） */
+function openClothMenu(id){
+  const c = state.clothes.find(x=>x.id===id);
+  if(!c) return;
+  clothMenuId = id;
+  const g = groupName(c.group);
+  const thumb = c.img
+    ? '<div class="cm-thumb"><img src="' + c.img + '" alt=""></div>'
+    : '<div class="cm-thumb" style="background:' + (c.tint||'#EAF5EC') + '">' + (c.emoji||'👕') + '</div>';
+  $('cm-item').innerHTML = thumb +
+    '<div class="cm-info">' +
+      '<div class="cm-name">' + c.name + '</div>' +
+      '<div class="cm-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
+    '</div>';
+  openSheet('sheet-cloth-menu');
+}
+
+/* 菜单「编辑」→ 复用上传页，预填该衣物数据进入编辑态 */
+function editClothFromMenu(){
+  const c = state.clothes.find(x=>x.id===clothMenuId);
+  closeSheet('sheet-cloth-menu');
+  if(!c) return;
+  openUpload(c.group, c);   // 传入现有衣物 → 编辑模式
+}
+
+/* 菜单「删除」→ 复用删除确认 Sheet */
+function delClothFromMenu(){
+  closeSheet('sheet-cloth-menu');
+  openDelSheet(clothMenuId);
+}
+
 /* ---------- 6. 分组详情 ---------- */
 /* 分组详情页：分组切换 chips（仅各分组，当前高亮；无分组时显示占位提示，非 chip） */
 function renderGroupChips(){
@@ -1333,21 +1439,30 @@ function openUploadWithGroup(){
 /* ---------- 7. 上传页 ---------- */
 let pendingImage = null;       // 压缩后的 dataURL（所见即存储；null 表示无图，允许提交走占位）
 let upSelectedGroup = null;
+let editingId = null;          // 编辑模式：当前正在编辑的衣物 id（null 表示新增）
 
-function openUpload(presetGroup){
-  // 重置表单
-  $('up-name').value = '';
-  $('up-note').value = '';
-  pendingImage = null;
+function openUpload(presetGroup, editCloth){
+  // 编辑模式：记录待编辑衣物，预填表单；否则清空进入新增态
+  editingId = editCloth ? editCloth.id : null;
+  $('up-name').value = editCloth ? (editCloth.name||'') : '';
+  $('up-note').value = editCloth ? (editCloth.note||'') : '';
+  pendingImage = editCloth ? (editCloth.img||null) : null;
   // 清空文件输入 value，允许重复选择同一文件
   $('albumInput').value = '';
   $('cameraInput').value = '';
   // 提交按钮复位
   const sb = $('up-submit');
   if(sb){ sb.disabled = false; sb.textContent = '保存到衣橱'; }
-  uploadPresetGroup = presetGroup || null;
-  upSelectedGroup = presetGroup || (state.groups.length ? state.groups[0].id : null);
-  $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
+  // 编辑态标题
+  const t = document.querySelector('#screen-upload .screen-head .title');
+  if(t) t.textContent = editCloth ? '编辑衣物' : '上传新衣物';
+  uploadPresetGroup = (editCloth ? editCloth.group : presetGroup) || null;
+  upSelectedGroup = (editCloth ? editCloth.group : presetGroup) || (state.groups.length ? state.groups[0].id : null);
+  if(editCloth && editCloth.img){
+    showPreviewImg(editCloth.img, '');
+  }else{
+    $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
+  }
 
   // 分组 chips
   let chips = '';
@@ -1482,6 +1597,45 @@ function submitUpload(e){
   if(!upSelectedGroup){ toast('请选择分组'); return false; }
 
   const note = $('up-note').value.trim();
+
+  // 编辑模式：更新既有衣物（保留 id / imgRemote，便于云端图片联动）
+  if(editingId){
+    const idx = state.clothes.findIndex(x=>x.id===editingId);
+    if(idx < 0){ toast('未找到要编辑的衣物'); return false; }
+    const prev = state.clothes[idx];
+    // 图片变化：旧图独立存储时，联动删除云端旧图（不阻塞，仅提示）
+    if(prev.imgRemote && pendingImage && pendingImage !== prev.img){
+      deleteCloudImage(prev.imgRemote).catch(err=>{
+        toast('云端旧图删除失败：' + (err && err.message ? err.message : '未知错误'));
+      });
+    }
+    const updated = {
+      id: prev.id,
+      name: name,
+      group: upSelectedGroup,
+      note: note,
+      img: pendingImage || null,                    // 无图保留原占位走法
+      imgRemote: prev.imgRemote,                    // 沿用云端路径引用
+      emoji: groupEmoji(upSelectedGroup),
+      tint: TINT_MAP[groupEmoji(upSelectedGroup)] || '#EAF5EC'
+    };
+    state.clothes.splice(idx, 1, updated);
+    if(!saveState()){
+      state.clothes.splice(idx, 1, prev);           // 回滚内存
+      toast('保存失败，请重试');
+      return false;
+    }
+    pendingImage = null;
+    editingId = null;
+    $('albumInput').value = '';
+    $('cameraInput').value = '';
+    $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
+    toast('已更新衣物 ✓');
+    openGroup(upSelectedGroup);
+    return false;
+  }
+
+  // 新增模式
   const cloth = {
     id: Date.now(),
     name: name,
