@@ -940,7 +940,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.2.1';
+const APP_VERSION = '1.2.2';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1469,7 +1469,7 @@ function openUpload(presetGroup, editCloth){
   let chips = '';
   state.groups.forEach(g=>{
     const act = (g.id===upSelectedGroup) ? ' active' : '';
-    chips += '<button class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(' + g.id + ',this)"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
+    chips += '<button type="button" class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(' + g.id + ',this)"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
   });
   $('up-chips').innerHTML = chips || '<span style="color:var(--ink-faint);font-size:13px;">请先在「分组管理」创建分组</span>';
 
