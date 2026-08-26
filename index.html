@@ -738,7 +738,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;">
           <circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/>
         </svg>
-        <div class="row-main"><div class="row-title">关于电子衣橱</div><div class="row-sub">v1.1 · 轻量免费 PWA · Gitee 云同步</div></div>
+        <div class="row-main"><div class="row-title">关于电子衣橱</div><div class="row-sub" id="about-ver"></div></div>
         <span class="row-chev">›</span>
       </div>
     </div>
@@ -746,6 +746,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div style="padding:8px 16px 0;">
       <button class="btn btn-danger press" onclick="doLogout()">退出登录</button>
     </div>
+
+    <!-- 版本页脚（复用 .home-version 样式，文字由 renderMine 从 APP_VERSION 渲染） -->
+    <div class="home-version" id="mine-version" style="margin-top:4px;"></div>
   </section>
 
   <!-- ============ 底部导航（登录态展示） ============ -->
@@ -879,7 +882,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1686,6 +1689,13 @@ function renderMine(){
   $('mine-meta').textContent = '加入于 ' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' · ' + state.clothes.length + ' 件衣物';
   renderSyncStatus();
   renderGiteeTokenInput();
+
+  // 版本页脚（与首页页脚一致，读 APP_VERSION，不写死在 HTML）
+  var v = $('mine-version');
+  if(v) v.textContent = 'v' + APP_VERSION;
+  // 关于行版本（统一读 APP_VERSION，避免硬编码失同步）
+  var av = $('about-ver');
+  if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · Gitee 云同步';
 }
 
 function renderSyncStatus(){
