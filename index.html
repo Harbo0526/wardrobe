@@ -589,7 +589,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <input class="input" id="login-pass" type="password" placeholder="输入密码" autocomplete="current-password">
         </div>
         <button class="btn btn-primary press" type="submit">登 录</button>
-        <div class="auth-tip">演示账号：任意用户名，密码 123456</div>
+        <div class="auth-tip">账号需已在云端开通，请联系管理员创建；数据按账号隔离</div>
       </form>
 
       <form id="form-register" hidden onsubmit="return doRegister(event)">
@@ -940,7 +940,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.2.2';
+const APP_VERSION = '1.3.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1128,21 +1128,27 @@ async function doLogin(e){
   const pass = $('login-pass').value;
   if(!name){ toast('请输入用户名'); return false; }
   if(!pass){ toast('请输入密码'); return false; }
+  if(!getGiteeToken()){ toast('请先在「我的」页配置 Gitee 令牌'); return false; }
 
-  // 已有注册用户：用同盐重算哈希比对；否则演示密码 123456
-  if(state.user){
-    if(state.user.name !== name){ toast('用户名或密码不正确'); return false; }
-    const hash = await hashPassword(pass, state.user.salt);
-    if(hash !== state.user.hash){
+  try{
+    // 从云端集中用户表校验：用户名 + 加盐哈希比对（数据按用户名隔离）
+    const users = await readUsersTable();
+    const u = users[name];
+    if(!u || !u.hash || !u.salt){
+      toast('账号不存在，请联系管理员开通');
+      return false;
+    }
+    const hash = await hashPassword(pass, u.salt);
+    if(hash !== u.hash){
       toast('用户名或密码不正确');
       return false;
     }
-  }else if(pass !== '123456'){
-    toast('演示密码为 123456');
+    state.user = { name: name, salt: u.salt, hash: u.hash, role: u.role || 'user', createdAt: u.createdAt || new Date().toISOString() };
+  }catch(err){
+    toast('登录失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
   }
 
-  if(!state.user) state.user = await createUser(name, pass);
   saveState();
   enterApp();
   toast('欢迎回来，' + state.user.name + ' ✓');
@@ -1157,8 +1163,22 @@ async function doRegister(e){
   if(name.length < 2){ toast('用户名至少 2 个字符'); return false; }
   if(p1.length < 6){ toast('密码至少 6 位'); return false; }
   if(p1 !== p2){ toast('两次密码不一致'); return false; }
+  if(!getGiteeToken()){ toast('请先在「我的」页配置 Gitee 令牌'); return false; }
 
-  state.user = await createUser(name, p1);
+  try{
+    // 读云端用户表：用户名已存在则拒绝；否则追加并写回
+    const users = await readUsersTable();
+    if(users[name]){ toast('该用户名已被注册'); return false; }
+    const salt = generateSalt();
+    const hash = await hashPassword(p1, salt);
+    users[name] = { hash: hash, salt: salt, role: 'user', createdAt: new Date().toISOString() };
+    await writeUsersTable(users);
+    state.user = { name: name, salt: salt, hash: hash, role: 'user', createdAt: users[name].createdAt };
+  }catch(err){
+    toast('注册失败：' + (err && err.message ? err.message : '未知错误'));
+    return false;
+  }
+
   saveState();
   enterApp();
   toast('注册成功，欢迎加入 ✓');
@@ -1939,6 +1959,35 @@ async function giteeFetch(path, method, body){
 function userDir(user){ return 'data/' + encodeURIComponent(user) + '/'; }   // 只编码单个路径段，保留斜杠
 function manifestPath(){ return userDir(state.user.name) + 'wardrobe.json'; }
 function clothImgPath(id){ return userDir(state.user.name) + 'clothes/' + id + '.jpg'; }
+/* 集中式用户表：data/_users.json（管理员在 Gitee 上直接编辑管理；登录/注册以此为准） */
+function usersTablePath(){ return 'data/_users.json'; }
+async function readUsersTable(){
+  try{
+    const data = await giteeFetch(usersTablePath(), 'GET');
+    if(data && !Array.isArray(data) && data.content){
+      return JSON.parse(base64Decode(data.content));
+    }
+  }catch(err){
+    if(String(err.message).indexOf('404') !== -1 || String(err.message).indexOf('[]') !== -1) return {};
+    throw err;
+  }
+  return {};
+}
+/* 写回用户表（管理员手动编辑时用；注册新增用户也走这里） */
+async function writeUsersTable(users){
+  const content = base64Encode(JSON.stringify(users, null, 2));
+  const path = usersTablePath();
+  let sha = null;
+  try{
+    const existing = await giteeFetch(path, 'GET');
+    if(existing && !Array.isArray(existing) && existing.sha) sha = existing.sha;
+  }catch(err){
+    if(String(err.message).indexOf('404') === -1) throw err;
+  }
+  const body = { content: content, message: 'users table ' + new Date().toISOString(), branch: GITEE_BRANCH };
+  if(sha) body.sha = sha;
+  await giteeFetch(path, sha ? 'PUT' : 'POST', body);
+}
 function isDataURL(v){ return typeof v === 'string' && v.indexOf('data:') === 0; }
 function dataURLToBase64(dataUrl){
   const idx = String(dataUrl).indexOf(',');
