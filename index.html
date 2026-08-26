@@ -940,7 +940,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.1';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1233,15 +1233,16 @@ function renderGrid(items, containerId, emptyHtml){
     attachClothLongPress(card, Number(card.dataset.id));
   });
   el.querySelectorAll('.cloth-more').forEach(more=>{
-    // 阻止事件冒泡到卡片，避免触发卡片短按/长按逻辑
-    ['touchstart','mousedown','click'].forEach(evt=>{
+    // 阻止触摸/按下事件冒泡到卡片，避免触发卡片长按/短按；注意这里不能 preventDefault，
+    // 否则会吞掉浏览器合成后续的 click 事件，导致「三个点」菜单点不出来
+    ['touchstart','mousedown'].forEach(evt=>{
       more.addEventListener(evt, function(e){
         e.stopPropagation();
-        e.preventDefault();
-      }, {passive:false});
+      }, {passive:true});
     });
-    // 独立点击 → 打开衣物操作菜单
+    // 独立点击 → 打开衣物操作菜单（阻止冒泡以免触发卡片短按）
     more.addEventListener('click', function(e){
+      e.stopPropagation();
       openClothMenu(Number(more.dataset.more));
     });
   });
