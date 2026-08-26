@@ -9,7 +9,8 @@
   基准：375px 移动端优先，桌面居中手机外壳观感（max-width:430px）
   类型：mobile-app 原型模板 + 单页 SPA 式交互
   全部代码内联，无外部依赖；localStorage 做本地兜底 + Gitee API 真实云同步
-  云同步：harboh/wardrobe 仓库，data/{username}.json（clothes 内含压缩 img dataURL）
+  云同步（方案 A）：harboh/wardrobe 仓库，data/{用户名}/wardrobe.json 清单 + clothes/{id}.jpg 独立图片文件；
+  本地 localStorage 始终存 dataURL 保证离线可用，云端清单 img 字段只存文件路径（或 null）
   ====================================================
 -->
 <html lang="zh-CN">
@@ -1251,6 +1252,12 @@ function confirmDeleteCloth(id){
   closeSheet('sheet-del');
   delPendingId = null;
   toast('已删除「' + name + '」');
+  // 联动删除云端图片文件（失败不阻塞主流程，仅提示）
+  if(c && c.imgRemote){
+    deleteCloudImage(c.imgRemote).catch(err=>{
+      toast('云端图片删除失败：' + (err && err.message ? err.message : '未知错误'));
+    });
+  }
   // 按当前页面刷新
   const cur = SCREENS.find(s=>$(s).classList.contains('active')) || 'screen-home';
   if(cur==='screen-group'){ openGroup(currentGroupId); }
@@ -1744,36 +1751,151 @@ async function giteeFetch(path, method, body){
   return data;
 }
 
-/* ---------- 推送：本地 → Gitee（data/{username}.json） ---------- */
+/* ---------- 方案 A：路径工具 ----------
+   云存储形态：
+     data/{用户名}/
+       ├── wardrobe.json          ← 清单：{groups, clothes[], updatedAt}，clothes.img 只存文件路径或 null
+       └── clothes/{id}.jpg       ← 每件衣物照片独立文件（本地 img 仍存 dataURL、云端存文件，两者分工） */
+function userDir(user){ return 'data/' + encodeURIComponent(user) + '/'; }   // 只编码单个路径段，保留斜杠
+function manifestPath(){ return userDir(state.user.name) + 'wardrobe.json'; }
+function clothImgPath(id){ return userDir(state.user.name) + 'clothes/' + id + '.jpg'; }
+function isDataURL(v){ return typeof v === 'string' && v.indexOf('data:') === 0; }
+function dataURLToBase64(dataUrl){
+  const idx = String(dataUrl).indexOf(',');
+  return idx >= 0 ? String(dataUrl).slice(idx + 1) : String(dataUrl);
+}
+
+/* 云端是否存在新格式清单（Gitee 对不存在路径返回 [] 空数组，不报 404） */
+async function manifestExists(){
+  try{
+    const data = await giteeFetch(manifestPath(), 'GET');
+    return !!(data && !Array.isArray(data) && data.content);
+  }catch(err){
+    if(String(err.message).indexOf('404') !== -1) return false;
+    throw err;
+  }
+}
+
+/* 上传单张衣物照片为独立文件：先查存在取 sha → PUT 更新 / POST 创建 */
+async function uploadClothImage(c){
+  const path = clothImgPath(c.id);
+  const content = dataURLToBase64(c.img);
+  const message = 'upload cloth ' + c.id + ' ' + new Date().toISOString();
+  let sha = null;
+  try{
+    const existing = await giteeFetch(path, 'GET');
+    if(existing && !Array.isArray(existing) && existing.sha) sha = existing.sha;
+  }catch(err){
+    if(String(err.message).indexOf('404') === -1) throw err;
+  }
+  const body = { content: content, message: message, branch: GITEE_BRANCH };
+  if(sha) body.sha = sha;
+  await giteeFetch(path, sha ? 'PUT' : 'POST', body);
+}
+
+/* ---------- 一次性迁移：旧格式 data/{username}.json → 新格式 ----------
+   只把旧数据合并进本地 state（本地 img 保留 dataURL、imgRemote 置空），由后续 push 负责上传图片+写新清单 */
+let syncMigrating = false;
+
+async function migrateLegacyData(){
+  if(!state.user) return null;
+  const oldPath = 'data/' + encodeURIComponent(state.user.name) + '.json';
+  let data;
+  try{
+    data = await giteeFetch(oldPath, 'GET');
+  }catch(err){
+    if(String(err.message).indexOf('404') !== -1) return null;
+    throw err;
+  }
+  if(!data || !data.content) return null;
+  let old;
+  try{
+    old = JSON.parse(base64Decode(data.content));
+  }catch(err){
+    return null;
+  }
+  if(!old || (!old.clothes && !old.groups)) return null;
+
+  // 旧格式 clothes.img 是 dataURL → 保留给本地显示，imgRemote 置空待上传
+  const migrated = (old.clothes || []).map(c=>{
+    const out = Object.assign({}, c);
+    if(c && c.img && isDataURL(c.img)){
+      out.img = c.img;
+      out.imgRemote = null;
+    }else{
+      out.img = null;
+      out.imgRemote = (c && c.imgRemote) || null;
+    }
+    return out;
+  });
+
+  // 本地有数据 → 合并（远端为准、去重 by id）；本地空 → 直接采用
+  const hasLocalData = (state.clothes && state.clothes.length > 0) || (state.groups && state.groups.length > 0);
+  if(hasLocalData){
+    state.groups = mergeById(state.groups, old.groups || []);
+    state.clothes = mergeById(state.clothes, migrated);
+  }else{
+    state.groups = old.groups || [];
+    state.clothes = migrated;
+  }
+  state.lastSync = null;   // 强制 push 完整上传一次
+  saveState();
+  return old;
+}
+
+/* ---------- 推送：本地 → Gitee（增量：只传未上传过的图片 + 重写清单） ---------- */
 async function pushUserData(){
   if(!state.user) throw new Error('请先登录');
   const username = state.user.name;
   const updatedAt = new Date().toISOString();
+
+  // 兜底迁移：云端尚无新清单但存在旧格式文件 → 先合并旧数据（防新清单抢占导致旧数据孤儿化）
+  if(!syncMigrating && !(await manifestExists())){
+    syncMigrating = true;
+    try{
+      const migrated = await migrateLegacyData();
+      if(migrated) toast('已合并旧数据，正在迁移到新格式…');
+    }finally{
+      syncMigrating = false;
+    }
+  }
+
+  // 1) 增量上传图片：本地有 dataURL 且未上传（imgRemote 空）→ 上传为独立文件
+  for(const c of state.clothes){
+    if(!c || !c.img || !isDataURL(c.img)) continue;   // 占位/无图跳过
+    if(c.imgRemote) continue;                          // 已上传过 → 增量跳过
+    try{
+      await uploadClothImage(c);
+      c.imgRemote = 'clothes/' + c.id + '.jpg';
+      saveState();                                     // 及时落盘，失败可续传
+    }catch(err){
+      throw new Error('图片上传失败：' + (err && err.message ? err.message : '未知错误'));
+    }
+  }
+
+  // 2) 组装云端清单：img 写文件路径或 null（不再是 dataURL）
+  const manifestClothes = state.clothes.map(c=>Object.assign({}, c, {
+    img: c.imgRemote || null,
+    imgRemote: c.imgRemote || null
+  }));
   const payload = JSON.stringify({
     groups: state.groups,
-    clothes: state.clothes,
+    clothes: manifestClothes,
     updatedAt: updatedAt
   });
   const content = base64Encode(payload);
-  const path = 'data/' + username + '.json';
+  const path = manifestPath();
 
-  // 先 GET 看远端是否已存在 → 存在取 sha 用于 PUT 更新；404 则 POST 首次创建
+  // 3) 写清单：存在取 sha → PUT；不存在 → POST（Gitee 对已存在文件 POST 会返回 400「文件名已存在」）
   let sha = null;
   try{
     const existing = await giteeFetch(path, 'GET');
-    if(existing && existing.sha) sha = existing.sha;
+    if(existing && !Array.isArray(existing) && existing.sha) sha = existing.sha;
   }catch(err){
     if(String(err.message).indexOf('404') === -1) throw err;
   }
-
-  const body = {
-    content: content,
-    message: 'sync ' + username + ' ' + updatedAt,
-    branch: GITEE_BRANCH
-  };
+  const body = { content: content, message: 'sync ' + username + ' ' + updatedAt, branch: GITEE_BRANCH };
   if(sha) body.sha = sha;
-
-  // 已存在（有 sha）→ PUT 更新；不存在 → POST 创建（Gitee 对已存在文件 POST 会返回 400「文件名已存在」）
   await giteeFetch(path, sha ? 'PUT' : 'POST', body);
 
   state.lastSync = updatedAt;
@@ -1801,29 +1923,122 @@ function refreshAfterSync(){
   else if(cur==='screen-mine'){ renderMine(); }
 }
 
-/* ---------- 拉取：Gitee → 本地 ----------
-   远端 updatedAt 比本地新 或 本地无数据 → 覆盖/合并（clothes/groups 以远端为准，合并去重 by id） */
-async function pullUserData(){
-  if(!state.user) throw new Error('请先登录');
-  const username = state.user.name;
-  const path = 'data/' + username + '.json';
+/* ---------- 拉取：Gitee → 本地（清单 + 图片补齐） ----------
+   远端 updatedAt 比本地新 或 本地无数据 → 覆盖/合并（clothes/groups 以远端为准，合并去重 by id）
+   云端 clothes.img 是文件路径 → 本地按 imgRemote 下载回 dataURL（本地显示用 dataURL、云端存文件） */
 
+/* 归一化云端衣物：img=路径 → 转为 imgRemote 并置空本地 img（待下载）；img=dataURL（旧格式）→ 原样保留 */
+function normalizeRemoteCloth(c){
+  if(!c) return c;
+  const img = c.img;
+  const imgRemote = c.imgRemote || (img && !isDataURL(img) ? img : null);
+  const out = Object.assign({}, c, { imgRemote: imgRemote || null });
+  out.img = imgRemote ? null : (img || null);
+  return out;
+}
+
+/* 拉取新格式清单（Gitee 对不存在路径返回 [] → 视为首次，返回 null） */
+async function fetchManifest(){
   let data;
   try{
-    data = await giteeFetch(path, 'GET');
+    data = await giteeFetch(manifestPath(), 'GET');
   }catch(err){
-    if(String(err.message).indexOf('404') !== -1) return null;   // 云端无此用户数据
+    if(String(err.message).indexOf('404') !== -1) return null;
     throw err;
   }
-  if(!data || !data.content) return null;
+  if(Array.isArray(data) || !data || !data.content) return null;
+  try{
+    return JSON.parse(base64Decode(data.content));
+  }catch(err){
+    throw new Error('云端清单解析失败，可能已被其他工具修改');
+  }
+}
 
+/* 下载单张云端图片（imgRemote 相对用户目录）→ 本地 dataURL */
+async function downloadClothImage(c){
+  const path = userDir(state.user.name) + c.imgRemote;
+  const file = await giteeFetch(path, 'GET');
+  if(file && !Array.isArray(file) && file.content){
+    c.img = 'data:image/jpeg;base64,' + file.content;
+    return true;
+  }
+  return false;
+}
+
+/* 补齐缺失图片：有 imgRemote 且本地无 dataURL → 下载（单张失败不阻塞，留占位下次再试） */
+async function downloadMissingImages(clothes){
+  const jobs = (clothes || []).filter(c=>c && c.imgRemote && !c.img);
+  for(const c of jobs){
+    try{
+      await downloadClothImage(c);
+    }catch(err){
+      // 单张失败不中断整体拉取
+    }
+  }
+}
+
+/* 删除云端图片文件：DELETE 必须带最新 sha，sha/message 走 query 参数（Gitee 文档） */
+async function deleteCloudImage(imgRemote){
+  if(!state.user || !imgRemote) return;
+  const path = userDir(state.user.name) + imgRemote;
+  // 先 GET 取最新 sha
+  let sha = null;
+  try{
+    const existing = await giteeFetch(path, 'GET');
+    if(existing && !Array.isArray(existing) && existing.sha) sha = existing.sha;
+  }catch(err){
+    if(String(err.message).indexOf('404') !== -1) return;   // 云端已无此文件
+    throw err;
+  }
+  if(!sha) return;
+  const url = GITEE_API + '/repos/' + GITEE_OWNER + '/' + GITEE_REPO + '/contents/' + path
+    + '?access_token=' + encodeURIComponent(getGiteeToken())
+    + '&sha=' + encodeURIComponent(sha)
+    + '&message=' + encodeURIComponent('delete cloth image ' + new Date().toISOString());
+  let res;
+  try{
+    res = await fetch(url, { method: 'DELETE', headers: { 'Content-Type': 'application/json' } });
+  }catch(err){
+    throw new Error('网络错误，请检查网络连接');
+  }
+  if(!res.ok){
+    let data = null;
+    try{ data = await res.json(); }catch(e){}
+    const raw = (data && (data.message || data.error)) ? (data.message || data.error) : ('HTTP ' + res.status);
+    throw new Error(raw);
+  }
+}
+
+async function pullUserData(){
+  if(!state.user) throw new Error('请先登录');
+
+  // 1) 拉新格式清单
   let remote;
   try{
-    remote = JSON.parse(base64Decode(data.content));
+    remote = await fetchManifest();
   }catch(err){
-    throw new Error('云端数据解析失败，可能已被其他工具修改');
+    throw err;
   }
-  if(!remote || (!remote.clothes && !remote.groups)) return null;
+  if(!remote){
+    // 新清单不存在 → 尝试一次性迁移旧格式 data/{username}.json
+    syncMigrating = true;
+    try{
+      const migrated = await migrateLegacyData();
+      if(migrated){
+        await pushUserData();          // 上传图片 + 写新清单
+        toast('已迁移旧数据到新格式 ✓');
+        refreshAfterSync();
+        return migrated;
+      }
+    }catch(err){
+      toast('旧数据迁移失败：' + (err && err.message ? err.message : '未知错误'));
+      return null;
+    }finally{
+      syncMigrating = false;
+    }
+    return null;                       // 云端无任何数据
+  }
+  if(!remote.clothes && !remote.groups) return null;
 
   const remoteTs = remote.updatedAt ? parseTs(remote.updatedAt) : 0;
   const localTs = state.lastSync ? parseTs(state.lastSync) : 0;
@@ -1834,15 +2049,25 @@ async function pullUserData(){
   if(neverSynced || !hasLocalData){
     // 覆盖：远端为准（首次拉取 / 本机无数据）
     state.groups = remote.groups || [];
-    state.clothes = remote.clothes || [];
+    state.clothes = (remote.clothes || []).map(normalizeRemoteCloth);
     changed = true;
   }else if(remoteTs > localTs){
-    // 合并：远端为准，去重 by id
-    state.clothes = mergeById(state.clothes, remote.clothes);
+    // 合并：远端为准，去重 by id；同 imgRemote 的本地 dataURL 保留（省一次下载）
+    const localMap = new Map((state.clothes || []).map(c=>[c.id, c]));
+    state.clothes = mergeById(state.clothes, (remote.clothes || []).map(normalizeRemoteCloth));
+    state.clothes.forEach(c=>{
+      if(c.imgRemote && !c.img){
+        const lc = localMap.get(c.id);
+        if(lc && lc.img && isDataURL(lc.img) && lc.imgRemote === c.imgRemote) c.img = lc.img;
+      }
+    });
     state.groups = mergeById(state.groups, remote.groups);
     changed = true;
   }
   if(!changed) return null;
+
+  // 2) 图片补齐：云端是文件路径 → 下载回本地 dataURL
+  await downloadMissingImages(state.clothes);
 
   if(remote.updatedAt) state.lastSync = remote.updatedAt;
   saveState();
