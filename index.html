@@ -20,6 +20,7 @@
 <title>电子衣橱</title>
 <!-- ============ PWA：可添加到主屏幕，像原生 App 一样全屏运行 ============ -->
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico">
 <meta name="theme-color" content="#8FD3A8">
 <!-- iOS：不读 manifest 的图标，必须单独提供 apple-touch-icon；靠 meta 才全屏 -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -588,6 +589,15 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <button id="tab-register" onclick="switchAuthMode('register')">注册</button>
       </div>
 
+      <!-- 首次登录必填 Gitee 令牌（打破「未登录无法配置令牌」死锁） -->
+      <div class="token-block">
+        <div class="field">
+          <label>Gitee 令牌</label>
+          <input class="input" id="auth-token" type="password" placeholder="首次使用必填，填一次存本机" autocomplete="off">
+        </div>
+        <div class="auth-tip">数据存入你的 Gitee 仓库，填一次本机记住；本机已存令牌可留空</div>
+      </div>
+
       <form id="form-login" onsubmit="return doLogin(event)">
         <div class="field">
           <label>用户名</label>
@@ -956,7 +966,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.4';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1211,7 +1221,8 @@ async function doLogin(e){
   const pass = $('login-pass').value;
   if(!name){ toast('请输入用户名'); return false; }
   if(!pass){ toast('请输入密码'); return false; }
-  if(!getGiteeToken()){ toast('请先在「我的」页配置 Gitee 令牌'); return false; }
+  autoSaveAuthToken();
+  if(!getGiteeToken()){ toast('请先在上方填写 Gitee 令牌'); return false; }
 
   try{
     // 从云端集中用户表校验：用户名 + 加盐哈希比对（数据按用户名隔离）
@@ -1247,7 +1258,8 @@ async function doRegister(e){
   if(name.length < 2){ toast('用户名至少 2 个字符'); return false; }
   if(p1.length < 6){ toast('密码至少 6 位'); return false; }
   if(p1 !== p2){ toast('两次密码不一致'); return false; }
-  if(!getGiteeToken()){ toast('请先在「我的」页配置 Gitee 令牌'); return false; }
+  autoSaveAuthToken();
+  if(!getGiteeToken()){ toast('请先在上方填写 Gitee 令牌'); return false; }
 
   try{
     // 读云端用户表：用户名已存在则拒绝；否则追加并写回
@@ -1973,6 +1985,12 @@ function renderSyncStatus(){
 
 /* ---------- Gitee 令牌（本地保存，不入代码） ---------- */
 function getGiteeToken(){ try{ return localStorage.getItem(GITEE_TOKEN_KEY) || ''; }catch(e){ return ''; } }
+/* 登录页令牌：本机未存时，从登录页输入框自动保存，打破死锁 */
+function autoSaveAuthToken(){
+  if(getGiteeToken()) return;
+  const inp = $('auth-token');
+  if(inp && inp.value && inp.value.trim()) setGiteeToken(inp.value.trim());
+}
 function setGiteeToken(token){ try{ localStorage.setItem(GITEE_TOKEN_KEY, token); return true; }catch(e){ return false; } }
 function maskToken(token){
   if(!token) return '填一次存本机';
