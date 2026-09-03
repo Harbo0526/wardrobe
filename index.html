@@ -79,6 +79,7 @@ input,textarea{font-family:inherit;border:none;outline:none;color:var(--ink);}
   position:relative;
   max-width:430px;
   margin:0 auto;
+  height:100vh;  /* vh 兜底（老内核），dvh 动态视口增强 */
   height:100dvh;
   background:var(--bg);
   display:flex;
@@ -88,6 +89,7 @@ input,textarea{font-family:inherit;border:none;outline:none;color:var(--ink);}
 @media (min-width:520px){
   .phone-shell{
     margin:24px auto;
+    height:calc(100vh - 48px);
     height:calc(100dvh - 48px);
     border-radius:36px;
     box-shadow:var(--shadow-modal), 0 0 0 10px #F7FAF5;
@@ -205,10 +207,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   padding-bottom:0; /* 底部留白改由 ::after spacer 撑开（flex 滚动容器 padding 常被忽略导致最后一行被 tab-bar 遮挡） */
   animation:none;
 }
-/* 滚动内容底部 spacer：真实撑开滚动空间，避免最后一行被绝对定位 tab-bar 遮挡（auth 居中页排除） */
+/* 滚动内容底部留白（tab-bar 已为 flex 布局项，不再覆盖内容，仅留少量呼吸空间；auth 居中页排除） */
 .screen:not(.screen-auth)::after{
   content:'';display:block;flex-shrink:0;
-  height:calc(88px + var(--safe-b));
+  height:calc(16px + var(--safe-b));
 }
 .screen.active{display:flex;animation:fadeIn .25s ease;}
 @keyframes fadeIn{
@@ -432,7 +434,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
 /* ============ 11. 底部导航 ============ */
 .tab-bar{
-  position:absolute;left:0;right:0;bottom:0;
+  /* flex 布局项：作为 phone-shell 的最后一行，天然固定在底部，不随内容滚动消失 */
+  flex:0 0 auto;
+  width:100%;
   height:calc(56px + var(--safe-b));
   padding-bottom:var(--safe-b);
   background:#fff;
@@ -595,7 +599,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <label>Gitee 令牌</label>
           <input class="input" id="auth-token" type="password" placeholder="首次使用必填，填一次存本机" autocomplete="off">
         </div>
-        <div class="auth-tip">数据存入你的 Gitee 仓库，填一次本机记住；本机已存令牌可留空</div>
+        <div class="auth-tip">数据存入远程仓库，填一次本机记住；本机已存令牌可留空</div>
       </div>
 
       <form id="form-login" onsubmit="return doLogin(event)">
@@ -608,7 +612,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <input class="input" id="login-pass" type="password" placeholder="输入密码" autocomplete="current-password">
         </div>
         <button class="btn btn-primary press" type="submit">登 录</button>
-        <div class="auth-tip">账号需已在云端开通，请联系管理员创建；数据按账号隔离</div>
+        <div class="auth-tip">令牌请联系Harbo获取</div>
       </form>
 
       <form id="form-register" hidden onsubmit="return doRegister(event)">
@@ -628,7 +632,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       </form>
     </div>
 
-    <div class="auth-foot">轻量 · 免费 · 数据自主可控 · 支持 Gitee 云同步</div>
+    <div class="auth-foot">轻量 · 免费 · 数据自主可控 · 支持云同步</div>
   </section>
 
   <!-- ============ 屏 2：衣橱主页 ============ -->
@@ -758,7 +762,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <input class="input" type="password" id="gitee-token" placeholder="填一次存本机" autocomplete="off">
         <button class="btn-sm btn-primary press" onclick="saveGiteeToken()">保存</button>
       </div>
-      <div class="sync-note">数据存入你的 Gitee 仓库 harboh/wardrobe，换设备填入同一令牌即可同步</div>
+      <div class="sync-note">数据存入远程仓库，换设备填入同一令牌即可同步</div>
 
       <!-- 云端同步 -->
       <div class="row">
@@ -865,7 +869,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <label>确认新密码</label>
           <input class="input" id="pw-new2" type="password" placeholder="再次输入新密码">
         </div>
-        <div class="pw-tip">修改后请记得同步到 Gitee，以免丢失</div>
+        <div class="pw-tip">修改后请记得同步到远程仓库，以免丢失</div>
         <button class="btn btn-primary press" type="submit">确认修改</button>
       </form>
     </div>
@@ -953,8 +957,15 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
    旧单键 LS_KEY 仅用于一次性兼容迁移，不再作为读写主路径。 */
 const LS_KEY = 'wardrobe.demo.v1';
 const LS_KEY_GUEST = 'wardrobe.v1.guest';
+const LS_KEY_LAST = 'wardrobe.v1.lastUser';   // 最近登录用户名：供刷新/重启后自动恢复会话
 function userStateKey(name){ return 'wardrobe.v1.' + encodeURIComponent(name); }
 function currentStateKey(){ return (state && state.user) ? userStateKey(state.user.name) : LS_KEY_GUEST; }
+function rememberLastUser(name){
+  try{
+    if(name){ localStorage.setItem(LS_KEY_LAST, name); }
+    else{ localStorage.removeItem(LS_KEY_LAST); }
+  }catch(e){}
+}
 
 /* ---------- Gitee 云同步配置（真实可用） ----------
    令牌不入代码：存 localStorage（gitee_token），首次使用时在「我的」页填写一次。 */
@@ -966,7 +977,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.1.1';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1030,7 +1041,7 @@ function saveState(){
         const prev = localStorage.getItem(key);
         if(prev){ localStorage.setItem(key, prev); }
       }catch(e2){}
-      toast('本地空间不足（约5MB），请换更小图片或优先接入 Gitee 同步');
+      toast('本地空间不足（约5MB），请换更小图片或优先接入远端仓库同步');
     }
     return false;
   }
@@ -1072,6 +1083,7 @@ function loadUserWorkspace(name){
 
 /* 重置为游客空态（登出时用；不残留任何上一账号的衣物/分组） */
 function resetToGuest(){
+  rememberLastUser(null);   // 登出即忘，避免下次启动误恢复已登出账号
   state.user = null;
   state.groups = [];
   state.clothes = [];
@@ -1221,6 +1233,7 @@ async function doLogin(e){
       return false;
     }
     state.user = { name: name, role: u.role || 'user', createdAt: u.createdAt || new Date().toISOString() };
+    rememberLastUser(name);   // 记录最近登录用户，刷新后自动恢复会话
   }catch(err){
     toast('登录失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
@@ -1251,6 +1264,7 @@ async function doRegister(e){
     users[name] = { password: p1, role: 'user', createdAt: new Date().toISOString() };
     await writeUsersTable(users);
     state.user = { name: name, role: 'user', createdAt: users[name].createdAt };
+    rememberLastUser(name);   // 记录最近登录用户，刷新后自动恢复会话
   }catch(err){
     toast('注册失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
@@ -2461,6 +2475,20 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 (async function init(){
   // 一次性迁移旧单键数据到各用户专属 key（多账号隔离改造后）
   migrateLegacyLocalData();
+  // 恢复上次登录会话：state 默认从游客 key 初始化（无用户）；若记得上次登录用户，则从其专属 key 恢复完整会话
+  if(!state.user || !state.user.name){
+    let last = '';
+    try{ last = localStorage.getItem(LS_KEY_LAST) || ''; }catch(e){}
+    if(last){
+      try{
+        const raw = localStorage.getItem(userStateKey(last));
+        if(raw){
+          const s = JSON.parse(raw);
+          if(s && s.user && s.user.name === last && s.groups){ state = s; }
+        }
+      }catch(e){}
+    }
+  }
   // 兼容旧版本本地会话：去掉历史 hash/salt/pass 字段，仅保留身份（密码以云端 _users.json 明文为准）
   if(state.user && state.user.name && (state.user.hash || state.user.salt || state.user.pass || state.user.password !== undefined)){
     const legacy = state.user;
