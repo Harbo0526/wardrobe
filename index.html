@@ -966,7 +966,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1003,7 +1003,7 @@ let state = loadState();
 function defaultState(){
   // 游客态：空衣橱（不带任何衣物/分组，避免多账号看到相同内容）
   return {
-    user:null,                       // {name, salt, hash, createdAt}（加盐哈希，不落明文）
+    user:null,                       // {name, role, createdAt}（本地仅存身份；密码明文权威在云端 _users.json）
     groups:[],
     clothes:[],
     lastSync:null                    // 上次同步时间戳
@@ -1169,28 +1169,16 @@ function switchAuthMode(mode){
   $('auth-title').textContent = mode==='login' ? '嗨，欢迎回来' : '加入你的私人衣橱';
 }
 
-/* ---------- 密码哈希 ----------
-   生产环境必须走 Web Crypto / HTTPS（crypto.subtle 仅在安全上下文可用）。
-   file:// 协议下自动降级为内置 djb2 同步哈希（仅演示用途）。 */
+/* ---------- 密码校验（V2.1.0：明文优先，哈希仅兼容旧表） ----------
+   _users.json 直接存明文 password，管理员在 Gitee 仓库改文本即可改任意账号/密码。
+   历史 hash/salt 记录在未迁移前仍可登录（下方哈希算法仅作过渡兼容）。 */
 function isWebCryptoAvailable(){
   return typeof crypto !== 'undefined'
     && typeof crypto.getRandomValues === 'function'
     && typeof crypto.subtle === 'object' && crypto.subtle
     && typeof crypto.subtle.digest === 'function';
 }
-/* 生成 16 字节随机盐（base64）；降级时用伪随机串 */
-function generateSalt(){
-  if(isWebCryptoAvailable()){
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return btoa(String.fromCharCode.apply(null, bytes));
-  }
-  let s = '';
-  const pool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  for(let i=0;i<22;i++) s += pool[Math.floor(Math.random()*pool.length)];
-  return s;
-}
-/* 内置 djb2 同步哈希：仅在无 Web Crypto 时使用（演示降级） */
+/* 内置 djb2 同步哈希：仅在无 Web Crypto 时使用（兼容旧记录校验的演示降级） */
 function djb2Hex(text){
   let h = 5381;
   for(let i=0;i<text.length;i++){
@@ -1208,13 +1196,6 @@ async function hashPassword(pass, salt){
   }
   return djb2Hex(data);
 }
-/* 创建用户：加盐哈希存储，密码绝不明文保存 */
-async function createUser(name, pass){
-  const salt = generateSalt();
-  const hash = await hashPassword(pass, salt);
-  return {name, salt, hash, createdAt:new Date().toISOString()};
-}
-
 async function doLogin(e){
   e.preventDefault();
   const name = $('login-name').value.trim();
@@ -1225,19 +1206,21 @@ async function doLogin(e){
   if(!getGiteeToken()){ toast('请先在上方填写 Gitee 令牌'); return false; }
 
   try{
-    // 从云端集中用户表校验：用户名 + 加盐哈希比对（数据按用户名隔离）
+    // 从云端集中用户表校验（数据按用户名隔离）：V2.1.0 起明文 password 优先，兼容历史 hash/salt
     const users = await readUsersTable();
     const u = users[name];
-    if(!u || !u.hash || !u.salt){
+    if(!u){
       toast('账号不存在，请联系管理员开通');
       return false;
     }
-    const hash = await hashPassword(pass, u.salt);
-    if(hash !== u.hash){
+    let ok = false;
+    if(typeof u.password === 'string'){ ok = (u.password === pass); }
+    else if(u.hash && u.salt){ ok = ((await hashPassword(pass, u.salt)) === u.hash); }
+    if(!ok){
       toast('用户名或密码不正确');
       return false;
     }
-    state.user = { name: name, salt: u.salt, hash: u.hash, role: u.role || 'user', createdAt: u.createdAt || new Date().toISOString() };
+    state.user = { name: name, role: u.role || 'user', createdAt: u.createdAt || new Date().toISOString() };
   }catch(err){
     toast('登录失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
@@ -1262,14 +1245,12 @@ async function doRegister(e){
   if(!getGiteeToken()){ toast('请先在上方填写 Gitee 令牌'); return false; }
 
   try{
-    // 读云端用户表：用户名已存在则拒绝；否则追加并写回
+    // 读云端用户表：用户名已存在则拒绝；否则追加并写回（明文 password）
     const users = await readUsersTable();
     if(users[name]){ toast('该用户名已被注册'); return false; }
-    const salt = generateSalt();
-    const hash = await hashPassword(p1, salt);
-    users[name] = { hash: hash, salt: salt, role: 'user', createdAt: new Date().toISOString() };
+    users[name] = { password: p1, role: 'user', createdAt: new Date().toISOString() };
     await writeUsersTable(users);
-    state.user = { name: name, salt: salt, hash: hash, role: 'user', createdAt: users[name].createdAt };
+    state.user = { name: name, role: 'user', createdAt: users[name].createdAt };
   }catch(err){
     toast('注册失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
@@ -1884,19 +1865,23 @@ async function changePassword(e){
   const n1 = $('pw-new').value;
   const n2 = $('pw-new2').value;
   if(!state.user){ toast('请先登录'); return false; }
-  // 校验当前密码：同盐重算哈希比对
-  const oldHash = await hashPassword(oldP, state.user.salt);
-  if(oldHash !== state.user.hash){ toast('当前密码不正确'); return false; }
+  // 以云端 _users.json 为准校验并更新（明文 password；兼容历史 hash/salt 旧记录）
+  const users = await readUsersTable();
+  const rec = users[state.user.name];
+  if(!rec){ toast('云端账号不存在，请联系管理员'); return false; }
+  let ok = false;
+  if(typeof rec.password === 'string'){ ok = (rec.password === oldP); }
+  else if(rec.hash && rec.salt){ ok = ((await hashPassword(oldP, rec.salt)) === rec.hash); }
+  if(!ok){ toast('当前密码不正确'); return false; }
   if(n1.length < 6){ toast('新密码至少 6 位'); return false; }
   if(n1 !== n2){ toast('两次新密码不一致'); return false; }
-  // 更新：重新加盐 + 哈希
-  const salt = generateSalt();
-  state.user.salt = salt;
-  state.user.hash = await hashPassword(n1, salt);
-  saveState();
+  // 写回云端明文密码（清掉历史 hash/salt）
+  rec.password = n1;
+  delete rec.hash; delete rec.salt;
+  await writeUsersTable(users);
   closeSheet('sheet-pw');
   $('pw-old').value = $('pw-new').value = $('pw-new2').value = '';
-  toast('密码已更新 ✓');
+  toast('密码已更新 ✓（已同步云端）');
   return false;
 }
 
@@ -1912,7 +1897,7 @@ function queryUser(){
     el.innerHTML = '<div class="card" style="padding:12px;background:var(--group-bg);">' +
       '<div class="row-title">用户「' + name + '」存在 ✓</div>' +
       '<div class="row-sub">注册时间：' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}) + '</div>' +
-      '<div class="row-sub" style="margin-top:8px;">密码以「盐 + SHA-256 哈希」存储，不可反查明文。忘记密码可通过下方重置新密码。</div>' +
+      '<div class="row-sub" style="margin-top:8px;">密码以明文保存在云端 <code>data/_users.json</code>，忘记密码可请管理员在 Gitee 仓库直接修改该用户 password 字段。</div>' +
     '</div>';
     fgUserName = name;
     $('fg-reset-form').hidden = false;
@@ -1932,22 +1917,26 @@ function resetPassword(e){
   const n2 = $('fg-new2').value;
   if(n1.length < 6){ toast('新密码至少 6 位'); return false; }
   if(n1 !== n2){ toast('两次新密码不一致'); return false; }
-  // 演示：仅重置当前设备已注册账号（该原型为单用户本地存储）
+  // 安全限制：仅允许"当前已登录本人"重置本人账号；其余交管理员在 Gitee 改 _users.json
   if(state.user && state.user.name === fgUserName){
     (async ()=>{
-      const salt = generateSalt();
-      state.user.salt = salt;
-      state.user.hash = await hashPassword(n1, salt);
-      saveState();
-      closeSheet('sheet-forgot');
-      $('fg-name').value = '';
-      $('fg-new').value = $('fg-new2').value = '';
-      $('fg-result').style.display = 'none';
-      $('fg-reset-form').hidden = true;
-      toast('密码已重置 ✓');
+      const users = await readUsersTable();
+      if(users[fgUserName]){
+        users[fgUserName].password = n1;
+        delete users[fgUserName].hash; delete users[fgUserName].salt;
+        await writeUsersTable(users);
+        closeSheet('sheet-forgot');
+        $('fg-name').value = '';
+        $('fg-new').value = $('fg-new2').value = '';
+        $('fg-result').style.display = 'none';
+        $('fg-reset-form').hidden = true;
+        toast('密码已重置 ✓（已同步云端）');
+      } else {
+        toast('云端未找到该用户，无法重置');
+      }
     })();
   }else{
-    toast('该用户未注册，无法重置');
+    toast('请先以本人账号登录后重置，或由管理员在 Gitee 直接改 data/_users.json 的 password 字段');
   }
   return false;
 }
@@ -2472,11 +2461,10 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 (async function init(){
   // 一次性迁移旧单键数据到各用户专属 key（多账号隔离改造后）
   migrateLegacyLocalData();
-  // 兼容旧版本：localStorage 若存有明文 pass，则迁移为加盐哈希（密码绝不明文保留）
-  if(state.user && state.user.pass && !state.user.hash){
+  // 兼容旧版本本地会话：去掉历史 hash/salt/pass 字段，仅保留身份（密码以云端 _users.json 明文为准）
+  if(state.user && state.user.name && (state.user.hash || state.user.salt || state.user.pass || state.user.password !== undefined)){
     const legacy = state.user;
-    state.user = await createUser(legacy.name, legacy.pass);
-    if(legacy.createdAt) state.user.createdAt = legacy.createdAt;
+    state.user = { name: legacy.name, role: legacy.role || 'user', createdAt: legacy.createdAt || new Date().toISOString() };
     saveState();
   }
   // 已登录 → 进入主页；否则登录页
