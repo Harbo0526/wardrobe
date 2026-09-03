@@ -977,7 +977,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.1.2';
+const APP_VERSION = '2.1.3';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1164,7 +1164,7 @@ function showTabBar(show){
 
 /* 底部导航点击 */
 function navTo(idx){
-  if(idx===0){ showScreen('screen-home'); setTab(0); }
+  if(idx===0){ renderHome(); showScreen('screen-home'); setTab(0); }  // 每次进首页重渲染，保证衣物/分组统计始终最新
   else if(idx===1){ state.groups.length ? openGroup(state.groups[0].id) : openGroup(0); }
   else if(idx===2){ openUpload(null); }
   else if(idx===3){ renderMine(); showScreen('screen-mine'); setTab(3); }
