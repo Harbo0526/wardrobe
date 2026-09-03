@@ -339,7 +339,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   border:1px solid rgba(46,74,58,.04);
 }
 .cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px;}
-.cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;padding-right:26px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* 备注固定单行，超长省略 */
+.cloth-note{font-size:12px;color:var(--ink-sub);margin-top:3px;padding-right:26px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* 卡片正面仅备注：单行省略，无备注留空占位保持等高 */
 /* 真实照片卡：img 铺满缩略区 */
 .cloth-thumb.has-img{overflow:hidden;border:none;}
 .cloth-thumb.has-img img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -369,10 +369,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-group{overflow:hidden;}              /* 本屏不整页滚动，改由左右栏内部滚动 */
 .wardrobe-body{flex:1;display:flex;align-items:stretch;overflow:hidden;min-height:0;}
 .group-rail{
-  flex:0 0 96px;width:96px;overflow-y:auto;
+  flex:0 0 84px;width:84px;overflow-y:auto;   /* 收窄：约容纳 5 个汉字 */
   background:#F2F7F2;border-right:1px solid var(--line);
   display:flex;flex-direction:column;align-items:stretch;
-  padding:10px 8px 14px;gap:6px;scrollbar-width:none;
+  padding:10px 6px 14px;gap:6px;scrollbar-width:none;
 }
 .group-rail::-webkit-scrollbar{display:none;}
 .rail-item{
@@ -381,6 +381,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   font-size:11px;line-height:1.15;text-align:center;flex-shrink:0;
 }
 .rail-item .rail-emoji{font-size:20px;line-height:1;}
+.rail-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* 超 5 字长组名省略 */
 .rail-item.active{
   background:#fff;color:var(--primary-deep);font-weight:600;
   box-shadow:0 1px 4px rgba(46,74,58,.08);
@@ -1084,7 +1085,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.3.1';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1445,7 +1446,7 @@ function renderGrid(items, containerId, emptyHtml){
     return '<button class="cloth-card press" data-id="' + c.id + '">' +
       thumb +
       '<div class="cloth-name">' + c.name + '</div>' +
-      '<div class="cloth-group">' + g + (c.note ? ' · ' + c.note : '') + '</div>' +
+      '<div class="cloth-note">' + (c.note ? c.note : '') + '</div>' +   // 正面不显示分组，仅备注（分组进详情看）
       '<span class="cloth-more" data-more="' + c.id + '" title="更多操作">⋮</span>' +
     '</button>';
   }).join('');
@@ -1479,7 +1480,7 @@ function showCloth(id){
     ? '<img src="' + c.img + '" alt="' + c.name + '">'
     : '<span class="cd-emoji">' + (c.emoji||'👕') + '</span>';
   $('cd-name').textContent = c.name;
-  $('cd-meta').textContent = g + ' · 共看详情';
+  $('cd-meta').textContent = '分组：' + g;   // 分组信息仅在详情展示
   const noteEl = $('cd-note');
   if(c.note){
     noteEl.innerHTML = '<div class="cd-note-label">备注</div>';
