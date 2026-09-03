@@ -278,7 +278,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   background:var(--primary-soft);color:var(--primary-deep);
   display:flex;align-items:center;justify-content:center;
   font-size:16px;font-weight:700;flex-shrink:0;
+  overflow:hidden;
 }
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;}
 .head-add{
   width:44px;height:44px;border-radius:12px;flex-shrink:0;
   background:var(--group-bg);color:var(--primary-deep);
@@ -337,7 +339,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   border:1px solid rgba(46,74,58,.04);
 }
 .cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px;}
-.cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;padding-right:26px;}
+.cloth-group{font-size:12px;color:var(--ink-faint);margin-top:3px;padding-right:26px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* 备注固定单行，超长省略 */
 /* 真实照片卡：img 铺满缩略区 */
 .cloth-thumb.has-img{overflow:hidden;border:none;}
 .cloth-thumb.has-img img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -438,11 +440,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   margin:16px 16px 12px;
 }
 .profile-avatar{
-  width:56px;height:56px;border-radius:18px;
+  width:56px;height:56px;border-radius:50%;   /* 头像外框：自动裁剪为圆形 */
   background:var(--primary);color:#fff;
   display:flex;align-items:center;justify-content:center;
   font-size:22px;font-weight:700;flex-shrink:0;
+  overflow:hidden;cursor:pointer;
 }
+.avatar img,.profile-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
 .profile-name{font-size:18px;font-weight:700;}
 .profile-meta{font-size:12px;color:var(--ink-faint);margin-top:4px;}
 .mine-card{margin:0 16px 12px;padding:8px 16px;}
@@ -456,6 +460,51 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .token-row{display:flex;gap:8px;align-items:center;margin:0 0 6px;}
 .token-row .input{flex:1;height:40px;font-size:14px;padding:0 12px;}
 .sync-note{font-size:12px;color:var(--ink-faint);line-height:18px;padding:2px 0 8px;border-bottom:1px solid var(--line);margin-bottom:2px;}
+
+/* ============ 11.5 衣物详情大图 / 头像设置 ============ */
+/* 深色全屏遮罩（放大查看用） */
+.overlay-detail{background:rgba(24,30,26,.62);align-items:center;justify-content:center;padding:24px;}
+.cloth-detail{
+  position:relative;width:min(92vw,430px);max-height:88%;
+  background:var(--bg);border-radius:22px;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:var(--shadow-modal);
+}
+.cd-media{
+  width:100%;min-height:220px;max-height:52vh;background:#EDF3ED;
+  display:flex;align-items:center;justify-content:center;padding:10px;
+}
+.cd-media img{display:block;max-width:100%;max-height:50vh;object-fit:contain;border-radius:12px;}
+.cd-media .cd-emoji{font-size:92px;}
+.cd-body{padding:14px 16px 18px;overflow-y:auto;}
+.cd-name{font-size:17px;font-weight:700;}
+.cd-meta{font-size:13px;color:var(--ink-sub);margin-top:4px;}
+.cd-note{
+  margin-top:10px;font-size:14px;color:var(--ink);line-height:1.65;
+  background:var(--group-bg);border-radius:12px;padding:10px 12px;
+  white-space:pre-wrap;word-break:break-word;
+}
+.cd-note-label{font-size:12px;color:var(--ink-faint);margin-bottom:4px;}
+.cd-close{
+  position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.94);color:var(--ink);font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 5px rgba(0,0,0,.2);
+}
+/* 头像编辑 */
+.avatar-edit{display:flex;flex-direction:column;align-items:center;padding:2px 0 10px;}
+.avatar-big{
+  width:120px;height:120px;border-radius:50%;overflow:hidden;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:700;
+  box-shadow:0 2px 10px rgba(46,74,58,.15);margin:8px 0 12px;
+}
+.avatar-big img{width:100%;height:100%;object-fit:cover;display:block;}
+.avatar-tip{font-size:12px;color:var(--ink-faint);margin-bottom:12px;text-align:center;}
+.avatar-btns{display:flex;flex-direction:column;gap:10px;width:100%;}
+.avatar-btns .btn{height:46px;}
+.avatar-remove{background:none;border:none;color:var(--danger);font-size:14px;padding:12px 0 4px;cursor:pointer;}
+/* 衣物卡等高（网格内同行等高；配合固定缩略高+单行文本，全卡视觉等高） */
+.cloth-card{height:100%;}
 
 /* ============ 11. 底部导航 ============ */
 .tab-bar{
@@ -764,7 +813,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="screen-head"><span class="title">我的</span><span style="width:44px;"></span></div>
 
     <div class="card profile-card">
-      <div class="profile-avatar" id="mine-avatar">绿</div>
+      <div class="profile-avatar" id="mine-avatar" onclick="openAvatarEditor()" title="点击设置头像">绿</div>
       <div>
         <div class="profile-name" id="mine-name">小绿</div>
         <div class="profile-meta" id="mine-meta">加入于 2026-08-25</div>
@@ -858,6 +907,37 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       <span>我的</span>
     </button>
   </nav>
+
+  <!-- ============ Sheet：衣物详情（点击衣物卡放大） ============ -->
+  <div class="overlay overlay-detail" id="sheet-cloth-view" onclick="closeSheetOnBg(event,'sheet-cloth-view')">
+    <div class="cloth-detail" onclick="event.stopPropagation()">
+      <button class="cd-close" onclick="closeSheet('sheet-cloth-view')">✕</button>
+      <div class="cd-media" id="cd-media"></div>
+      <div class="cd-body">
+        <div class="cd-name" id="cd-name"></div>
+        <div class="cd-meta" id="cd-meta"></div>
+        <div class="cd-note" id="cd-note"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Sheet：我的头像（点击放大 + 图库/相机设置） ============ -->
+  <div class="overlay" id="sheet-avatar" onclick="closeSheetOnBg(event,'sheet-avatar')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-head"><h3>我的头像</h3><button class="sheet-close" onclick="closeSheet('sheet-avatar')">✕</button></div>
+      <div class="avatar-edit">
+        <div class="avatar-big" id="avatar-big">绿</div>
+        <div class="avatar-tip">从图库选择或拍照，头像会自动裁剪为圆形</div>
+        <div class="avatar-btns">
+          <button class="btn btn-secondary press" onclick="document.getElementById('avatarAlbumInput').click()">从图库选择</button>
+          <button class="btn btn-accent press" onclick="document.getElementById('avatarCameraInput').click()">拍照</button>
+        </div>
+        <button class="avatar-remove" id="avatar-remove" onclick="removeAvatar()" style="display:none;">移除头像</button>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="avatarAlbumInput" accept="image/*" hidden>
+  <input type="file" id="avatarCameraInput" accept="image/*" capture="user" hidden>
 
   <!-- ============ Sheet：分组管理 ============ -->
   <div class="overlay" id="sheet-group" onclick="closeSheetOnBg(event,'sheet-group')">
@@ -1004,7 +1084,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1099,6 +1179,8 @@ function loadUserWorkspace(name){
     state.groups = found.groups || [];
     state.clothes = found.clothes || [];
     state.lastSync = found.lastSync || null;
+    // 头像随账号恢复（头像存本地用户 key，不随云端同步）
+    if(state.user && found.user && found.user.avatar){ state.user.avatar = found.user.avatar; }
   }else{
     // 新账号 / 无本地缓存 → 空衣橱
     state.groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));
@@ -1322,7 +1404,7 @@ function renderHome(){
   const h = new Date().getHours();
   const greet = h<11 ? '早上好' : (h<14 ? '中午好' : (h<18 ? '午后好' : '晚上好'));
   $('home-greet').textContent = greet + '，' + (state.user ? state.user.name : '小绿');
-  $('home-avatar').textContent = (state.user ? state.user.name : '小绿').charAt(0);
+  applyAvatar('home-avatar');
   $('home-date').textContent = new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 
   $('home-stats').innerHTML = '共 <b>' + state.clothes.length + '</b> 件衣物 · <b>' + state.groups.length + '</b> 个分组';
@@ -1387,11 +1469,25 @@ function renderGrid(items, containerId, emptyHtml){
   });
 }
 
-/* 点击衣物卡 → 轻提示 */
+/* 点击衣物卡 → 放大详情：看清照片与备注全貌 */
 function showCloth(id){
   const c = state.clothes.find(x=>x.id===id);
   if(!c) return;
-  toast('「' + c.name + '」 · ' + groupName(c.group) + (c.note ? ' · ' + c.note : ''));
+  const g = groupName(c.group);
+  // 图片区：有图则大图；无图则 emoji 占位大块
+  $('cd-media').innerHTML = c.img
+    ? '<img src="' + c.img + '" alt="' + c.name + '">'
+    : '<span class="cd-emoji">' + (c.emoji||'👕') + '</span>';
+  $('cd-name').textContent = c.name;
+  $('cd-meta').textContent = g + ' · 共看详情';
+  const noteEl = $('cd-note');
+  if(c.note){
+    noteEl.innerHTML = '<div class="cd-note-label">备注</div>';
+    noteEl.appendChild(document.createTextNode(c.note));
+  }else{
+    noteEl.textContent = '该衣物暂无备注';
+  }
+  openSheet('sheet-cloth-view');
 }
 
 /* ---------- 长按删除衣物 ---------- */
@@ -1988,7 +2084,7 @@ function resetPassword(e){
 /* ---------- 10. 我的页 / 同步 / 退出 ---------- */
 function renderMine(){
   const u = state.user || {name:'小绿', createdAt:new Date().toISOString()};
-  $('mine-avatar').textContent = u.name.charAt(0);
+  applyAvatar('mine-avatar');
   $('mine-name').textContent = u.name;
   const d = new Date(u.createdAt);
   $('mine-meta').textContent = '加入于 ' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' · ' + state.clothes.length + ' 件衣物';
@@ -2002,6 +2098,94 @@ function renderMine(){
   var av = $('about-ver');
   if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
 }
+
+/* ---------- 10.5 头像（本机按账号存储；外框 CSS 圆形裁剪） ---------- */
+function currentAvatar(){ return (state.user && state.user.avatar) ? state.user.avatar : null; }
+function applyAvatar(elId){
+  const el = $(elId);
+  if(!el) return;
+  const av = currentAvatar();
+  if(av){ el.innerHTML = '<img src="' + av + '" alt="头像">'; }
+  else{ el.textContent = (state.user ? state.user.name : '绿').charAt(0); }
+}
+/* 点击「我的页」头像 → 放大预览 + 可选更换 */
+function openAvatarEditor(){
+  const av = currentAvatar();
+  const big = $('avatar-big');
+  big.innerHTML = av ? '<img src="' + av + '" alt="头像">' : ((state.user ? state.user.name : '绿').charAt(0));
+  const rm = $('avatar-remove');
+  if(rm) rm.style.display = av ? '' : 'none';
+  openSheet('sheet-avatar');
+}
+/* 头像图片处理：按人物中心裁成正方形 → 缩至 320×320（圆形由 CSS 裁，存储为方图） */
+function avatarFromFile(file){
+  return new Promise(function(resolve, reject){
+    if(typeof createImageBitmap === 'function'){
+      createImageBitmap(file, {imageOrientation:'from-image'}).then(
+        function(bmp){
+          const side = Math.min(bmp.width, bmp.height);
+          const c = document.createElement('canvas');
+          c.width = c.height = 320;
+          c.getContext('2d').drawImage(bmp, (bmp.width-side)/2, (bmp.height-side)/2, side, side, 0, 0, 320, 320);
+          bmp.close();
+          resolve(c.toDataURL('image/jpeg', 0.85));
+        },
+        function(){ resolve(avatarCropViaImage(URL.createObjectURL(file))); }
+      ).catch(function(){ resolve(avatarCropViaImage(URL.createObjectURL(file))); });
+    }else{
+      resolve(avatarCropViaImage(URL.createObjectURL(file)));
+    }
+  });
+}
+function avatarCropViaImage(src){
+  return new Promise(function(resolve, reject){
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const c = document.createElement('canvas');
+        c.width = c.height = 320;
+        c.getContext('2d').drawImage(img, (img.naturalWidth-side)/2, (img.naturalHeight-side)/2, side, side, 0, 0, 320, 320);
+        URL.revokeObjectURL(src);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      }catch(err){ URL.revokeObjectURL(src); reject(err); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(src); reject(new Error('图片读取失败')); };
+    img.src = src;
+  });
+}
+function handleAvatarFile(file){
+  if(!file) return;
+  if(!file.type || file.type.indexOf('image/') !== 0){ toast('请选择图片文件'); return; }
+  if(!state.user){ toast('请先登录'); return; }
+  avatarFromFile(file).then(function(dataURL){
+    state.user.avatar = dataURL;
+    saveState();
+    applyAvatar('mine-avatar');
+    applyAvatar('home-avatar');
+    openAvatarEditor();
+    toast('头像已更新 ✓');
+  }).catch(function(err){
+    toast('头像处理失败：' + (err && err.message ? err.message : '请重试'));
+  });
+}
+function removeAvatar(){
+  if(!state.user) return;
+  delete state.user.avatar;
+  saveState();
+  applyAvatar('mine-avatar');
+  applyAvatar('home-avatar');
+  openAvatarEditor();
+  toast('已移除头像');
+}
+$('avatarAlbumInput').addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(f) handleAvatarFile(f);
+});
+$('avatarCameraInput').addEventListener('change', function(e){
+  const f = e.target.files && e.target.files[0];
+  if(f) handleAvatarFile(f);
+});
 
 function renderSyncStatus(){
   const el = $('sync-status');
