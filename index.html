@@ -63,7 +63,7 @@
 
 /* ============ 2. 基础 ============ */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;}
+html,body{height:100%;overflow:hidden;} /* body 禁滚：滚动只发生在 .screen 内部，底部 tab-bar 永不出视口 */
 body{
   font-family:var(--font);
   background:#E8EEE7; /* 桌面外框底色 */
@@ -201,10 +201,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
 /* ============ 5. 屏幕容器与切换 ============ */
 .screen{
-  flex:1;display:none;
+  flex:1;min-height:0;display:none; /* min-height:0 关键：防止内容把 flex 外壳撑爆、把底部 tab-bar 挤出视口被裁掉 */
   flex-direction:column;
   overflow-y:auto;
-  padding-bottom:0; /* 底部留白改由 ::after spacer 撑开（flex 滚动容器 padding 常被忽略导致最后一行被 tab-bar 遮挡） */
+  padding-bottom:0; /* 底部留白改由 ::after spacer 撑开 */
   animation:none;
 }
 /* 滚动内容底部留白（tab-bar 已为 flex 布局项，不再覆盖内容，仅留少量呼吸空间；auth 居中页排除） */
@@ -596,7 +596,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       <!-- 首次登录必填 Gitee 令牌（打破「未登录无法配置令牌」死锁） -->
       <div class="token-block">
         <div class="field">
-          <label>Gitee 令牌</label>
+          <label>远程仓库 令牌</label>
           <input class="input" id="auth-token" type="password" placeholder="首次使用必填，填一次存本机" autocomplete="off">
         </div>
         <div class="auth-tip">数据存入远程仓库，填一次本机记住；本机已存令牌可留空</div>
@@ -754,7 +754,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6"/>
         </svg>
         <div class="row-main">
-          <div class="row-title">Gitee 令牌</div>
+          <div class="row-title">远程仓库 令牌</div>
           <div class="row-sub">填一次存本机，用于云端同步</div>
         </div>
       </div>
@@ -977,7 +977,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.1.1';
+const APP_VERSION = '2.1.2';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1215,7 +1215,7 @@ async function doLogin(e){
   if(!name){ toast('请输入用户名'); return false; }
   if(!pass){ toast('请输入密码'); return false; }
   autoSaveAuthToken();
-  if(!getGiteeToken()){ toast('请先在上方填写 Gitee 令牌'); return false; }
+  if(!getGiteeToken()){ toast('请先在上方填写 远程仓库 令牌'); return false; }
 
   try{
     // 从云端集中用户表校验（数据按用户名隔离）：V2.1.0 起明文 password 优先，兼容历史 hash/salt
@@ -1255,7 +1255,7 @@ async function doRegister(e){
   if(p1.length < 6){ toast('密码至少 6 位'); return false; }
   if(p1 !== p2){ toast('两次密码不一致'); return false; }
   autoSaveAuthToken();
-  if(!getGiteeToken()){ toast('请先在上方填写 Gitee 令牌'); return false; }
+  if(!getGiteeToken()){ toast('请先在上方填写 远程仓库 令牌'); return false; }
 
   try{
     // 读云端用户表：用户名已存在则拒绝；否则追加并写回（明文 password）
@@ -1911,7 +1911,7 @@ function queryUser(){
     el.innerHTML = '<div class="card" style="padding:12px;background:var(--group-bg);">' +
       '<div class="row-title">用户「' + name + '」存在 ✓</div>' +
       '<div class="row-sub">注册时间：' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'}) + '</div>' +
-      '<div class="row-sub" style="margin-top:8px;">密码以明文保存在云端 <code>data/_users.json</code>，忘记密码可请管理员在 Gitee 仓库直接修改该用户 password 字段。</div>' +
+      '<div class="row-sub" style="margin-top:8px;">密码以明文保存在云端 <code>data/_users.json</code>，忘记密码可请管理员在 远程 仓库直接修改该用户 password 字段。</div>' +
     '</div>';
     fgUserName = name;
     $('fg-reset-form').hidden = false;
@@ -1950,7 +1950,7 @@ function resetPassword(e){
       }
     })();
   }else{
-    toast('请先以本人账号登录后重置，或由管理员在 Gitee 直接改 data/_users.json 的 password 字段');
+    toast('请先以本人账号登录后重置，或由管理员在 远程仓库 直接改 data/_users.json 的 password 字段');
   }
   return false;
 }
@@ -1970,7 +1970,7 @@ function renderMine(){
   if(v) v.textContent = 'v' + APP_VERSION;
   // 关于行版本（统一读 APP_VERSION，避免硬编码失同步）
   var av = $('about-ver');
-  if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · Gitee 云同步';
+  if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
 }
 
 function renderSyncStatus(){
