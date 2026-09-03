@@ -363,6 +363,31 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   display:flex;align-items:center;justify-content:center;
   font-size:15px;
 }
+/* 衣橱页 V2.2.0 两栏布局：左分组导航竖列 + 右侧衣物两列向下展开 */
+#screen-group{overflow:hidden;}              /* 本屏不整页滚动，改由左右栏内部滚动 */
+.wardrobe-body{flex:1;display:flex;align-items:stretch;overflow:hidden;min-height:0;}
+.group-rail{
+  flex:0 0 96px;width:96px;overflow-y:auto;
+  background:#F2F7F2;border-right:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:stretch;
+  padding:10px 8px 14px;gap:6px;scrollbar-width:none;
+}
+.group-rail::-webkit-scrollbar{display:none;}
+.rail-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 4px;border-radius:12px;color:var(--ink-sub);
+  font-size:11px;line-height:1.15;text-align:center;flex-shrink:0;
+}
+.rail-item .rail-emoji{font-size:20px;line-height:1;}
+.rail-item.active{
+  background:#fff;color:var(--primary-deep);font-weight:600;
+  box-shadow:0 1px 4px rgba(46,74,58,.08);
+}
+.rail-empty{font-size:11px;color:var(--ink-faint);text-align:center;padding:6px 2px;line-height:1.6;}
+#screen-group .cloth-grid{
+  flex:1;overflow-y:auto;align-content:start;
+  min-width:0;padding:12px;gap:12px;
+}
 
 /* ============ 9. 上传页 ============ */
 .upload-wrap{padding:8px 16px 24px;}
@@ -670,9 +695,11 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </div>
-    <!-- 分组切换 chips：仅各分组，当前分组高亮（无分组时显示占位提示） -->
-    <div class="chips-scroll" id="group-chips" style="padding:0 16px 12px;"></div>
-    <div class="cloth-grid" id="group-grid"></div>
+    <!-- 衣橱两栏布局：左分组导航竖列 + 右侧衣物两列向下展开 -->
+    <div class="wardrobe-body">
+      <aside class="group-rail" id="group-chips"></aside>
+      <div class="cloth-grid" id="group-grid"></div>
+    </div>
   </section>
 
   <!-- ============ 屏 4：上传页 ============ -->
@@ -771,7 +798,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <path d="M18 3v5h-5M6 21v-5h5"/>
         </svg>
         <div class="row-main">
-          <div class="row-title">云端同步</div>
+          <div class="row-title">上传云端</div>
           <div class="sync-status"><span class="dot"></span><span id="sync-status">尚未同步</span></div>
         </div>
         <button class="btn-sm btn-accent press" onclick="doSync()" id="sync-btn">立即同步</button>
@@ -977,7 +1004,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.1.3';
+const APP_VERSION = '2.2.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1506,12 +1533,15 @@ function delClothFromMenu(){
 /* 分组详情页：分组切换 chips（仅各分组，当前高亮；无分组时显示占位提示，非 chip） */
 function renderGroupChips(){
   if(!state.groups.length){
-    $('group-chips').innerHTML = '<span style="color:var(--ink-faint);font-size:12px;">暂无分组，点右上角 + 创建</span>';
+    $('group-chips').innerHTML = '<div class="rail-empty">暂无分组<br>点右上角＋创建</div>';
     return;
   }
   let h = '';
   state.groups.forEach(g=>{
-    h += '<button class="chip' + (currentGroupId===g.id ? ' active' : '') + ' press" onclick="openGroup(' + g.id + ')"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
+    h += '<button class="rail-item' + (currentGroupId===g.id ? ' active' : '') + ' press" onclick="openGroup(' + g.id + ')">' +
+      '<span class="rail-emoji">' + g.emoji + '</span>' +
+      '<span class="rail-name">' + g.name + '</span>' +
+    '</button>';
   });
   $('group-chips').innerHTML = h;
 }
