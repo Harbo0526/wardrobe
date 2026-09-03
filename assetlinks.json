@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.harbo.wardrobe",
-        "sha256_cert_fingerprints": ["5D:EE:1C:0F:F8:EE:E7:2D:1F:78:64:8E:04:03:C1:AD:A0:75:FE:3B:D7:96:D2:D4:B5:26:6B:30:02:F9:BA:D1"]
-      }
-    }]
