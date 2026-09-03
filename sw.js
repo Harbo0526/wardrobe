@@ -6,15 +6,15 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时）
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v1.4.1';
+const CACHE_NAME = 'wardrobe-v1.4.2';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png'
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png'
 ];
 
 /* 安装：预缓存 app shell，立即接管 */
