@@ -18,6 +18,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>电子衣橱</title>
+<!-- ============ PWA：可添加到主屏幕，像原生 App 一样全屏运行 ============ -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#8FD3A8">
+<!-- iOS：不读 manifest 的图标，必须单独提供 apple-touch-icon；靠 meta 才全屏 -->
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="电子衣橱">
 <style>
 /* ============ 1. 设计令牌 ============ */
 :root{
@@ -947,7 +956,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.4.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -2431,6 +2440,14 @@ function doLogout(){
   switchAuthMode('login');
   showScreen('screen-auth');
   toast('已退出登录');
+}
+
+/* ---------- PWA：注册 Service Worker（离线缓存） ----------
+   仅 HTTPS / localhost 生效；file:// 直接打开会自动跳过（不影响页面本身使用） */
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){ /* 静默失败，不影响功能 */ });
+  });
 }
 
 /* ---------- 11. 启动 ---------- */
