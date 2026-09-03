@@ -928,7 +928,14 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
    ============================================================ */
 
 /* ---------- 1. 数据层 ---------- */
+/* 本地存储按用户隔离：每个账号一个独立 key，避免同一浏览器多账号共用一份数据导致串号。
+   - 未登录（游客）态：LS_KEY_GUEST
+   - 登录后：wardrobe.v1.{用户名}
+   旧单键 LS_KEY 仅用于一次性兼容迁移，不再作为读写主路径。 */
 const LS_KEY = 'wardrobe.demo.v1';
+const LS_KEY_GUEST = 'wardrobe.v1.guest';
+function userStateKey(name){ return 'wardrobe.v1.' + encodeURIComponent(name); }
+function currentStateKey(){ return (state && state.user) ? userStateKey(state.user.name) : LS_KEY_GUEST; }
 
 /* ---------- Gitee 云同步配置（真实可用） ----------
    令牌不入代码：存 localStorage（gitee_token），首次使用时在「我的」页填写一次。 */
@@ -940,7 +947,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -952,6 +959,8 @@ const DEFAULT_GROUPS = [
   {id:7, name:'配饰',   emoji:'🧣'},
 ];
 
+/* 演示衣物：多用户隔离改造后【不再】注入为新账号默认数据（否则每个账号初始都看到同一批衣服）。
+   仅保留作示例参考，普通逻辑不引用。 */
 const DEFAULT_CLOTHES = [
   {id:101, name:'奶油白T恤',   group:1, note:'日常通勤', emoji:'👕', tint:'#EAF5EC'},
   {id:102, name:'雾蓝直筒裤',   group:2, note:'百搭裤装', emoji:'👖', tint:'#E9F5FB'},
@@ -973,36 +982,101 @@ const PHOTO_EMOJIS = ['👕','👖','👟','🧥','👗','🧢','👜','🧣','�
 let state = loadState();
 
 function defaultState(){
+  // 游客态：空衣橱（不带任何衣物/分组，避免多账号看到相同内容）
   return {
     user:null,                       // {name, salt, hash, createdAt}（加盐哈希，不落明文）
-    groups:JSON.parse(JSON.stringify(DEFAULT_GROUPS)),
-    clothes:JSON.parse(JSON.stringify(DEFAULT_CLOTHES)),
+    groups:[],
+    clothes:[],
     lastSync:null                    // 上次同步时间戳
   };
 }
 function loadState(){
+  // 游客态数据（登录后由 loadUserWorkspace 按用户名加载各自的数据）
   try{
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(LS_KEY_GUEST);
     if(raw){ const s = JSON.parse(raw); if(s && s.groups) return s; }
   }catch(e){}
   return defaultState();
 }
 function saveState(){
   const data = JSON.stringify(state);
+  const key = currentStateKey();
   try{
-    localStorage.setItem(LS_KEY, data);
+    localStorage.setItem(key, data);
     return true;
   }catch(e){
     // 配额溢出：显式回滚旧值，避免半写入损坏已有数据
     if(e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')){
       try{
-        const prev = localStorage.getItem(LS_KEY);
-        if(prev){ localStorage.setItem(LS_KEY, prev); }
+        const prev = localStorage.getItem(key);
+        if(prev){ localStorage.setItem(key, prev); }
       }catch(e2){}
       toast('本地空间不足（约5MB），请换更小图片或优先接入 Gitee 同步');
     }
     return false;
   }
+}
+
+/* ---------- 按用户隔离的本地工作区 ----------
+   切换/登录账号时调用：只加载该用户名专属的本地缓存；
+   无缓存则给全新「空衣橱」（分组沿用默认，方便首次上传；衣物为空）。
+   这样不同账号之间不会互相残留/合并对方的数据（云端本就按 data/{用户名}/ 隔离）。 */
+function loadUserWorkspace(name){
+  const key = userStateKey(name);
+  let found = null;
+  try{
+    const raw = localStorage.getItem(key);
+    if(raw){ const s = JSON.parse(raw); if(s && s.groups) found = s; }
+  }catch(e){}
+  // 一次性兼容迁移：旧单键里若正好是该用户的数据，则迁到新 key
+  if(!found){
+    try{
+      const legacy = localStorage.getItem(LS_KEY);
+      if(legacy){
+        const ls = JSON.parse(legacy);
+        if(ls && ls.user && ls.user.name === name) found = ls;
+      }
+    }catch(e){}
+  }
+  if(found){
+    state.groups = found.groups || [];
+    state.clothes = found.clothes || [];
+    state.lastSync = found.lastSync || null;
+  }else{
+    // 新账号 / 无本地缓存 → 空衣橱
+    state.groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));
+    state.clothes = [];
+    state.lastSync = null;
+  }
+  saveState();
+}
+
+/* 重置为游客空态（登出时用；不残留任何上一账号的衣物/分组） */
+function resetToGuest(){
+  state.user = null;
+  state.groups = [];
+  state.clothes = [];
+  state.lastSync = null;
+  saveState();
+}
+
+/* 一次性兼容迁移：把旧单键 wardrobe.demo.v1 里的数据，按用户名迁到各自的 userStateKey。
+   作用：老版本升级后不丢失本地缓存（云端数据仍为准，登录后会自动拉回覆盖）。 */
+function migrateLegacyLocalData(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const ls = JSON.parse(raw);
+    if(!ls || !ls.user || !ls.user.name) return;
+    const key = userStateKey(ls.user.name);
+    if(localStorage.getItem(key)) return;      // 已迁移过则跳过
+    localStorage.setItem(key, JSON.stringify({
+      user: ls.user,
+      groups: ls.groups || [],
+      clothes: ls.clothes || [],
+      lastSync: ls.lastSync || null
+    }));
+  }catch(e){}
 }
 
 /* 当前上下文：当前分组 id（0=无分组空态），上传预选分组 */
@@ -1149,7 +1223,8 @@ async function doLogin(e){
     return false;
   }
 
-  saveState();
+  // 切换账号：只加载该用户名专属的本地工作区（避免上一账号数据残留串号）
+  loadUserWorkspace(state.user.name);
   enterApp();
   toast('欢迎回来，' + state.user.name + ' ✓');
   return false;
@@ -1179,7 +1254,8 @@ async function doRegister(e){
     return false;
   }
 
-  saveState();
+  // 新账号：全新「空衣橱」工作区（不继承任何他人数据）
+  loadUserWorkspace(state.user.name);
   enterApp();
   toast('注册成功，欢迎加入 ✓');
   return false;
@@ -2345,8 +2421,9 @@ function showAbout(){
 }
 
 function doLogout(){
-  state.user = null;
-  saveState();
+  // 先把当前账号的数据存回它自己的 key，再重置游客空态（不残留任何衣物/分组给下一个账号）
+  if(state.user){ saveState(); }
+  resetToGuest();
   showTabBar(false);
   $('tab-bar').querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   $('form-login').querySelector('input').value = '';
@@ -2358,6 +2435,8 @@ function doLogout(){
 
 /* ---------- 11. 启动 ---------- */
 (async function init(){
+  // 一次性迁移旧单键数据到各用户专属 key（多账号隔离改造后）
+  migrateLegacyLocalData();
   // 兼容旧版本：localStorage 若存有明文 pass，则迁移为加盐哈希（密码绝不明文保留）
   if(state.user && state.user.pass && !state.user.hash){
     const legacy = state.user;
@@ -2366,7 +2445,9 @@ function doLogout(){
     saveState();
   }
   // 已登录 → 进入主页；否则登录页
-  if(state.user){
+  if(state.user && state.user.name){
+    // 集中用户表模式下，启动恢复会话也需加载该用户专属工作区
+    loadUserWorkspace(state.user.name);
     enterApp();
   }else{
     showTabBar(false);
