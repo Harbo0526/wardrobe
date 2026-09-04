@@ -6,11 +6,11 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时）
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v2.3.1';
+const CACHE_NAME = 'wardrobe-v2.8.0';
 const APP_SHELL = [
   './',
   './index.html',
-  './manifest.json',
+  './manifest.json',   /* cocktail.html 已移除：V2.5.0 起调酒内嵌进 index.html，不再作为独立页面缓存 */
   './favicon.ico',
   './icon-192.png',
   './icon-512.png',

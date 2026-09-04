@@ -367,6 +367,28 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 }
 /* 衣橱页 V2.2.0 两栏布局：左分组导航竖列 + 右侧衣物两列向下展开 */
 #screen-group{overflow:hidden;}              /* 本屏不整页滚动，改由左右栏内部滚动 */
+/* 分组页搜索条（V2.7.0：按名称匹配分组，结果在弹窗中展示） */
+.group-search{flex:0 0 auto;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);}
+.group-search .gs-box{display:flex;align-items:center;gap:7px;height:38px;padding:0 12px;
+  border-radius:var(--r-input);background:var(--bg);border:1.5px solid var(--line);
+  transition:border-color .15s ease, box-shadow .15s ease;}
+.group-search .gs-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 2px rgba(143,211,168,.25);}
+.group-search svg{width:16px;height:16px;color:var(--ink-faint);flex:0 0 auto;}
+.group-search input{flex:1;min-width:0;border:none;background:none;outline:none;
+  font-size:14px;color:var(--ink);font-family:inherit;}
+.group-search input::placeholder{color:var(--ink-faint);}
+.gs-ico{width:16px;height:16px;color:var(--ink-faint);flex:0 0 auto;cursor:pointer;}
+/* 上传页搜索分组（多选卡片，V2.7.2） */
+.up-gs{height:auto;flex-wrap:wrap;align-items:center;padding:8px 12px;gap:6px;}
+.up-group-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;order:3;}
+.up-gs-field{position:relative;display:flex;align-items:center;flex:1 1 auto;min-width:80px;order:2;}
+.up-gs-field .up-gs-ico{position:absolute;left:8px;top:50%;transform:translateY(-50%);cursor:pointer;z-index:1;}
+.up-gs-input{flex:1;width:100%;min-width:0;padding:6px 8px 6px 30px;border:none;background:none;outline:none;font-size:14px;color:var(--ink);font-family:inherit;}
+.up-gs-input::placeholder{color:var(--ink-faint);}
+.up-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft,#EAF5EC);color:var(--accent,#3B9E6B);border-radius:999px;padding:3px 8px;font-size:13px;line-height:1.4;}
+.up-chip .chip-emoji{font-size:13px;}
+.up-chip-x{margin-left:2px;font-weight:700;cursor:pointer;opacity:.7;}
+.up-chip-x:hover{opacity:1;}
 .wardrobe-body{flex:1;display:flex;align-items:stretch;overflow:hidden;min-height:0;}
 .group-rail{
   flex:0 0 84px;width:84px;overflow-y:auto;   /* 收窄：约容纳 5 个汉字 */
@@ -465,6 +487,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 /* ============ 11.5 衣物详情大图 / 头像设置 ============ */
 /* 深色全屏遮罩（放大查看用） */
 .overlay-detail{background:rgba(24,30,26,.62);align-items:center;justify-content:center;padding:24px;}
+
+/* 调酒 iframe 全屏 overlay 样式已移除（V2.5.0 起调酒内嵌为底部导航常驻 tab，不再使用 iframe） */
 .cloth-detail{
   position:relative;width:min(92vw,430px);max-height:88%;
   background:var(--bg);border-radius:22px;overflow:hidden;
@@ -528,6 +552,84 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 }
 .tab-item svg{width:24px;height:24px;}
 .tab-item.active{color:var(--primary-deep);}
+
+/* ============ 11.6 调酒模块（底部导航常驻 tab：左侧功能卡片 + 右侧主区） ============
+   风格复用衣橱设计令牌与 .card/.btn/.field/.chip/.empty 组件，保证与主功能一致；
+   调酒专属类名统一 ck- 前缀，避免与衣橱既有样式互相污染。 */
+#screen-cocktail{overflow:hidden;}
+#screen-cocktail::after{display:none;}   /* 分栏页不需要底部留白 spacer */
+.ck-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);}
+.ck-head h2{font-size:17px;font-weight:700;margin:0;color:var(--ink);display:flex;align-items:center;gap:7px;}
+.ck-save{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-sub);
+  background:var(--primary-soft);padding:4px 9px;border-radius:var(--r-chip);}
+.ck-save .dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
+
+/* 左右分栏：左侧功能卡片栏 + 右侧主区（各自滚动，互不干扰） */
+.ck-body{flex:1;min-height:0;display:flex;align-items:stretch;}
+.ck-side{flex:0 0 auto;width:92px;overflow-y:auto;background:var(--group-bg);
+  border-right:1px solid var(--line);padding:10px 8px;display:flex;flex-direction:column;gap:8px;}
+.ck-scard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  min-height:66px;padding:8px 4px;border-radius:14px;background:var(--card);
+  border:1px solid var(--line);color:var(--ink-sub);font-size:11px;font-weight:500;
+  cursor:pointer;box-shadow:var(--shadow-card);}
+.ck-scard svg{width:22px;height:22px;}
+.ck-scard:active{background:var(--primary-soft);}
+.ck-scard.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary-deep);font-weight:700;}
+.ck-main{flex:1;min-width:0;overflow-y:auto;padding:12px;}
+.ck-panel{display:none;}
+.ck-panel.active{display:block;}
+
+/* 结果三宫格 */
+.ck-result{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ck-res{text-align:center;padding:10px 2px;border-radius:12px;background:var(--group-bg);}
+.ck-res .v{font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;}
+.ck-res .v small{font-size:11px;font-weight:600;}
+.ck-res .k{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+.ck-warn{display:none;margin-top:8px;font-size:12px;color:var(--danger);
+  background:#FDECEA;padding:7px 10px;border-radius:10px;}
+.ck-warn.show{display:block;}
+
+/* 材料行 / 混调行 / 配方行（共用行样式，紧凑适配窄栏） */
+.ck-mat{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);}
+.ck-mat:last-child{border-bottom:none;}
+.ck-ic{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;background:var(--primary-soft);color:var(--primary-deep);}
+.ck-ic svg{width:18px;height:18px;}
+.ck-info{flex:1;min-width:0;}
+.ck-info .nm{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ck-info .sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+.ck-info .sub b{color:var(--primary-deep);}
+.ck-iconbtn{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:none;
+  background:var(--group-bg);color:var(--ink-sub);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.ck-iconbtn svg{width:16px;height:16px;}
+.ck-iconbtn.del{color:var(--danger);}
+
+.ck-mix{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);}
+.ck-mix:last-child{border-bottom:none;}
+.ck-mix .nm{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ck-mix .nm small{display:block;font-size:10.5px;color:var(--ink-faint);font-weight:400;}
+.ck-mix .vol{flex:0 0 auto;width:60px;}
+.ck-mix .vol input{width:100%;height:34px;border-radius:10px;background:#fff;
+  border:1.5px solid var(--line);padding:0 4px;font-size:13px;text-align:center;}
+.ck-mix .cost{flex:0 0 auto;width:50px;text-align:right;font-size:12.5px;font-weight:700;color:var(--primary-deep);}
+
+/* 快速配方 chips（复用衣橱 .chip） */
+.ck-quick{display:flex;gap:6px;overflow-x:auto;padding:2px 0;scrollbar-width:none;}
+.ck-quick::-webkit-scrollbar{display:none;}
+.ck-quick .chip{min-height:36px;padding:0 12px;font-size:12px;margin:0;cursor:pointer;}
+.ck-hint{font-size:12px;color:var(--ink-faint);line-height:1.65;margin:0;}
+.ck-sec{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;}
+.ck-sec h3{font-size:15px;font-weight:700;margin:0;color:var(--ink);display:flex;align-items:center;gap:6px;}
+.ck-sec h3 svg{width:17px;height:17px;color:var(--primary-deep);}
+.ck-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ck-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.ck-gap{height:10px;}
+/* 居中弹层（调酒专用，基于衣橱 .overlay 机制） */
+.overlay.ck-center{align-items:center;padding:20px;}
+.ck-modal{width:100%;max-width:400px;background:var(--card);border-radius:var(--r-card);
+  box-shadow:var(--shadow-modal);padding:16px;max-height:80%;overflow-y:auto;}
 
 /* ============ 12. 底部 Sheet 弹层 ============ */
 .overlay{
@@ -745,6 +847,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </div>
+    <!-- 分组搜索：输入关键词匹配分组名称，结果以弹窗展示 -->
+    <div class="group-search">
+      <div class="gs-box">
+        <svg class="gs-ico" onclick="openGroupSearch()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="groupSearch" type="text" placeholder="搜索分组…（输入后回车或点放大镜）" autocomplete="off" onkeydown="if(event.key==='Enter'){openGroupSearch();}">
+      </div>
+    </div>
     <!-- 衣橱两栏布局：左分组导航竖列 + 右侧衣物两列向下展开 -->
     <div class="wardrobe-body">
       <aside class="group-rail" id="group-chips"></aside>
@@ -797,7 +906,14 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <input class="input" id="up-name" placeholder="如：奶油白T恤">
         </div>
         <div class="field">
-          <label>选择分组</label>
+          <label>选择分组（可多选）</label>
+          <div class="gs-box up-gs">
+            <div class="up-group-chips" id="upGroupChosen"></div>
+            <div class="up-gs-field">
+              <svg class="gs-ico up-gs-ico" onclick="openUpGroupSearch()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+              <input class="input up-gs-input" id="upGroupSearch" type="text" placeholder="搜索分组…（回车或点放大镜）" autocomplete="off" onkeydown="if(event.key==='Enter'){openUpGroupSearch();}">
+            </div>
+          </div>
         </div>
         <div class="chips-scroll" id="up-chips" style="padding:0 0 16px;"></div>
         <div class="field">
@@ -879,6 +995,11 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <div class="row-main"><div class="row-title">关于电子衣橱</div><div class="row-sub" id="about-ver"></div></div>
         <span class="row-chev">›</span>
       </div>
+      <div class="row press" onclick="navTo(2)">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><path d="M5 4h14l-7 8z"/><path d="M12 12v6"/><path d="M8 21h8"/></svg>
+        <div class="row-main"><div class="row-title">调酒小工具</div><div class="row-sub">材料库 · 配方 · 调酒计算</div></div>
+        <span class="row-chev">›</span>
+      </div>
     </div>
 
     <div style="padding:8px 16px 0;">
@@ -888,6 +1009,204 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <!-- 版本页脚（复用 .home-version 样式，文字由 renderMine 从 APP_VERSION 渲染） -->
     <div class="home-version" id="mine-version" style="margin-top:4px;"></div>
   </section>
+
+  <!-- ============ 调酒（底部导航常驻 tab：左侧功能卡片 + 右侧主区） ============ -->
+  <section class="screen" id="screen-cocktail">
+    <div class="ck-head">
+      <h2>🍹 调酒</h2>
+      <span class="ck-save"><span class="dot"></span>已存本机</span>
+    </div>
+
+    <div class="ck-body">
+      <!-- 左侧：竖直功能卡片列表（点击切换右侧主区） -->
+      <aside class="ck-side" id="ckSide">
+        <button class="ck-scard active" data-ck="mix">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>
+          调酒
+        </button>
+        <button class="ck-scard" data-ck="mat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+          材料库
+        </button>
+        <button class="ck-scard" data-ck="rec">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          配方
+        </button>
+        <button class="ck-scard" data-ck="bak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M12 7v5l3 2"/></svg>
+          备份
+        </button>
+      </aside>
+
+      <!-- 右侧：主区域（随左侧卡片切换） -->
+      <main class="ck-main">
+
+        <!-- 面板：调酒 -->
+        <div class="ck-panel active" id="ckp-mix">
+          <div class="card">
+            <div class="ck-sec"><h3>⚡ 快速开始</h3></div>
+            <div class="ck-quick" id="ckQuick"></div>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-result">
+              <div class="ck-res"><div class="v" id="ckPrice">¥0.00</div><div class="k">这杯总价</div></div>
+              <div class="ck-res"><div class="v" id="ckAbv">0.0<small>%</small></div><div class="k">酒精度</div></div>
+              <div class="ck-res"><div class="v" id="ckVol">0<small>ml</small></div><div class="k">总体积</div></div>
+            </div>
+            <div class="ck-warn" id="ckWarn">⚠️ 此饮酒精度较高，请适量饮用</div>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-sec">
+              <h3>🥃 配方材料</h3>
+              <button class="btn btn-accent btn-sm" id="ckAddMix">+ 添加</button>
+            </div>
+            <div id="ckMixList"></div>
+            <div class="empty" id="ckMixEmpty" style="padding:20px 8px;">
+              <span class="empty-emoji">🍸</span>
+              <div class="empty-text">还没选材料，点「添加」开始调制</div>
+            </div>
+            <div class="ck-row2" style="margin-top:12px;align-items:end;">
+              <div class="field" style="margin-bottom:0;">
+                <label>目标体积 (ml)</label>
+                <input class="input" type="number" id="ckTargetVol" placeholder="如 105" min="0" step="1">
+              </div>
+              <button class="btn btn-secondary" id="ckScale">按比例缩放</button>
+            </div>
+          </div>
+
+          <div class="ck-actions">
+            <button class="btn btn-secondary" id="ckClearMix">清空</button>
+            <button class="btn btn-primary" id="ckSaveRecipe">保存为配方</button>
+          </div>
+        </div>
+
+        <!-- 面板：材料库 -->
+        <div class="ck-panel" id="ckp-mat">
+          <div class="card">
+            <div class="ck-sec">
+              <h3>🧊 材料库</h3>
+              <button class="btn btn-accent btn-sm" id="ckAddMat">+ 新增</button>
+            </div>
+            <div id="ckMatList"></div>
+          </div>
+          <button class="btn btn-secondary" id="ckClearSeed" style="margin-top:10px;">清空示例数据</button>
+        </div>
+
+        <!-- 面板：配方 -->
+        <div class="ck-panel" id="ckp-rec">
+          <div class="card">
+            <div class="ck-sec"><h3>📖 我的配方</h3></div>
+            <div id="ckRecList"></div>
+          </div>
+        </div>
+
+        <!-- 面板：备份 -->
+        <div class="ck-panel" id="ckp-bak">
+          <div class="card">
+            <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
+            <p class="ck-hint">调酒数据独立存放在远程仓库的 <b>cocktail.json</b>（与衣物数据分开、按账号隔离）。<b>换设备后点「从云端拉取」即可取回</b>，该操作只影响调酒，不涉及任何衣物数据。</p>
+            <button class="btn btn-secondary" id="ckPull" style="margin-top:10px;">⬇ 从云端拉取</button>
+            <button class="btn btn-accent" id="ckSync" style="margin-top:8px;">⬆ 同步到云端</button>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-sec"><h3>💾 数据备份</h3></div>
+            <p class="ck-hint">数据已自动存于本机，换设备或清缓存会丢失，建议定期导出备份。</p>
+            <div class="ck-actions">
+              <button class="btn btn-secondary" id="ckExport">导出 JSON</button>
+              <button class="btn btn-secondary" id="ckImport">导入恢复</button>
+            </div>
+            <input type="file" id="ckImportFile" accept="application/json" style="display:none;">
+            <button class="btn btn-danger" id="ckWipe" style="margin-top:10px;">清空全部数据</button>
+          </div>
+
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-hint">共 <b id="ckStatMat">0</b> 种材料 · <b id="ckStatRec">0</b> 个配方</div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
+  <!-- ============ Sheet：分组搜索结果（点选后关闭弹窗并打开该分组） ============ -->
+  <div class="overlay" id="sheet-group-search" onclick="closeSheetOnBg(event,'sheet-group-search')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>匹配分组</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-group-search')">✕</button>
+      </div>
+      <div id="group-search-list"></div>
+    </div>
+  </div>
+
+  <!-- ============ 上传页：搜索选择分组 ============ -->
+  <div class="overlay" id="sheet-upgroup-search" onclick="closeSheetOnBg(event,'sheet-upgroup-search')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>选择分组</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-upgroup-search')">✕</button>
+      </div>
+      <div id="upgroup-search-list"></div>
+    </div>
+  </div>
+
+  <!-- ============ 调酒弹层（居中，基于衣橱 .overlay 机制） ============ -->
+  <!-- 新增 / 编辑材料 -->
+  <div class="overlay ck-center" id="ckMatModal" onclick="closeCkModal('ckMatModal')">
+    <div class="ck-modal" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <h3 id="ckMatTitle">新增材料</h3>
+        <button class="sheet-close" onclick="closeCkModal('ckMatModal')">✕</button>
+      </div>
+      <div class="field"><label>名称</label><input class="input" id="ckMName" placeholder="如 白朗姆酒"></div>
+      <div class="ck-row2">
+        <div class="field"><label>类别</label>
+          <select class="input" id="ckMCat"><option value="基酒">基酒</option><option value="辅料">辅料</option><option value="其他">其他</option></select>
+        </div>
+        <div class="field"><label>酒精度 %</label><input class="input" id="ckMAbv" type="number" min="0" max="100" step="0.1" placeholder="如 40"></div>
+      </div>
+      <div class="ck-row2">
+        <div class="field"><label>总价 ¥</label><input class="input" id="ckMPrice" type="number" min="0" step="0.01" placeholder="如 68"></div>
+        <div class="field"><label>总体积 ml</label><input class="input" id="ckMVol" type="number" min="0" step="1" placeholder="如 700"></div>
+      </div>
+      <div class="ck-actions">
+        <button class="btn btn-secondary" id="ckMatCancel">取消</button>
+        <button class="btn btn-primary" id="ckMatSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 选择材料加入混调 -->
+  <div class="overlay ck-center" id="ckPickModal" onclick="closeCkModal('ckPickModal')">
+    <div class="ck-modal" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <h3>选择材料</h3>
+        <button class="sheet-close" onclick="closeCkModal('ckPickModal')">✕</button>
+      </div>
+      <div class="field"><label>搜索材料名称</label><input class="input" id="ckPickSearch" placeholder="输入名称筛选，如 朗姆"></div>
+      <div id="ckPickList" style="max-height:44vh;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- 保存为配方 -->
+  <div class="overlay ck-center" id="ckRecModal" onclick="closeCkModal('ckRecModal')">
+    <div class="ck-modal" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <h3>保存配方</h3>
+        <button class="sheet-close" onclick="closeCkModal('ckRecModal')">✕</button>
+      </div>
+      <div class="field"><label>配方名称</label><input class="input" id="ckRecName" placeholder="如 桃味朗姆"></div>
+      <div class="ck-actions">
+        <button class="btn btn-secondary" id="ckRecCancel">取消</button>
+        <button class="btn btn-primary" id="ckRecSave">保存</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ============ 底部导航（登录态展示） ============ -->
   <nav class="tab-bar" id="tab-bar" hidden>
@@ -900,8 +1219,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       <span>衣橱</span>
     </button>
     <button class="tab-item press" data-tab="2" onclick="navTo(2)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      <span>上传</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14l-7 8z"/><path d="M12 12v6"/><path d="M8 21h8"/></svg>
+      <span>调酒</span>
     </button>
     <button class="tab-item press" data-tab="3" onclick="navTo(3)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.6-3.6 4.4-5.2 7.5-5.2s5.9 1.6 7.5 5.2"/></svg>
@@ -1066,6 +1385,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 const LS_KEY = 'wardrobe.demo.v1';
 const LS_KEY_GUEST = 'wardrobe.v1.guest';
 const LS_KEY_LAST = 'wardrobe.v1.lastUser';   // 最近登录用户名：供刷新/重启后自动恢复会话
+const LS_KEY_SESSION = 'wardrobe.v1.session';  // 仅存登录态 {user}（纯云端策略：衣物/图片/调酒等用户数据不落盘）
 function userStateKey(name){ return 'wardrobe.v1.' + encodeURIComponent(name); }
 function currentStateKey(){ return (state && state.user) ? userStateKey(state.user.name) : LS_KEY_GUEST; }
 function rememberLastUser(name){
@@ -1085,7 +1405,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.3.1';
+const APP_VERSION = '2.8.0';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1119,40 +1439,45 @@ const PHOTO_EMOJIS = ['👕','👖','👟','🧥','👗','🧢','👜','🧣','�
 
 let state = loadState();
 
+function defaultCocktail(){ return { materials:[], recipes:[], seeded:false }; }
+function normalizeCocktail(c){
+  const d = defaultCocktail();
+  if(!c || typeof c !== 'object') return d;
+  return {
+    materials: Array.isArray(c.materials) ? c.materials : [],
+    recipes:  Array.isArray(c.recipes)  ? c.recipes  : [],
+    seeded:   !!c.seeded
+  };
+}
 function defaultState(){
   // 游客态：空衣橱（不带任何衣物/分组，避免多账号看到相同内容）
   return {
     user:null,                       // {name, role, createdAt}（本地仅存身份；密码明文权威在云端 _users.json）
     groups:[],
     clothes:[],
-    lastSync:null                    // 上次同步时间戳
+    lastSync:null,                   // 上次同步时间戳
+    cocktail: defaultCocktail()      // 调酒：材料库 + 配方（按账号隔离，随衣橱统一同步）
   };
 }
 function loadState(){
-  // 游客态数据（登录后由 loadUserWorkspace 按用户名加载各自的数据）
-  try{
-    const raw = localStorage.getItem(LS_KEY_GUEST);
-    if(raw){ const s = JSON.parse(raw); if(s && s.groups) return s; }
-  }catch(e){}
+  // 纯云端策略：本地【不】持久化任何衣物/图片/调酒数据，启动时一律从云端拉取。
+  // 故本地只给一个空衣橱默认值；登录态由 init() 从 LS_KEY_SESSION 恢复。
   return defaultState();
 }
 function saveState(){
-  const data = JSON.stringify(state);
-  const key = currentStateKey();
+  // 纯云端策略：localStorage 只保留必要配置（登录态 + 记住的用户），
+  // 衣物/分组/调酒/图片等用户数据【不】落盘（启动自动从云端 pull 填充）。
+  // 数据极小，彻底消除 5MB 配额压力。
   try{
-    localStorage.setItem(key, data);
-    return true;
-  }catch(e){
-    // 配额溢出：显式回滚旧值，避免半写入损坏已有数据
-    if(e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')){
-      try{
-        const prev = localStorage.getItem(key);
-        if(prev){ localStorage.setItem(key, prev); }
-      }catch(e2){}
-      toast('本地空间不足（约5MB），请换更小图片或优先接入远端仓库同步');
+    if(state.user && state.user.name){
+      localStorage.setItem(LS_KEY_SESSION, JSON.stringify(state.user));
+      rememberLastUser(state.user.name);
+    }else{
+      localStorage.removeItem(LS_KEY_SESSION);
+      rememberLastUser(null);
     }
-    return false;
-  }
+    return true;
+  }catch(e){ return false; }
 }
 
 /* ---------- 按用户隔离的本地工作区 ----------
@@ -1160,35 +1485,14 @@ function saveState(){
    无缓存则给全新「空衣橱」（分组沿用默认，方便首次上传；衣物为空）。
    这样不同账号之间不会互相残留/合并对方的数据（云端本就按 data/{用户名}/ 隔离）。 */
 function loadUserWorkspace(name){
-  const key = userStateKey(name);
-  let found = null;
-  try{
-    const raw = localStorage.getItem(key);
-    if(raw){ const s = JSON.parse(raw); if(s && s.groups) found = s; }
-  }catch(e){}
-  // 一次性兼容迁移：旧单键里若正好是该用户的数据，则迁到新 key
-  if(!found){
-    try{
-      const legacy = localStorage.getItem(LS_KEY);
-      if(legacy){
-        const ls = JSON.parse(legacy);
-        if(ls && ls.user && ls.user.name === name) found = ls;
-      }
-    }catch(e){}
-  }
-  if(found){
-    state.groups = found.groups || [];
-    state.clothes = found.clothes || [];
-    state.lastSync = found.lastSync || null;
-    // 头像随账号恢复（头像存本地用户 key，不随云端同步）
-    if(state.user && found.user && found.user.avatar){ state.user.avatar = found.user.avatar; }
-  }else{
-    // 新账号 / 无本地缓存 → 空衣橱
-    state.groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));
-    state.clothes = [];
-    state.lastSync = null;
-  }
-  saveState();
+  // 纯云端策略：本地不存储衣物数据。登录后只把内存重置为「空衣橱」，
+  // 真正的分组/衣物/调酒由 init() 末尾的 autoPullOnLaunch() 从云端拉取并以远端为准填充。
+  state.groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));
+  state.clothes = [];
+  state.lastSync = null;
+  state.cocktail = defaultCocktail();
+  // 头像随账号保留在内存（login 时已写入 state.user.avatar，且 saveState 将其存入 LS_KEY_SESSION）
+  saveState();   // 仅写登录态配置
 }
 
 /* 重置为游客空态（登出时用；不残留任何上一账号的衣物/分组） */
@@ -1198,6 +1502,7 @@ function resetToGuest(){
   state.groups = [];
   state.clothes = [];
   state.lastSync = null;
+  state.cocktail = defaultCocktail();
   saveState();
 }
 
@@ -1215,7 +1520,8 @@ function migrateLegacyLocalData(){
       user: ls.user,
       groups: ls.groups || [],
       clothes: ls.clothes || [],
-      lastSync: ls.lastSync || null
+      lastSync: ls.lastSync || null,
+      cocktail: defaultCocktail()
     }));
   }catch(e){}
 }
@@ -1234,6 +1540,313 @@ function toast(msg){
   clearTimeout(toast._t);
   toast._t = setTimeout(()=>t.classList.remove('show'), 1800);
 }
+/* 衣物多分组兼容：旧数据仅有单值 group，新数据用 groups 数组；二者统一判断 */
+function clothGroups(c){ return (c && c.groups && c.groups.length) ? c.groups : (c && c.group!=null ? [c.group] : []); }
+function belongsTo(c, gid){ return clothGroups(c).includes(gid); }
+
+/* ---------- 调酒模块（内嵌为底部导航常驻 tab） ----------
+   V2.5.0：去掉 iframe，调酒直接内嵌为衣橱的常驻页面。
+   布局：左侧竖直功能卡片（调酒 / 材料库 / 配方 / 备份）+ 右侧主区随卡片切换。
+   数据：直接读写 state.cocktail（随衣橱按账号隔离、统一云同步），不再有第二仓库 / 令牌。 */
+const CK_PANELS = { mix:'ckp-mix', mat:'ckp-mat', rec:'ckp-rec', bak:'ckp-bak' };
+let ckMix = [];          // 当前混调临时态 [{matId, vol}]，不持久化
+let ckEditId = null;     // 材料弹层正在编辑的 id（null=新增）
+
+function ckRoot(){ return state.cocktail; }
+function ckUid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function ckEsc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function ckMoney(n){ return '¥' + (Math.round(n*100)/100).toFixed(2); }
+function ckUnit(m){ return m.vol > 0 ? m.price/m.vol : 0; }
+function ckMatById(id){ return ckRoot().materials.find(m => m.id === id) || null; }
+function ckCatIcon(c){
+  if(c === '基酒') return '<path d="M5 4h14l-7 8z"/><path d="M12 12v6"/>';
+  if(c === '辅料') return '<path d="M12 3c4 4 6 7 6 10a6 6 0 0 1-12 0c0-3 2-6 6-10z"/>';
+  return '<rect x="4" y="4" width="16" height="16" rx="3"/>';
+}
+function ckSave(){ saveState(); }
+function openCkModal(id){ $(id).classList.add('show'); }
+function closeCkModal(id){ $(id).classList.remove('show'); }
+
+/* 左侧卡片 ↔ 右侧面板切换 */
+function ckSwitch(key){
+  document.querySelectorAll('#ckSide .ck-scard').forEach(b => b.classList.toggle('active', b.dataset.ck === key));
+  Object.keys(CK_PANELS).forEach(k => $(CK_PANELS[k]).classList.toggle('active', k === key));
+}
+document.querySelectorAll('#ckSide .ck-scard').forEach(b => { b.onclick = () => ckSwitch(b.dataset.ck); });
+
+/* 首次进入注入示例材料（按账号各自 seed） */
+function ckSeed(){
+  const r = ckRoot();
+  if(r.seeded) return;
+  [ {name:'白朗姆酒', cat:'基酒', abv:40, price:68, vol:700},
+    {name:'蓝橙力娇酒', cat:'基酒', abv:20, price:55, vol:500},
+    {name:'桃汁', cat:'辅料', abv:0, price:12, vol:1000},
+    {name:'鲜柠檬汁', cat:'辅料', abv:0, price:8, vol:200},
+    {name:'糖浆', cat:'辅料', abv:0, price:15, vol:250}
+  ].forEach(m => r.materials.push(Object.assign({ id: ckUid() }, m)));
+  r.seeded = true;
+  ckSave();
+}
+
+/* ---------- 材料库 ---------- */
+function ckRenderMats(){
+  const box = $('ckMatList'), r = ckRoot();
+  if(!r.materials.length){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🧊</span><div class="empty-text">材料库还是空的，点右上角「新增」</div></div>';
+  }else{
+    box.innerHTML = r.materials.map(m =>
+      '<div class="ck-mat">' +
+        '<div class="ck-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ckCatIcon(m.cat) + '</svg></div>' +
+        '<div class="ck-info"><div class="nm">' + ckEsc(m.name) + '</div>' +
+          '<div class="sub">' + (m.cat === '基酒' ? ('酒精度 ' + m.abv + '% · ') : '') + m.vol + 'ml / ' + ckMoney(m.price) + ' · 单价 <b>' + ckMoney(ckUnit(m)) + '/ml</b></div></div>' +
+        '<button class="ck-iconbtn" data-cke="' + m.id + '" aria-label="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>' +
+        '<button class="ck-iconbtn del" data-ckd="' + m.id + '" aria-label="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>' +
+      '</div>').join('');
+    box.querySelectorAll('[data-cke]').forEach(b => { b.onclick = () => ckOpenMat(b.dataset.cke); });
+    box.querySelectorAll('[data-ckd]').forEach(b => { b.onclick = () => ckDelMat(b.dataset.ckd); });
+  }
+  $('ckStatMat').textContent = r.materials.length;
+  $('ckStatRec').textContent = r.recipes.length;
+}
+function ckDelMat(id){
+  if(!confirm('确定删除该材料？')) return;
+  const r = ckRoot();
+  r.materials = r.materials.filter(m => m.id !== id);
+  ckMix = ckMix.filter(x => x.matId !== id);
+  ckSave(); ckRenderMats(); ckRenderMix();
+}
+function ckOpenMat(id){
+  ckEditId = id || null;
+  $('ckMatTitle').textContent = id ? '编辑材料' : '新增材料';
+  const m = id ? ckMatById(id) : null;
+  $('ckMName').value  = m ? m.name  : '';
+  $('ckMCat').value   = m ? m.cat   : '基酒';
+  $('ckMAbv').value   = m ? m.abv   : '';
+  $('ckMPrice').value = m ? m.price : '';
+  $('ckMVol').value   = m ? m.vol   : '';
+  openCkModal('ckMatModal');
+}
+$('ckAddMat').onclick = () => ckOpenMat(null);
+$('ckMatCancel').onclick = () => closeCkModal('ckMatModal');
+$('ckMatSave').onclick = function(){
+  const name  = $('ckMName').value.trim(),
+        cat   = $('ckMCat').value,
+        abv   = parseFloat($('ckMAbv').value) || 0,
+        price = parseFloat($('ckMPrice').value) || 0,
+        vol   = parseFloat($('ckMVol').value) || 0;
+  if(!name){ toast('请填写名称'); return; }
+  if(vol <= 0){ toast('总体积需大于0'); return; }
+  if(abv < 0 || abv > 100){ toast('酒精度 0~100'); return; }
+  const r = ckRoot();
+  if(ckEditId){
+    const m = ckMatById(ckEditId);
+    if(m){ m.name = name; m.cat = cat; m.abv = abv; m.price = price; m.vol = vol; }
+  }else{
+    r.materials.push({ id: ckUid(), name: name, cat: cat, abv: abv, price: price, vol: vol });
+  }
+  ckSave(); closeCkModal('ckMatModal'); ckRenderMats(); ckRenderMix(); toast('已保存');
+};
+$('ckClearSeed').onclick = function(){
+  if(!confirm('清空示例数据？将删除材料库全部材料（不影响已保存配方里的快照）。')) return;
+  const r = ckRoot(); r.materials = []; r.seeded = false;
+  ckSave(); ckRenderMats(); ckRenderMix(); toast('已清空示例');
+};
+
+/* ---------- 混调（调酒主区） ---------- */
+function ckCompute(){
+  let tv = 0, tc = 0, al = 0;
+  ckMix.forEach(x => {
+    const m = ckMatById(x.matId); if(!m) return;
+    tv += x.vol; tc += x.vol * ckUnit(m); al += x.vol * (m.abv/100);
+  });
+  return { totalVol: tv, totalCost: tc, abv: tv > 0 ? al/tv*100 : 0 };
+}
+function ckTotals(){
+  const c = ckCompute();
+  $('ckPrice').textContent = ckMoney(c.totalCost);
+  $('ckAbv').innerHTML = c.abv.toFixed(1) + '<small>%</small>';
+  $('ckVol').innerHTML = Math.round(c.totalVol) + '<small>ml</small>';
+  $('ckWarn').classList.toggle('show', c.abv >= 20);
+  ckRenderQuick();
+}
+function ckRenderMix(){
+  const box = $('ckMixList'), empty = $('ckMixEmpty');
+  if(!ckMix.length){
+    box.innerHTML = '';
+    empty.style.display = '';
+  }else{
+    empty.style.display = 'none';
+    box.innerHTML = ckMix.map(x => {
+      const m = ckMatById(x.matId); if(!m) return '';
+      return '<div class="ck-mix">' +
+        '<div class="nm">' + ckEsc(m.name) + '<small>' + (m.cat === '基酒' ? (m.abv + '% · ') : '') + ckMoney(ckUnit(m)) + '/ml</small></div>' +
+        '<div class="vol"><input type="number" min="0" step="1" value="' + x.vol + '" data-cmv="' + m.id + '"></div>' +
+        '<div class="cost" data-cmc="' + m.id + '">' + ckMoney(x.vol * ckUnit(m)) + '</div>' +
+        '<button class="ck-iconbtn del" data-cmr="' + m.id + '" aria-label="移除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+      '</div>';
+    }).join('');
+    box.querySelectorAll('[data-cmv]').forEach(inp => {
+      inp.oninput = function(){
+        const id = inp.dataset.cmv, v = parseFloat(inp.value) || 0;
+        const it = ckMix.find(x => x.matId === id); if(it) it.vol = v;
+        const m = ckMatById(id);
+        const c = box.querySelector('[data-cmc="' + id + '"]');
+        if(c && m) c.textContent = ckMoney(v * ckUnit(m));
+        ckTotals();
+      };
+    });
+    box.querySelectorAll('[data-cmr]').forEach(b => {
+      b.onclick = function(){ ckMix = ckMix.filter(x => x.matId !== b.dataset.cmr); ckRenderMix(); };
+    });
+  }
+  ckTotals();
+}
+function ckRenderPick(){
+  const q = ($('ckPickSearch').value || '').trim().toLowerCase();
+  const list = $('ckPickList');
+  const shown = ckRoot().materials.filter(m => m.name.toLowerCase().indexOf(q) >= 0);
+  if(!shown.length){ list.innerHTML = '<div class="empty"><div class="empty-text">没有匹配的材料</div></div>'; return; }
+  list.innerHTML = shown.map(m =>
+    '<div class="ck-mat" data-ckp="' + m.id + '" style="cursor:pointer;">' +
+      '<div class="ck-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ckCatIcon(m.cat) + '</svg></div>' +
+      '<div class="ck-info"><div class="nm">' + ckEsc(m.name) + '</div>' +
+        '<div class="sub">' + (m.cat === '基酒' ? (m.abv + '% · ') : '') + ckMoney(ckUnit(m)) + '/ml</div></div>' +
+      '<span style="color:var(--primary-deep);font-size:18px;">＋</span>' +
+    '</div>').join('');
+  list.querySelectorAll('[data-ckp]').forEach(row => {
+    row.onclick = function(){
+      const id = row.dataset.ckp, m = ckMatById(id);
+      if(m && !ckMix.some(x => x.matId === id)) ckMix.push({ matId: id, vol: m.cat === '基酒' ? 45 : 50 });
+      closeCkModal('ckPickModal'); ckRenderMix();
+    };
+  });
+}
+$('ckPickSearch').oninput = ckRenderPick;
+$('ckAddMix').onclick = function(){
+  if(!ckRoot().materials.length){ toast('请先到材料库添加材料'); return; }
+  $('ckPickSearch').value = ''; ckRenderPick(); openCkModal('ckPickModal');
+};
+$('ckScale').onclick = function(){
+  const target = parseFloat($('ckTargetVol').value) || 0;
+  if(target <= 0){ toast('请输入目标体积'); return; }
+  const cur = ckMix.reduce((s, x) => s + x.vol, 0);
+  if(cur <= 0){ toast('请先添加材料'); return; }
+  const f = target / cur;
+  ckMix.forEach(x => { x.vol = Math.max(1, Math.round(x.vol * f)); });
+  ckRenderMix(); toast('已缩放到 ' + Math.round(target) + 'ml');
+};
+$('ckClearMix').onclick = function(){ ckMix = []; ckRenderMix(); };
+
+/* ---------- 配方 ---------- */
+function ckRenderRecs(){
+  const box = $('ckRecList'), r = ckRoot();
+  if(!r.recipes.length){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">📖</span><div class="empty-text">还没有保存的配方</div></div>';
+    return;
+  }
+  box.innerHTML = r.recipes.slice().reverse().map(rec =>
+    '<div class="ck-mat">' +
+      '<div class="ck-info"><div class="nm">' + ckEsc(rec.name) + '</div>' +
+        '<div class="sub">' + rec.totalVol + 'ml · <b>' + ckMoney(rec.totalCost) + '</b> · 酒精度 ' + rec.abv.toFixed(1) + '%</div></div>' +
+      '<button class="btn btn-secondary btn-sm" data-ckl="' + rec.id + '">调入</button>' +
+      '<button class="ck-iconbtn del" data-ckr="' + rec.id + '" aria-label="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>' +
+    '</div>').join('');
+  box.querySelectorAll('[data-ckl]').forEach(b => { b.onclick = () => ckLoadRecipe(b.dataset.ckl); });
+  box.querySelectorAll('[data-ckr]').forEach(b => {
+    b.onclick = function(){
+      if(!confirm('删除该配方？')) return;
+      const rr = ckRoot();
+      rr.recipes = rr.recipes.filter(x => x.id !== b.dataset.ckr);
+      ckSave(); ckRenderRecs(); ckRenderQuick();
+    };
+  });
+}
+function ckRenderQuick(){
+  const box = $('ckQuick'), r = ckRoot();
+  if(!r.recipes.length){ box.innerHTML = '<div class="ck-hint">保存配方后会出现在这里，一键调入</div>'; return; }
+  box.innerHTML = r.recipes.slice(-4).reverse().map(rec =>
+    '<div class="chip" data-ckq="' + rec.id + '">🍹 ' + ckEsc(rec.name) + '</div>').join('');
+  box.querySelectorAll('[data-ckq]').forEach(c => { c.onclick = () => ckLoadRecipe(c.dataset.ckq); });
+}
+$('ckSaveRecipe').onclick = function(){
+  if(!ckMix.length){ toast('先添加材料再保存'); return; }
+  if(ckCompute().totalVol <= 0){ toast('用量不能为0'); return; }
+  $('ckRecName').value = ''; openCkModal('ckRecModal');
+};
+$('ckRecCancel').onclick = () => closeCkModal('ckRecModal');
+$('ckRecSave').onclick = function(){
+  const name = $('ckRecName').value.trim() || ('配方' + (ckRoot().recipes.length + 1));
+  const c = ckCompute();
+  ckRoot().recipes.push({
+    id: ckUid(), name: name,
+    items: ckMix.map(x => ({ matId: x.matId, vol: x.vol })),
+    totalVol: Math.round(c.totalVol), totalCost: c.totalCost, abv: c.abv, ts: Date.now()
+  });
+  ckSave(); closeCkModal('ckRecModal'); ckRenderRecs(); toast('配方已保存');
+};
+function ckLoadRecipe(id){
+  const rec = ckRoot().recipes.find(x => x.id === id);
+  if(!rec) return;
+  ckMix = rec.items.filter(it => ckMatById(it.matId)).map(it => ({ matId: it.matId, vol: it.vol }));
+  ckRenderMix(); ckSwitch('mix'); toast('已调入「' + rec.name + '」');
+}
+
+/* ---------- 备份 / 同步 ---------- */
+$('ckSync').onclick = function(){ doSync(); };
+
+/* 手动从云端拉取（仅调酒，完全不涉及衣物数据）
+   用途：换设备后取回远程仓库的 cocktail.json，以远端为准覆盖本机材料库与配方。 */
+async function ckPullFromCloud(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(3); return; }
+  if(!confirm('将用云端 cocktail.json 覆盖本机的材料库与配方（不影响任何衣物数据），确定继续？')) return;
+  const btn = $('ckPull');
+  btn.disabled = true; btn.textContent = '拉取中…'; btn.style.opacity = .7;
+  try{
+    const ok = await pullCocktailData(true);      // true = 以远端为准覆盖本机
+    if(!ok){ toast('云端还没有调酒数据（cocktail.json 不存在）'); return; }
+    ckSave(); ckSwitch('mix'); ckRenderAll();
+    toast('已从云端拉取调酒数据 ✓');
+  }catch(err){
+    toast('拉取失败：' + (err && err.message ? err.message : '未知错误'));
+  }finally{
+    btn.disabled = false; btn.textContent = '⬇ 从云端拉取'; btn.style.opacity = 1;
+  }
+}
+$('ckPull').onclick = ckPullFromCloud;
+$('ckExport').onclick = function(){
+  const r = ckRoot();
+  const data = { materials: r.materials, recipes: r.recipes, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '调酒备份_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click(); toast('已导出');
+};
+$('ckImport').onclick = () => $('ckImportFile').click();
+$('ckImportFile').onchange = function(e){
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = function(){
+    try{
+      const d = JSON.parse(rd.result), r = ckRoot();
+      if(Array.isArray(d.materials)) r.materials = r.materials.concat(d.materials.filter(m => m && m.name && m.vol > 0));
+      if(Array.isArray(d.recipes))   r.recipes   = r.recipes.concat(d.recipes.filter(x => x && x.name));
+      ckSave(); ckRenderAll();
+      toast('已导入 ' + d.materials.length + ' 材料 / ' + d.recipes.length + ' 配方');
+    }catch(err){ toast('文件格式错误'); }
+  };
+  rd.readAsText(f); e.target.value = '';
+};
+$('ckWipe').onclick = function(){
+  if(!confirm('确定清空全部材料和配方？此操作不可恢复！')) return;
+  const r = ckRoot(); r.materials = []; r.recipes = []; r.seeded = false;
+  ckMix = []; ckSave(); ckRenderAll(); toast('已清空');
+};
+
+/* ---------- 统一渲染入口（进入 tab 时调用） ---------- */
+function ckRenderAll(){ ckRenderMats(); ckRenderMix(); ckRenderRecs(); }
+function renderCocktail(){ ckSeed(); ckSwitch('mix'); ckRenderAll(); }
 
 function groupName(id){
   // 已移除「全部」概念：id 0 仅作无分组空态兜底，孤儿衣物按「未分组」显示
@@ -1245,12 +1858,12 @@ function groupEmoji(id){
   return g ? g.emoji : '👕';
 }
 function countInGroup(id){
-  return state.clothes.filter(c=>c.group===id).length;
+  return state.clothes.filter(c=>belongsTo(c,id)).length;
 }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 /* ---------- 3. 屏幕导航 ---------- */
-const SCREENS = ['screen-auth','screen-home','screen-group','screen-upload','screen-mine'];
+const SCREENS = ['screen-auth','screen-home','screen-group','screen-upload','screen-mine','screen-cocktail'];
 
 function showScreen(id){
   SCREENS.forEach(s=>$(s).classList.remove('active'));
@@ -1276,8 +1889,9 @@ function showTabBar(show){
 function navTo(idx){
   if(idx===0){ renderHome(); showScreen('screen-home'); setTab(0); }  // 每次进首页重渲染，保证衣物/分组统计始终最新
   else if(idx===1){ state.groups.length ? openGroup(state.groups[0].id) : openGroup(0); }
-  else if(idx===2){ openUpload(null); }
+  else if(idx===2){ renderCocktail(); showScreen('screen-cocktail'); setTab(2); }  // 调酒：左侧功能卡片 + 右侧主区
   else if(idx===3){ renderMine(); showScreen('screen-mine'); setTab(3); }
+  // 注：原底部「上传」入口已移除（V2.7.0），上传统一走衣橱页右上角「＋」
 }
 
 /* ---------- 4. 登录 / 注册 ---------- */
@@ -1643,6 +2257,88 @@ function renderGroupChips(){
   $('group-chips').innerHTML = h;
 }
 
+/* ---------- 分组搜索（V2.7.0）----------
+   输入关键词 → 实时匹配分组名称 → 弹窗列出结果 → 点选后关闭弹窗并打开该分组。
+   列表用 DOM API + textContent 构建，分组名含特殊字符也不会破坏结构或造成注入。 */
+function renderGroupSearch(kw){
+  const box = $('group-search-list');
+  const q = (kw || '').trim().toLowerCase();
+  box.innerHTML = '';
+  if(!q){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🔍</span><div class="empty-text">输入关键词搜索分组</div></div>';
+    return;
+  }
+  const matched = state.groups.filter(g => (g.name || '').toLowerCase().indexOf(q) >= 0);
+  if(!matched.length){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🍃</span><div class="empty-text">没有匹配的分组</div></div>';
+    return;
+  }
+  matched.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'row press';
+    const emoji = document.createElement('span');
+    emoji.className = 'chip-emoji'; emoji.textContent = g.emoji || '👕';
+    const main = document.createElement('div'); main.className = 'row-main';
+    const title = document.createElement('div'); title.className = 'row-title'; title.textContent = g.name;
+    const sub = document.createElement('div'); sub.className = 'row-sub';
+    sub.textContent = countInGroup(g.id) + ' 件衣物';
+    main.appendChild(title); main.appendChild(sub);
+    const chev = document.createElement('span'); chev.className = 'row-chev'; chev.textContent = '›';
+    row.appendChild(emoji); row.appendChild(main); row.appendChild(chev);
+    row.onclick = function(){
+      closeSheet('sheet-group-search');
+      $('groupSearch').value = '';
+      openGroup(g.id);
+    };
+    box.appendChild(row);
+  });
+}
+function openGroupSearch(){
+  renderGroupSearch($('groupSearch').value);
+  openSheet('sheet-group-search');
+}
+
+
+/* 上传页：搜索选择分组（点搜索结果仅设置选择，不跳转页面） */
+function renderUpGroupSearch(kw){
+  const box = $('upgroup-search-list');
+  const q = (kw || '').trim().toLowerCase();
+  box.innerHTML = '';
+  if(!q){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🔍</span><div class="empty-text">输入关键词搜索分组</div></div>';
+    return;
+  }
+  const matched = state.groups.filter(g => (g.name || '').toLowerCase().indexOf(q) >= 0);
+  if(!matched.length){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🍃</span><div class="empty-text">没有匹配的分组</div></div>';
+    return;
+  }
+  matched.forEach(g => {
+    const row = document.createElement('div');
+    row.className = 'row press';
+    const emoji = document.createElement('span');
+    emoji.className = 'chip-emoji'; emoji.textContent = g.emoji || '👕';
+    const main = document.createElement('div'); main.className = 'row-main';
+    const title = document.createElement('div'); title.className = 'row-title'; title.textContent = g.name;
+    const sub = document.createElement('div'); sub.className = 'row-sub';
+    sub.textContent = countInGroup(g.id) + ' 件衣物';
+    main.appendChild(title); main.appendChild(sub);
+    const chev = document.createElement('span'); chev.className = 'row-chev'; chev.textContent = '›';
+    row.appendChild(emoji); row.appendChild(main); row.appendChild(chev);
+    row.onclick = function(){
+      closeSheet('sheet-upgroup-search');
+      $('upGroupSearch').value = '';
+      addUpGroup(g.id);
+    };
+    box.appendChild(row);
+  });
+}
+function openUpGroupSearch(){
+  renderUpGroupSearch($('upGroupSearch').value);
+  openSheet('sheet-upgroup-search');
+}
+
+
 function openGroup(gid){
   currentGroupId = gid;
   renderGroupChips();
@@ -1660,7 +2356,7 @@ function openGroup(gid){
   if(gid===0){
     renderGrid([], 'group-grid', '<div class="empty" style="grid-column:1/-1;"><span class="empty-emoji">🧺</span><span class="empty-text">衣橱空空，去创建分组并上传吧</span><button class="btn btn-primary press" onclick="openSheet(\'sheet-group\')">去创建分组</button></div>');
   }else{
-    renderGrid(state.clothes.filter(c=>c.group===gid), 'group-grid');
+    renderGrid(state.clothes.filter(c=>belongsTo(c,gid)), 'group-grid');
   }
   showScreen('screen-group');
   setTab(1);
@@ -1678,7 +2374,7 @@ function openUploadWithGroup(){
 
 /* ---------- 7. 上传页 ---------- */
 let pendingImage = null;       // 压缩后的 dataURL（所见即存储；null 表示无图，允许提交走占位）
-let upSelectedGroup = null;
+let upSelectedGroups = [];
 let editingId = null;          // 编辑模式：当前正在编辑的衣物 id（null 表示新增）
 
 function openUpload(presetGroup, editCloth){
@@ -1696,29 +2392,65 @@ function openUpload(presetGroup, editCloth){
   // 编辑态标题
   const t = document.querySelector('#screen-upload .screen-head .title');
   if(t) t.textContent = editCloth ? '编辑衣物' : '上传新衣物';
-  uploadPresetGroup = (editCloth ? editCloth.group : presetGroup) || null;
-  upSelectedGroup = (editCloth ? editCloth.group : presetGroup) || (state.groups.length ? state.groups[0].id : null);
+  uploadPresetGroup = (editCloth ? (editCloth.groups && editCloth.groups.length ? editCloth.groups[0] : editCloth.group) : presetGroup) || null;
+  upSelectedGroups = editCloth
+    ? (editCloth.groups && editCloth.groups.length ? editCloth.groups.slice() : (editCloth.group!=null ? [editCloth.group] : []))
+    : (presetGroup!=null ? [presetGroup] : []);
   if(editCloth && editCloth.img){
     showPreviewImg(editCloth.img, '');
   }else{
     $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
   }
 
-  // 分组 chips
+  // 分组 chips（多选 toggle，与搜索结果、已选卡片联动）
   let chips = '';
   state.groups.forEach(g=>{
-    const act = (g.id===upSelectedGroup) ? ' active' : '';
-    chips += '<button type="button" class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(' + g.id + ',this)"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
+    const act = upSelectedGroups.includes(g.id) ? ' active' : '';
+    chips += '<button type="button" class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(' + g.id + ')"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
   });
   $('up-chips').innerHTML = chips || '<span style="color:var(--ink-faint);font-size:13px;">请先在「分组管理」创建分组</span>';
+  renderUpGroupChosen();
+  const ups = $('upGroupSearch'); if(ups) ups.value = '';
 
   showScreen('screen-upload');
-  setTab(2);
+  setTab(3);
 }
-function selectUpGroup(gid, el){
-  upSelectedGroup = gid;
-  document.querySelectorAll('#up-chips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
+function selectUpGroup(gid){
+  const i = upSelectedGroups.indexOf(gid);
+  if(i>=0) upSelectedGroups.splice(i,1); else upSelectedGroups.push(gid);
+  renderUpGroupChosen(); updateUpChips();
+}
+/* 搜索结果点选：加入已选（不重复），关闭弹窗并清空搜索框 */
+function addUpGroup(gid){
+  if(!upSelectedGroups.includes(gid)){ upSelectedGroups.push(gid); renderUpGroupChosen(); updateUpChips(); }
+}
+/* 已选分组卡片渲染：一字型排列，每张带 × 删除 */
+function renderUpGroupChosen(){
+  const box = $('upGroupChosen');
+  if(!box) return;
+  box.innerHTML = '';
+  upSelectedGroups.forEach(gid=>{
+    const g = state.groups.find(x=>x.id===gid);
+    if(!g) return;
+    const chip = document.createElement('span');
+    chip.className = 'up-chip';
+    const em = document.createElement('span'); em.className = 'chip-emoji'; em.textContent = g.emoji || '👕';
+    const nm = document.createElement('span'); nm.textContent = g.name;
+    const x = document.createElement('span'); x.className = 'up-chip-x'; x.textContent = '×';
+    x.onclick = function(e){ e.stopPropagation(); removeUpGroup(gid); };
+    chip.appendChild(em); chip.appendChild(nm); chip.appendChild(x);
+    box.appendChild(chip);
+  });
+}
+function removeUpGroup(gid){
+  const i = upSelectedGroups.indexOf(gid);
+  if(i>=0) upSelectedGroups.splice(i,1);
+  renderUpGroupChosen(); updateUpChips();
+}
+function updateUpChips(){
+  document.querySelectorAll('#up-chips .chip').forEach(c=>{
+    c.classList.toggle('active', upSelectedGroups.includes(Number(c.dataset.gid)));
+  });
 }
 
 /* 真实选图：相册 / 相机 双通道（替代原模拟选图逻辑） */
@@ -1827,14 +2559,25 @@ $('cameraInput').addEventListener('change', function(e){
 });
 
 function goBackFromUpload(){
-  if(state.user){ goHome(); }else{ showScreen('screen-auth'); }
+  if(state.user){
+    // 回到进入上传页之前所在的衣橱分组（而非首页）
+    if(currentGroupId && currentGroupId!==0 && state.groups.some(g=>g.id===currentGroupId)){
+      openGroup(currentGroupId);
+    }else if(state.groups.length){
+      openGroup(state.groups[0].id);
+    }else{
+      openGroup(0);
+    }
+  }else{
+    showScreen('screen-auth');
+  }
 }
 
 function submitUpload(e){
   e.preventDefault();
   const name = $('up-name').value.trim();
   if(!name){ toast('请填写衣物名称'); return false; }
-  if(!upSelectedGroup){ toast('请选择分组'); return false; }
+  if(!upSelectedGroups.length){ toast('请至少选择一个分组'); return false; }
 
   const note = $('up-note').value.trim();
 
@@ -1849,15 +2592,17 @@ function submitUpload(e){
         toast('云端旧图删除失败：' + (err && err.message ? err.message : '未知错误'));
       });
     }
+    const primaryG = upSelectedGroups[0];
     const updated = {
       id: prev.id,
       name: name,
-      group: upSelectedGroup,
+      group: primaryG,
+      groups: upSelectedGroups.slice(),
       note: note,
       img: pendingImage || null,                    // 无图保留原占位走法
       imgRemote: prev.imgRemote,                    // 沿用云端路径引用
-      emoji: groupEmoji(upSelectedGroup),
-      tint: TINT_MAP[groupEmoji(upSelectedGroup)] || '#EAF5EC'
+      emoji: groupEmoji(primaryG),
+      tint: TINT_MAP[groupEmoji(primaryG)] || '#EAF5EC'
     };
     state.clothes.splice(idx, 1, updated);
     if(!saveState()){
@@ -1871,7 +2616,7 @@ function submitUpload(e){
     $('cameraInput').value = '';
     $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
     toast('已更新衣物 ✓');
-    openGroup(upSelectedGroup);
+    openGroup(upSelectedGroups[0]);
     return false;
   }
 
@@ -1879,11 +2624,12 @@ function submitUpload(e){
   const cloth = {
     id: Date.now(),
     name: name,
-    group: upSelectedGroup,
+    group: upSelectedGroups[0],
+    groups: upSelectedGroups.slice(),
     note: note,
     img: pendingImage || null,                    // 无图允许提交，走占位
-    emoji: groupEmoji(upSelectedGroup),
-    tint: TINT_MAP[groupEmoji(upSelectedGroup)] || '#EAF5EC'
+    emoji: groupEmoji(upSelectedGroups[0]),
+    tint: TINT_MAP[groupEmoji(upSelectedGroups[0])] || '#EAF5EC'
   };
 
   const prevLen = state.clothes.length;
@@ -1902,7 +2648,7 @@ function submitUpload(e){
   $('upload-preview').innerHTML = '<span id="preview-placeholder">选择照片后，这里会显示预览</span>';
 
   toast('已存入衣橱 ✓');
-  openGroup(upSelectedGroup);
+  openGroup(upSelectedGroups[0]);
   return false;
 }
 
@@ -1989,8 +2735,13 @@ function confirmDelete(gid){
     toast('再点一次确认删除该分组');
     return;
   }
-  // 分组内衣物移入「未分组」：简化处理为并入第一个分组或保留原组标记
-  state.clothes.forEach(c=>{ if(c.group===gid) c.group = (state.groups[0] && state.groups[0].id!==gid) ? state.groups[0].id : 0; });
+  // 分组内衣物移出该分组：从 groups 数组移除，回退到其余分组（或首个分组 / 未分组）
+  const fallback = state.groups.find(g=>g.id!==gid);
+  state.clothes.forEach(c=>{
+    const gs = clothGroups(c).filter(x=>x!==gid);
+    c.groups = gs;
+    c.group = gs.length ? gs[0] : (fallback ? fallback.id : 0);
+  });
   state.groups = state.groups.filter(g=>g.id!==gid);
   saveState();
   if(currentGroupId===gid) currentGroupId = state.groups.length ? state.groups[0].id : 0;
@@ -2273,13 +3024,42 @@ async function giteeFetch(path, method, body){
 }
 
 /* ---------- 方案 A：路径工具 ----------
-   云存储形态：
+   云存储形态（衣物与调酒两份清单，数据隔离）：
      data/{用户名}/
-       ├── wardrobe.json          ← 清单：{groups, clothes[], updatedAt}，clothes.img 只存文件路径或 null
+       ├── wardrobe.json          ← 衣物清单：{groups, clothes[], updatedAt}，clothes.img 只存文件路径或 null
+       ├── cocktail.json          ← 调酒清单：{updatedAt, seeded, materials[], recipes[]}（缩进 2 空格，人工可读）
        └── clothes/{id}.jpg       ← 每件衣物照片独立文件（本地 img 仍存 dataURL、云端存文件，两者分工） */
 function userDir(user){ return 'data/' + encodeURIComponent(user) + '/'; }   // 只编码单个路径段，保留斜杠
-function manifestPath(){ return userDir(state.user.name) + 'wardrobe.json'; }
+function manifestPath(){ return userDir(state.user.name) + 'wardrobe.json'; }         // 衣物
+function cocktailManifestPath(){ return userDir(state.user.name) + 'cocktail.json'; } // 调酒（独立文件，与衣物隔离）
 function clothImgPath(id){ return userDir(state.user.name) + 'clothes/' + id + '.jpg'; }
+
+/* 通用：读取云端 JSON 文件（不存在或 Gitee 返回 [] → null） */
+async function giteeReadJSON(path){
+  let data;
+  try{
+    data = await giteeFetch(path, 'GET');
+  }catch(err){
+    if(String(err.message).indexOf('404') !== -1) return null;
+    throw err;
+  }
+  if(Array.isArray(data) || !data || !data.content) return null;
+  return JSON.parse(base64Decode(data.content));
+}
+/* 通用：写入云端 JSON（content 为字符串，便于自定义缩进排版）；
+   存在取 sha → PUT，不存在 → POST（Gitee 对已存在文件 POST 会返回 400「文件名已存在」） */
+async function giteeWriteJSON(path, content, message){
+  let sha = null;
+  try{
+    const existing = await giteeFetch(path, 'GET');
+    if(existing && !Array.isArray(existing) && existing.sha) sha = existing.sha;
+  }catch(err){
+    if(String(err.message).indexOf('404') === -1) throw err;
+  }
+  const body = { content: base64Encode(content), message: message, branch: GITEE_BRANCH };
+  if(sha) body.sha = sha;
+  return await giteeFetch(path, sha ? 'PUT' : 'POST', body);
+}
 /* 集中式用户表：data/_users.json（管理员在 Gitee 上直接编辑管理；登录/注册以此为准） */
 function usersTablePath(){ return 'data/_users.json'; }
 async function readUsersTable(){
@@ -2394,6 +3174,44 @@ async function migrateLegacyData(){
 }
 
 /* ---------- 推送：本地 → Gitee（增量：只传未上传过的图片 + 重写清单） ---------- */
+/* ---------- 调酒清单（独立文件 cocktail.json，与衣物数据隔离） ----------
+   排版：JSON.stringify(obj, null, 2) 缩进 2 空格，材料/配方逐条展开，
+   便于直接在 Gitee 网页上人工查看与编辑（改完同步即生效）。 */
+async function pushCocktailData(username, updatedAt){
+  const c = normalizeCocktail(state.cocktail);
+  const payload = JSON.stringify({
+    updatedAt: updatedAt,
+    seeded: c.seeded,
+    materials: c.materials,
+    recipes: c.recipes
+  }, null, 2);
+  await giteeWriteJSON(cocktailManifestPath(), payload, 'sync cocktail ' + username + ' ' + updatedAt);
+}
+/* 拉取调酒清单：overwrite=true 以远端为准（首次/本机无数据），否则按 id 去重合并 */
+async function pullCocktailData(overwrite){
+  const remote = await giteeReadJSON(cocktailManifestPath());
+  if(!remote) return false;                       // 云端尚无调酒清单 → 保留本地
+  const rc = normalizeCocktail({ materials: remote.materials, recipes: remote.recipes, seeded: remote.seeded });
+  const local = normalizeCocktail(state.cocktail);
+  if(overwrite){
+    state.cocktail = rc;
+  }else{
+    state.cocktail = {
+      materials: mergeById(local.materials, rc.materials),
+      recipes:   mergeById(local.recipes,   rc.recipes),
+      seeded:    local.seeded || rc.seeded
+    };
+  }
+  return true;
+}
+/* 衣物清单缺失时也能单独拉取调酒；内部已落盘并刷新视图 */
+async function tryPullCocktail(overwrite){
+  let changed = false;
+  try{ changed = await pullCocktailData(overwrite); }catch(err){ return false; }
+  if(changed){ saveState(); refreshAfterSync(); }
+  return changed;
+}
+
 async function pushUserData(){
   if(!state.user) throw new Error('请先登录');
   const username = state.user.name;
@@ -2428,6 +3246,7 @@ async function pushUserData(){
     img: c.imgRemote || null,
     imgRemote: c.imgRemote || null
   }));
+  // 只含衣物数据；调酒已拆分为独立的 cocktail.json，两者互不干扰
   const payload = JSON.stringify({
     groups: state.groups,
     clothes: manifestClothes,
@@ -2447,6 +3266,9 @@ async function pushUserData(){
   const body = { content: content, message: 'sync ' + username + ' ' + updatedAt, branch: GITEE_BRANCH };
   if(sha) body.sha = sha;
   await giteeFetch(path, sha ? 'PUT' : 'POST', body);
+
+  // 调酒数据推送到独立文件 cocktail.json（与衣物清单隔离）
+  await pushCocktailData(username, updatedAt);
 
   state.lastSync = updatedAt;
   saveState();
@@ -2471,6 +3293,7 @@ function refreshAfterSync(){
   const cur = SCREENS.find(s=>$(s).classList.contains('active')) || 'screen-home';
   if(cur==='screen-group'){ openGroup(currentGroupId); }
   else if(cur==='screen-mine'){ renderMine(); }
+  else if(cur==='screen-cocktail'){ renderCocktail(); }
 }
 
 /* ---------- 拉取：Gitee → 本地（清单 + 图片补齐） ----------
@@ -2586,9 +3409,13 @@ async function pullUserData(){
     }finally{
       syncMigrating = false;
     }
-    return null;                       // 云端无任何数据
+    await tryPullCocktail(true);       // 衣物清单不存在，但调酒是独立文件，仍尝试单独拉取
+    return null;                       // 云端无任何衣物数据
   }
-  if(!remote.clothes && !remote.groups) return null;
+  if(!remote.clothes && !remote.groups){
+    await tryPullCocktail(true);       // 衣物清单为空，调酒仍可能存在于独立文件
+    return null;
+  }
 
   const remoteTs = remote.updatedAt ? parseTs(remote.updatedAt) : 0;
   const localTs = state.lastSync ? parseTs(state.lastSync) : 0;
@@ -2614,6 +3441,9 @@ async function pullUserData(){
     state.groups = mergeById(state.groups, remote.groups);
     changed = true;
   }
+  // 调酒走独立清单 cocktail.json（覆盖 / 合并策略与衣物一致）
+  if(await tryPullCocktail(neverSynced || !hasLocalData)) changed = true;
+
   if(!changed) return null;
 
   // 2) 图片补齐：云端是文件路径 → 下载回本地 dataURL
@@ -2687,34 +3517,48 @@ if('serviceWorker' in navigator && (location.protocol === 'https:' || location.h
 }
 
 /* ---------- 11. 启动 ---------- */
-(async function init(){
-  // 一次性迁移旧单键数据到各用户专属 key（多账号隔离改造后）
-  migrateLegacyLocalData();
-  // 恢复上次登录会话：state 默认从游客 key 初始化（无用户）；若记得上次登录用户，则从其专属 key 恢复完整会话
-  if(!state.user || !state.user.name){
-    let last = '';
-    try{ last = localStorage.getItem(LS_KEY_LAST) || ''; }catch(e){}
-    if(last){
-      try{
-        const raw = localStorage.getItem(userStateKey(last));
-        if(raw){
-          const s = JSON.parse(raw);
-          if(s && s.user && s.user.name === last && s.groups){ state = s; }
-        }
-      }catch(e){}
-    }
+/* 从本地仅恢复「登录态」配置（纯云端：衣物等数据不落盘，启动后由 autoPullOnLaunch 从云端拉取） */
+function restoreSession(){
+  try{
+    const raw = localStorage.getItem(LS_KEY_SESSION);
+    if(raw){ const u = JSON.parse(raw); if(u && u.name) return u; }
+  }catch(e){}
+  return null;
+}
+
+/* 启动自动从云端拉取（纯云端策略核心）：打开程序即 pull 远端仓库内容，以远端为准覆盖本地内存；
+   无网络 / 未配置令牌时给出明确提示并保留空态。 */
+async function autoPullOnLaunch(){
+  if(!state.user || !state.user.name) return;
+  const token = getGiteeToken();
+  if(!token){
+    toast('未配置 Gitee 令牌，无法从云端加载数据，请到「我的」页填写');
+    return;
   }
+  toast('正在从云端加载数据…');
+  try{
+    await pullUserData();   // 内部以远端为准覆盖/合并，并刷新视图
+  }catch(err){
+    toast('从云端加载失败：' + (err && err.message ? err.message : '请检查网络') + '（已显示本地空数据）');
+  }
+}
+
+(async function init(){
+  // 一次性迁移旧单键数据（保留无害；多账号隔离改造遗留，本地已不再依赖这些 key 存衣物）
+  migrateLegacyLocalData();
+  // 恢复登录态（仅 {user} 配置，不含衣物）
+  const sess = restoreSession();
+  if(sess && sess.name){ state.user = sess; }
   // 兼容旧版本本地会话：去掉历史 hash/salt/pass 字段，仅保留身份（密码以云端 _users.json 明文为准）
   if(state.user && state.user.name && (state.user.hash || state.user.salt || state.user.pass || state.user.password !== undefined)){
-    const legacy = state.user;
-    state.user = { name: legacy.name, role: legacy.role || 'user', createdAt: legacy.createdAt || new Date().toISOString() };
+    state.user = { name: state.user.name, role: state.user.role || 'user', createdAt: state.user.createdAt || new Date().toISOString() };
     saveState();
   }
-  // 已登录 → 进入主页；否则登录页
+  // 已登录 → 进入主页并自动从云端下拉数据；否则登录页
   if(state.user && state.user.name){
-    // 集中用户表模式下，启动恢复会话也需加载该用户专属工作区
-    loadUserWorkspace(state.user.name);
+    loadUserWorkspace(state.user.name);   // 内存重置为空衣橱
     enterApp();
+    autoPullOnLaunch();                    // 启动自动 pull 云端（以远端为准）
   }else{
     showTabBar(false);
     showScreen('screen-auth');
