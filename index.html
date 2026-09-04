@@ -1069,8 +1069,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             </div>
             <div class="ck-row2" style="margin-top:12px;align-items:end;">
               <div class="field" style="margin-bottom:0;">
-                <label>目标体积 (ml)</label>
-                <input class="input" type="number" id="ckTargetVol" placeholder="如 105" min="0" step="1">
+                <label>目标体积 / 成品体积 (ml)</label>
+                <input class="input" type="number" id="ckTargetVol" placeholder="成品体积 如105(含加冰融水)" min="0" step="1">
               </div>
               <button class="btn btn-secondary" id="ckScale">按比例缩放</button>
             </div>
@@ -1405,7 +1405,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.8.1';
+const APP_VERSION = '2.8.2';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1659,13 +1659,17 @@ function ckCompute(){
     const m = ckMatById(x.matId); if(!m) return;
     tv += x.vol; tc += x.vol * ckUnit(m); al += x.vol * (m.abv/100);
   });
-  return { totalVol: tv, totalCost: tc, abv: tv > 0 ? al/tv*100 : 0 };
+  // 酒精度以「目标体积（成品体积，含加冰融化的水）」为底计算，而非仅配方材料体积之和；
+  // 未填目标体积、或目标体积不大于材料体积时，回退为材料体积之和，避免出现虚高酒精度。
+  const target = parseFloat($('ckTargetVol').value) || 0;
+  const denom = target > tv ? target : tv;   // 成品体积（含加冰融化的水）；未填则回退材料体积之和
+  return { totalVol: tv, totalCost: tc, abv: denom > 0 ? al/denom*100 : 0, served: denom };
 }
 function ckTotals(){
   const c = ckCompute();
   $('ckPrice').textContent = ckMoney(c.totalCost);
   $('ckAbv').innerHTML = c.abv.toFixed(1) + '<small>%</small>';
-  $('ckVol').innerHTML = Math.round(c.totalVol) + '<small>ml</small>';
+  $('ckVol').innerHTML = Math.round(c.served) + '<small>ml</small>';
   $('ckWarn').classList.toggle('show', c.abv >= 20);
   ckRenderQuick();
 }
@@ -1780,7 +1784,7 @@ $('ckRecSave').onclick = function(){
   ckRoot().recipes.push({
     id: ckUid(), name: name,
     items: ckMix.map(x => ({ matId: x.matId, vol: x.vol })),
-    totalVol: Math.round(c.totalVol), totalCost: c.totalCost, abv: c.abv, ts: Date.now()
+    totalVol: Math.round(c.served), totalCost: c.totalCost, abv: c.abv, ts: Date.now()
   });
   ckSave(); closeCkModal('ckRecModal'); ckRenderRecs(); toast('配方已保存');
 };
