@@ -1405,7 +1405,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '2.8.0';
+const APP_VERSION = '2.8.1';
 
 const DEFAULT_GROUPS = [
   {id:1, name:'上衣',   emoji:'👕'},
@@ -1966,6 +1966,7 @@ async function doLogin(e){
   // 切换账号：只加载该用户名专属的本地工作区（避免上一账号数据残留串号）
   loadUserWorkspace(state.user.name);
   enterApp();
+  autoPullOnLaunch();   // 登录后自动从云端拉取衣物与头像
   toast('欢迎回来，' + state.user.name + ' ✓');
   return false;
 }
@@ -1997,6 +1998,7 @@ async function doRegister(e){
   // 新账号：全新「空衣橱」工作区（不继承任何他人数据）
   loadUserWorkspace(state.user.name);
   enterApp();
+  autoPullOnLaunch();   // 注册后自动从云端拉取（新账号为空，但保持与登录一致）
   toast('注册成功，欢迎加入 ✓');
   return false;
 }
@@ -2917,6 +2919,7 @@ function handleAvatarFile(file){
     applyAvatar('home-avatar');
     openAvatarEditor();
     toast('头像已更新 ✓');
+    pushProfile().catch(function(){ toast('头像已保存到本机，但上传云端失败（请检查网络/令牌）'); });
   }).catch(function(err){
     toast('头像处理失败：' + (err && err.message ? err.message : '请重试'));
   });
@@ -2929,6 +2932,7 @@ function removeAvatar(){
   applyAvatar('home-avatar');
   openAvatarEditor();
   toast('已移除头像');
+  pushProfile().catch(function(){});
 }
 $('avatarAlbumInput').addEventListener('change', function(e){
   const f = e.target.files && e.target.files[0];
@@ -3032,6 +3036,7 @@ async function giteeFetch(path, method, body){
 function userDir(user){ return 'data/' + encodeURIComponent(user) + '/'; }   // 只编码单个路径段，保留斜杠
 function manifestPath(){ return userDir(state.user.name) + 'wardrobe.json'; }         // 衣物
 function cocktailManifestPath(){ return userDir(state.user.name) + 'cocktail.json'; } // 调酒（独立文件，与衣物隔离）
+function profilePath(){ return userDir(state.user.name) + 'profile.json'; } // 头像（独立文件，与衣物/调酒隔离）
 function clothImgPath(id){ return userDir(state.user.name) + 'clothes/' + id + '.jpg'; }
 
 /* 通用：读取云端 JSON 文件（不存在或 Gitee 返回 [] → null） */
@@ -3210,6 +3215,30 @@ async function tryPullCocktail(overwrite){
   try{ changed = await pullCocktailData(overwrite); }catch(err){ return false; }
   if(changed){ saveState(); refreshAfterSync(); }
   return changed;
+}
+
+/* ---------- 头像（独立文件 profile.json，与衣物/调酒隔离） ----------
+   设置/移除头像时即时 push 云端；启动/登录/手动同步时 pull 恢复。
+   仅上传头像，不触碰衣物数据，避免手动同步用空头像覆盖云端。 */
+async function pushProfile(){
+  if(!state.user || !state.user.name) return;
+  const payload = JSON.stringify({ avatar: state.user.avatar || null, updatedAt: new Date().toISOString() }, null, 2);
+  await giteeWriteJSON(profilePath(), payload, 'sync profile ' + state.user.name + ' ' + new Date().toISOString());
+}
+/* 拉取头像：云端 profile.json 存在（即使 avatar 为 null）→ 覆盖本地；文件不存在 → 保留本地（来自 LS_KEY_SESSION） */
+async function pullProfile(){
+  if(!state.user || !state.user.name) return false;
+  const remote = await giteeReadJSON(profilePath());
+  if(remote === null){
+    // 云端无头像文件：若本地已有头像（来自 LS_KEY_SESSION，V2.8.0 升级前设置的），自动上传到云端迁移
+    if(state.user.avatar){ pushProfile().catch(function(){}); }
+    return false;            // 保留本地头像
+  }
+  state.user.avatar = (remote.avatar !== undefined) ? remote.avatar : null;
+  saveState();                                 // 持久化到 LS_KEY_SESSION（登录态含头像）
+  applyAvatar('home-avatar');
+  applyAvatar('mine-avatar');
+  return true;
 }
 
 async function pushUserData(){
@@ -3479,6 +3508,7 @@ async function doSync(){
   try{
     await pushUserData();   // 推送本地
     await pullUserData();   // 拉回合并（双向同步）
+    await pullProfile();    // 同步恢复头像
     renderSyncStatus();
     toast('已同步到 Gitee ✓');
   }catch(err){
@@ -3541,6 +3571,8 @@ async function autoPullOnLaunch(){
   }catch(err){
     toast('从云端加载失败：' + (err && err.message ? err.message : '请检查网络') + '（已显示本地空数据）');
   }
+  // 头像独立从云端恢复（即使衣物拉取失败也尝试），无网络/无文件则保留本地
+  try{ await pullProfile(); }catch(e){}
 }
 
 (async function init(){
