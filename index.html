@@ -357,6 +357,40 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   text-align:center;font-size:12px;color:var(--ink-faint);
   padding:12px 0 4px;letter-spacing:.3px;
 }
+/* ============ 总首页 v4.2.0：加菲猫橘色主题 + 励志卡 + 备忘卡 ============ */
+#screen-home{
+  background:linear-gradient(168deg,#fff8ec 0%,#ffe9c8 38%,#ffd9a8 68%,#ffc98a 100%);
+}
+#screen-home .home-hero{
+  position:relative;border-radius:22px;padding:14px 16px;margin:10px 16px 12px;
+  background:linear-gradient(135deg,rgba(255,236,214,.92),rgba(255,224,178,.88));
+  box-shadow:0 4px 14px rgba(255,167,38,.18);overflow:hidden;min-height:104px;
+  border:1px solid rgba(255,255,255,.65);display:flex;align-items:center;gap:12px;
+}
+#screen-home .home-hero .cat{
+  width:82px;height:82px;border-radius:50%;border:3px solid #fff;flex-shrink:0;
+  background-image:url('avatars/garfield-cat.png');background-size:cover;background-position:center;background-color:#fff;
+  box-shadow:0 2px 10px rgba(255,140,0,.28);
+}
+#screen-home .home-hero .qt{flex:1;min-width:0;z-index:2;}
+#screen-home .home-hero .qt .zh{font-size:14px;font-weight:800;color:#8a4b00;line-height:1.45;}
+#screen-home .home-hero .qt .en{font-size:11.5px;color:#b0762e;margin-top:5px;font-style:italic;line-height:1.4;}
+#screen-home .home-hero .scat{position:absolute;inset:0;z-index:1;pointer-events:none;}
+#screen-home .home-hero .scat span{position:absolute;line-height:1;filter:saturate(1.1);}
+#screen-home .memo-card{
+  margin:0 16px 12px;background:rgba(255,255,255,.88);border-radius:20px;padding:12px 14px;
+  box-shadow:0 4px 14px rgba(255,167,38,.12);border:1px solid rgba(255,255,255,.6);
+}
+#screen-home .memo-head{display:flex;align-items:center;gap:8px;}
+#screen-home .memo-head .memo-title{font-size:13px;font-weight:800;color:#8a4b00;}
+#screen-home .memo-head .memo-cnt{font-size:11px;color:#b0762e;}
+#screen-home .memo-row{display:flex;gap:8px;margin-top:8px;}
+#screen-home .memo-row .input{flex:1;min-width:0;background:#fff;}
+#screen-home .memo-list{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:78px;overflow-y:auto;}
+#screen-home .memo-item{display:flex;align-items:flex-start;gap:8px;background:#fff7ec;border-radius:12px;padding:7px 10px;}
+#screen-home .memo-item .mt{flex:1;min-width:0;font-size:13px;color:var(--ink);word-break:break-all;line-height:1.45;}
+#screen-home .memo-item .mtime{flex-shrink:0;font-size:10.5px;color:var(--ink-faint);padding-top:2px;}
+#screen-home .memo-item .mdel{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:13px;}
 .cloth-card{
   background:var(--card);
   border:1px solid var(--line);
@@ -600,6 +634,17 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .ck-save{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-sub);
   background:var(--primary-soft);padding:4px 9px;border-radius:var(--r-chip);}
 .ck-save .dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
+/* 返回首页按钮（v4.1.1：底部导航移除后，调酒页需自带返回入口） */
+.ck-head .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:var(--ink);font-size:20px;margin-left:-10px;}
+.ck-head .back:active{background:var(--primary-soft);}
+/* 顶栏刷新按钮（v4.1.2：统一「左返回 / 中标题 / 右刷新=先上传后下拉」格式） */
+.ck-head .ck-sync{width:34px;height:34px;border-radius:50%;background:var(--primary-soft);color:var(--ink);font-size:17px;display:flex;align-items:center;justify-content:center;}
+.ck-head .ck-sync:active{background:var(--primary-deep);color:#fff;}
+.screen-head .hrefresh{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:var(--ink);font-size:20px;}
+.screen-head .hrefresh:active{background:var(--primary-soft);}
+/* 刷新按钮同步转圈（v4.2.2：同步中旋转，结束恢复静止；同步期间禁止重复点击） */
+@keyframes syncSpin{to{transform:rotate(360deg);}}
+.spinning{animation:syncSpin .8s linear infinite;pointer-events:none;opacity:.75;}
 
 /* 左右分栏：左侧功能卡片栏 + 右侧主区（各自滚动，互不干扰） */
 .ck-body{flex:1;min-height:0;display:flex;align-items:stretch;}
@@ -1054,6 +1099,43 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-sleep .sp-modal .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 #screen-sleep .sp-modal .mh h3{margin:0;font-size:16px;font-weight:800;color:var(--lg-deep);}
 #screen-sleep .sp-ed-dur{margin-top:10px;font-size:13px;color:var(--lg-deep);font-weight:700;}
+/* ============ 衣橱屏（v4.1.0：复用记账/睡眠粉色主题，作用域 #screen-cloth） ============ */
+#screen-cloth{
+  background:linear-gradient(160deg,#fff0f6,#ffe3ee 60%,#ffd9ea);
+  --lg-primary:#ff8fb3;   /* 少女粉主色 */
+  --lg-deep:#ff6b9d;      /* 深粉 */
+  --lg-soft:#ffd6e7;      /* 浅粉 */
+  --lg-exp:#FF6B8A;       /* 支出：樱花粉 */
+  --lg-red:#FF4D6D;       /* 超支/负：红 */
+  --lg-inc:#69D19D;       /* 收入/正：薄荷绿 */
+  --lg-ink:#5a3d4e;
+}
+#screen-cloth .btn-secondary{background:var(--lg-soft);color:var(--lg-deep);}
+#screen-cloth .btn-accent{background:var(--lg-deep);color:#fff;opacity:1;}
+#screen-cloth .lg-sync{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;}
+#screen-cloth .lg-sync:active{background:rgba(255,255,255,.45);}
+#screen-cloth .lg-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:rgba(255,143,179,.85);backdrop-filter:blur(10px);color:#fff;border-bottom:1px solid rgba(255,255,255,.25);}
+#screen-cloth .lg-head h2{font-size:18px;font-weight:800;display:flex;align-items:center;gap:6px;}
+#screen-cloth .lg-shell{flex:1;min-height:0;display:flex;}
+#screen-cloth .lg-side{flex:0 0 80px;width:80px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-right:1px solid rgba(255,214,231,.6);display:flex;flex-direction:column;padding:8px 0;gap:6px;overflow-y:auto;}
+#screen-cloth .lg-nav{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0 6px;padding:10px 2px;border-radius:16px;color:var(--lg-ink);background:transparent;font-size:11px;font-weight:700;}
+#screen-cloth .lg-nav .lg-emoji{font-size:22px;line-height:1;}
+#screen-cloth .lg-nav.active{background:var(--lg-soft);color:var(--lg-deep);box-shadow:inset 0 0 0 1.5px var(--lg-primary);}
+#screen-cloth .lg-main{flex:1;min-width:0;overflow-y:auto;padding:12px;position:relative;z-index:1;}
+#screen-cloth .lg-panel{display:none;}
+#screen-cloth .lg-panel.active{display:block;animation:fadeIn .25s ease;}
+#screen-cloth .lg-banner{position:relative;border-radius:22px;padding:14px 16px;margin-bottom:12px;background:linear-gradient(135deg,rgba(255,214,231,.88),rgba(255,239,246,.78));backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(255,143,179,.12);overflow:hidden;min-height:92px;border:1px solid rgba(255,255,255,.5);}
+#screen-cloth .lg-banner-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(255,143,179,.28);background-size:cover;background-position:center;background-color:#fff;flex-shrink:0;}
+#screen-cloth .lg-banner-text{flex:1;min-width:0;margin-left:12px;z-index:2;}
+#screen-cloth .lg-banner-text h3{margin:0;font-size:16px;font-weight:800;color:var(--lg-deep);}
+#screen-cloth .lg-banner-text p{margin:3px 0 0;font-size:12px;color:var(--lg-ink);opacity:.82;}
+#screen-cloth .lg-banner-row{display:flex;align-items:center;position:relative;}
+#screen-cloth .lg-banner-emojis{position:absolute;inset:0;z-index:1;pointer-events:none;}
+#screen-cloth .lg-banner-emoji{position:absolute;font-size:18px;line-height:1;transform-origin:center;filter:saturate(1.1);}
+/* 首页遗留的全局内边距在衣橱面板内收紧 */
+#screen-cloth .cloth-grid{padding:6px 0 0;}
+#screen-cloth .home-groups{padding:0;}
+#screen-cloth .home-stats{padding:0 2px 12px;}
 
 </style>
 </head>
@@ -1125,48 +1207,149 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   </section>
 
   <!-- ============ 屏 2：衣橱主页 ============ -->
+  <!-- ============ 屏 1：总首页（功能入口：衣橱/调酒/记账/睡眠/我的） ============ -->
   <section class="screen" id="screen-home">
     <div class="home-head">
       <div style="flex:1;">
         <div class="home-greet" id="home-greet">午后好，小绿</div>
         <div class="home-date" id="home-date">2026年8月25日 · 星期二</div>
       </div>
-      <button class="head-add press" onclick="openSheet('sheet-group')" title="管理分组">＋</button>
-      <div class="avatar" id="home-avatar">绿</div>
+      <div class="avatar" id="home-avatar" onclick="navTo(4)" title="我的">绿</div>
     </div>
-    <div class="home-stats" id="home-stats"></div>
 
-    <!-- 快捷入口：睡眠等功能卡片（独立容器，避免被 renderHome 重写 #home-groups 覆盖） -->
-    <div class="sec-title" style="margin-top:14px;">快捷入口</div>
-    <div class="home-groups" id="home-quick">
+    <!-- 励志卡（v4.2.0：加菲猫橘猫点缀 + 中英双语励志语，每次进首页随机切换） -->
+    <div class="home-hero">
+      <div class="cat"></div>
+      <div class="qt">
+        <div class="zh" id="home-quote-zh">热爱可抵岁月漫长。</div>
+        <div class="en" id="home-quote-en">Love makes time pass slower.</div>
+      </div>
+      <div class="scat" id="home-hero-emojis"></div>
+    </div>
+
+    <!-- 备忘卡（v4.2.0：快速记录，固定展示 2 条，多余下滑翻看） -->
+    <div class="memo-card">
+      <div class="memo-head">
+        <span class="memo-title">📝 备忘</span>
+        <span class="memo-cnt" id="home-memo-cnt"></span>
+      </div>
+      <div class="memo-row">
+        <input class="input" id="home-memo-input" placeholder="快速记一条备忘…" autocomplete="off" onkeydown="if(event.key==='Enter')addMemo()">
+        <button class="btn-sm btn-primary press" onclick="addMemo()">记下</button>
+      </div>
+      <div class="memo-list" id="home-memo-list"></div>
+    </div>
+
+    <!-- 功能入口（v4.2.0：两列卡片网格，「我的」独占一行） -->
+    <div class="sec-title">功能入口</div>
+    <div class="home-groups" id="home-entries">
+      <button class="group-card press" onclick="gotoCloth()">
+        <span class="gc-emoji">👕</span>
+        <span class="gc-info"><span class="gc-name">衣橱</span><span class="gc-count" id="he-cloth">管理你的衣物</span></span>
+      </button>
+      <button class="group-card press" onclick="navTo(3)">
+        <span class="gc-emoji">🍹</span>
+        <span class="gc-info"><span class="gc-name">调酒</span><span class="gc-count">配方 · 计算</span></span>
+      </button>
+      <button class="group-card press" onclick="navTo(2)">
+        <span class="gc-emoji">📒</span>
+        <span class="gc-info"><span class="gc-name">记账</span><span class="gc-count">收支一目了然</span></span>
+      </button>
       <button class="group-card press" onclick="gotoSleep()">
         <span class="gc-emoji">🌙</span>
         <span class="gc-info"><span class="gc-name">睡眠</span><span class="gc-count">记录你的睡眠</span></span>
       </button>
+      <button class="group-card press" onclick="navTo(4)" style="grid-column:1/-1;">
+        <span class="gc-emoji">👤</span>
+        <span class="gc-info"><span class="gc-name">我的</span><span class="gc-count">账号 · 令牌 · 数据管理</span></span>
+      </button>
     </div>
-
-    <!-- 分组导航卡片 -->
-    <div class="sec-title">我的分组</div>
-    <div class="home-groups" id="home-groups"></div>
-
-    <div class="sec-title" style="margin-top:6px;">最近收藏</div>
-    <div class="cloth-grid" id="home-grid"></div>
 
     <!-- 页脚版本号（自然流内，滚动到底可见；文字由 renderHome 从 APP_VERSION 渲染） -->
     <div class="home-version" id="home-version"></div>
   </section>
 
+  <!-- ============ 屏：衣橱（左侧导航 概览/衣物/云端 + 右侧功能页，粉色 HelloKitty 风格） ============ -->
+  <section class="screen" id="screen-cloth">
+    <div class="lg-head">
+      <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
+      <h2>👕 Harbo衣橱</h2>
+      <button class="lg-sync press" title="上传云端+下拉云端" onclick="syncSpin(this, clSync)">⟳</button>
+    </div>
+    <div class="lg-shell">
+      <aside class="lg-side" id="clSide">
+        <button class="lg-nav active" data-cl="overview"><span class="lg-emoji">🏠</span><span class="lg-label">概览</span></button>
+        <button class="lg-nav" data-cl="list"><span class="lg-emoji">👗</span><span class="lg-label">衣物</span></button>
+        <button class="lg-nav" data-cl="bak"><span class="lg-emoji">☁️</span><span class="lg-label">云端</span></button>
+      </aside>
+      <main class="lg-main">
+
+        <!-- 概览 -->
+        <div class="lg-panel active" id="clp-overview">
+          <div class="lg-banner" data-title="👕 概览" data-sub="你的衣橱一览">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>👕 概览</h3><p>你的衣橱一览</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="home-stats" id="cl-stats"></div>
+          <div class="ck-sec" style="padding:0 2px 6px;"><h3>全部衣物</h3></div>
+          <div class="cloth-grid" id="cl-grid"></div>
+        </div>
+
+        <!-- 衣物（分组导航 + 上传/管理入口） -->
+        <div class="lg-panel" id="clp-list">
+          <div class="lg-banner" data-title="👗 衣物" data-sub="按分组收纳管理">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>👗 衣物</h3><p>按分组收纳管理</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:12px;">
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-accent press" style="flex:1;" onclick="openUpload(null)">＋ 上传衣物</button>
+              <button class="btn btn-secondary press" style="flex:1;" onclick="openSheet('sheet-group')">管理分组</button>
+            </div>
+          </div>
+          <div class="home-groups" id="cl-groups"></div>
+        </div>
+
+        <!-- 云端 -->
+        <div class="lg-panel" id="clp-bak">
+          <div class="lg-banner" data-title="☁️ 云端" data-sub="衣物数据云端备份，换设备也不丢">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>☁️ 云端</h3><p>衣物数据云端备份，换设备也不丢</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
+            <p class="ck-hint">衣物与分组数据存于远程仓库，换设备填入同一 Gitee 令牌即可同步取回。</p>
+            <button class="btn btn-accent press" style="margin-top:10px;" onclick="clSync()">⇅ 立即同步（上传 + 拉回）</button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
   <!-- ============ 屏 3：分组详情 ============ -->
   <section class="screen" id="screen-group">
     <div class="screen-head">
-      <button class="back press" onclick="goHome()">‹</button>
-      <div class="group-title-wrap">
+      <button class="back press" onclick="gotoCloth()">‹</button>
+      <div class="group-title-wrap" style="flex:1;justify-content:center;">
         <span class="group-badge" id="group-badge">👕</span>
         <span class="title" id="group-title">上衣</span>
       </div>
-      <button class="head-btn press" onclick="openUploadWithGroup()" title="上传衣物">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      </button>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clSync)">⟳</button>
+        <button class="head-btn press" onclick="openUploadWithGroup()" title="上传衣物">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
     </div>
     <!-- 分组搜索：输入关键词匹配分组名称，结果以弹窗展示 -->
     <div class="group-search">
@@ -1186,7 +1369,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   <section class="screen" id="screen-upload">
     <div class="screen-head">
       <button class="back press" onclick="goBackFromUpload()">‹</button>
-      <span class="title">上传新衣物</span>
+      <span class="title" style="flex:1;text-align:center;">上传新衣物</span>
       <span style="width:44px;"></span>
     </div>
 
@@ -1248,7 +1431,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
   <!-- ============ 屏 5：我的 / 设置 ============ -->
   <section class="screen" id="screen-mine">
-    <div class="screen-head"><span class="title">我的</span><span style="width:44px;"></span></div>
+    <div class="screen-head"><button class="back press" onclick="goHome()" title="返回首页">‹</button><span class="title">我的</span><button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clSync)">⟳</button></div>
 
     <div class="card profile-card">
       <div class="profile-avatar" id="mine-avatar" onclick="openAvatarEditor()" title="点击设置头像">绿</div>
@@ -1334,8 +1517,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   <!-- ============ 调酒（底部导航常驻 tab：左侧功能卡片 + 右侧主区） ============ -->
   <section class="screen" id="screen-cocktail">
     <div class="ck-head">
+      <button class="back press" onclick="goHome()" title="返回首页">‹</button>
       <h2>🍹 调酒</h2>
-      <span class="ck-save"><span class="dot"></span>已存本机</span>
+      <button class="ck-sync press" title="上传云端+下拉云端" onclick="syncSpin(this, doSync)">⟳</button>
     </div>
 
     <div class="ck-body">
@@ -1533,8 +1717,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   <!-- ============ 记账工作台（底部导航常驻 tab：左侧 80px 导航 + 右侧主区） ============ -->
   <section class="screen" id="screen-ledger">
     <div class="lg-head">
+      <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
       <h2>🎀 Harbo记账</h2>
-      <button class="lg-sync press" id="lgHeaderSync" title="同步到云端">⟳</button>
+      <button class="lg-sync press" id="lgHeaderSync" title="上传云端+下拉云端">⟳</button>
     </div>
     <div class="lg-shell">
       <!-- 左侧 80px 垂直导航 -->
@@ -1733,7 +1918,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="lg-head">
       <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
       <h2>🌙 Harbo睡眠</h2>
-      <button class="lg-sync press" id="spHeaderSync" title="同步到云端" onclick="spGuardSync() && spSyncCloud()">⟳</button>
+      <button class="lg-sync press" id="spHeaderSync" title="上传云端+下拉云端" onclick="spGuardSync() && syncSpin(this, spSyncCloud)">⟳</button>
     </div>
     <div class="lg-shell">
       <aside class="lg-side" id="spSide">
@@ -1915,28 +2100,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   </section>
 
   <!-- ============ 底部导航（登录态展示） ============ -->
-  <nav class="tab-bar" id="tab-bar" hidden>
-    <button class="tab-item press active" data-tab="0" onclick="navTo(0)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
-      <span>首页</span>
-    </button>
-    <button class="tab-item press" data-tab="1" onclick="navTo(1)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="1.8"/><rect x="13" y="13" width="7.5" height="7.5" rx="1.8"/></svg>
-      <span>衣橱</span>
-    </button>
-    <button class="tab-item press" data-tab="2" onclick="navTo(2)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
-      <span>记账</span>
-    </button>
-    <button class="tab-item press" data-tab="3" onclick="navTo(3)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14l-7 8z"/><path d="M12 12v6"/><path d="M8 21h8"/></svg>
-      <span>调酒</span>
-    </button>
-    <button class="tab-item press" data-tab="4" onclick="navTo(4)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.6-3.6 4.4-5.2 7.5-5.2s5.9 1.6 7.5 5.2"/></svg>
-      <span>我的</span>
-    </button>
-  </nav>
+  <!-- 底部导航栏已移除（v4.1.0）：功能入口统一收口到总首页，navTo() 函数保留供既有调用点使用 -->
 
   <!-- ============ Sheet：衣物详情（点击衣物卡放大） ============ -->
   <div class="overlay overlay-detail" id="sheet-cloth-view" onclick="closeSheetOnBg(event,'sheet-cloth-view')">
@@ -2126,7 +2290,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '4.0.4';
+const APP_VERSION = '4.2.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2626,7 +2790,7 @@ function countInGroup(id){
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 /* ---------- 3. 屏幕导航 ---------- */
-const SCREENS = ['screen-auth','screen-home','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep'];
+const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep'];
 
 function showScreen(id){
   SCREENS.forEach(s=>$(s).classList.remove('active'));
@@ -2636,26 +2800,13 @@ function showScreen(id){
   requestAnimationFrame(()=>{ el.scrollTop = 0; });
 }
 
-/* 底部导航高亮 */
-function setTab(idx){
-  document.querySelectorAll('.tab-item').forEach((t,i)=>{
-    t.classList.toggle('active', i===idx);
-  });
-}
-
-/* 登录态显示 tab 栏 */
-function showTabBar(show){
-  $('tab-bar').hidden = !show;
-}
-
-/* 底部导航点击 */
+/* 底部导航栏已移除（v4.1.0）：navTo 保留函数供既有调用点使用，仅做屏间跳转 */
 function navTo(idx){
-  if(idx===0){ renderHome(); showScreen('screen-home'); setTab(0); }  // 每次进首页重渲染，保证衣物/分组统计始终最新
-  else if(idx===1){ state.groups.length ? openGroup(state.groups[0].id) : openGroup(0); }
-  else if(idx===2){ showScreen('screen-ledger'); setTab(2); renderLedger(); }      // 记账：先切屏再渲染，保证入口可用
-  else if(idx===3){ renderCocktail(); showScreen('screen-cocktail'); setTab(3); }  // 调酒：左侧功能卡片 + 右侧主区
-  else if(idx===4){ renderMine(); showScreen('screen-mine'); setTab(4); }
-  // 注：原底部「上传」入口已移除（V2.7.0），上传统一走衣橱页右上角「＋」
+  if(idx===0){ renderHome(); showScreen('screen-home'); }               // 总首页（每次进入重渲染）
+  else if(idx===1){ gotoCloth(); }                                      // 衣橱：左侧导航子页面
+  else if(idx===2){ showScreen('screen-ledger'); renderLedger(); }      // 记账：先切屏再渲染，保证入口可用
+  else if(idx===3){ renderCocktail(); showScreen('screen-cocktail'); }  // 调酒：左侧功能卡片 + 右侧主区
+  else if(idx===4){ renderMine(); showScreen('screen-mine'); }
 }
 
 /* ---------- 4. 登录 / 注册 ---------- */
@@ -2769,10 +2920,8 @@ async function doRegister(e){
 
 /* 进入登录态主界面 */
 function enterApp(){
-  showTabBar(true);
   renderHome();
   showScreen('screen-home');
-  setTab(0);
   // 登录/启动后 1 秒静默拉取云端：成功自动刷新视图并提示，失败不打扰（避免网络慢卡 UI）
   setTimeout(function(){
     pullUserData().catch(function(){ /* 静默失败 */ });
@@ -2788,10 +2937,139 @@ function renderHome(){
   applyAvatar('home-avatar');
   $('home-date').textContent = new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 
-  $('home-stats').innerHTML = '共 <b>' + state.clothes.length + '</b> 件衣物 · <b>' + state.groups.length + '</b> 个分组';
+  // 衣橱入口副标题：实时统计
+  const he = $('he-cloth');
+  if(he) he.textContent = state.clothes.length + ' 件衣物 · ' + state.groups.length + ' 个分组';
 
-  // 分组卡片网格（每行 2 张），点击进入分组详情
-  const cardsHtml = state.groups.map(g=>{
+  // 加菲猫首页：励志语随机切换 + emoji 散射 + 备忘列表（v4.2.0）
+  renderHomeQuote();
+  homeScatter();
+  renderMemos();
+
+  // 页脚版本号（从 APP_VERSION 渲染，不写死在 HTML）
+  var v = $('home-version');
+  if(v) v.textContent = 'v' + APP_VERSION;
+}
+
+/* ---------- 总首页：励志卡 / 备忘卡（v4.2.0，加菲猫橘色主题） ---------- */
+const HOME_QUOTES = [
+  { zh: '生活就像意面，总能连在一起。', en: 'Life is like pasta - everything connects.' },
+  { zh: '今天的烦恼，先睡一觉再说。', en: 'Never put off till tomorrow what you can forget today.' },
+  { zh: '吃饱了才有力气做喜欢的事。', en: 'Eat well first, then chase your dreams.' },
+  { zh: '热爱可抵岁月漫长。', en: 'Love makes time pass slower.' },
+  { zh: '慢慢来，比较快。', en: 'Slow down and you will speed up.' },
+  { zh: '今天的你，已经很棒了。', en: 'You did great today. Keep it up.' },
+  { zh: '把日子过成自己喜欢的样子。', en: 'Make your days the way you love.' },
+  { zh: '所有的美好都会如约而至。', en: 'All good things come in time.' }
+];
+const HOME_EMOJIS = ['🐱','😹','😼','😴','🍖','😋','🧀','⭐','🍊','💤','🐟','🍩'];
+function renderHomeQuote(){
+  const q = HOME_QUOTES[Math.floor(Math.random()*HOME_QUOTES.length)];
+  const zh = $('home-quote-zh'), en = $('home-quote-en');
+  if(zh) zh.textContent = q.zh;
+  if(en) en.textContent = q.en;
+}
+function homeScatter(){
+  const grid = $('home-hero-emojis'); if(!grid) return;
+  const box = grid.parentElement;
+  const W = (box && box.clientWidth) || 320, H = (box && box.clientHeight) || 104;
+  grid.innerHTML = '';
+  const cols = 5, rows = 2, cw = W/cols, ch = H/rows;
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const s = document.createElement('span');
+      s.textContent = HOME_EMOJIS[Math.floor(Math.random()*HOME_EMOJIS.length)];
+      const size = 14 + Math.random()*8;
+      s.style.left = (c*cw + Math.random()*Math.max(4,cw-size)) + 'px';
+      s.style.top = (r*ch + Math.random()*Math.max(4,ch-size)) + 'px';
+      s.style.fontSize = size.toFixed(1)+'px';
+      s.style.transform = 'rotate('+(Math.random()*24-12).toFixed(1)+'deg)';
+      s.style.opacity = (0.25+Math.random()*0.2).toFixed(2);
+      grid.appendChild(s);
+    }
+  }
+}
+/* 备忘：按账号隔离存本机 localStorage（key: memo_<用户名>） */
+function memoKey(){ return 'memo_' + (state.user && state.user.name ? state.user.name : 'guest'); }
+function loadMemos(){ try{ const a = JSON.parse(localStorage.getItem(memoKey())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function saveMemos(a){ try{ localStorage.setItem(memoKey(), JSON.stringify(a)); }catch(e){} }
+function renderMemos(){
+  const list = $('home-memo-list'); if(!list) return;
+  const memos = loadMemos().sort((a,b)=>b.at-a.at);   // 最新在最上
+  const cnt = $('home-memo-cnt');
+  if(cnt) cnt.textContent = memos.length ? memos.length + ' 条' : '';
+  if(!memos.length){
+    list.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--ink-faint);padding:8px 0;">还没有备忘，记一条吧 📝</div>';
+    return;
+  }
+  list.innerHTML = memos.map(m=>{
+    const d = new Date(m.at);
+    const t = (d.getMonth()+1)+'/'+d.getDate()+' ' + ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+    return '<div class="memo-item"><span class="mt">' + spEsc(m.t) + '</span><span class="mtime">' + t + '</span><button class="mdel press" data-at="' + m.at + '">✕</button></div>';
+  }).join('');
+  list.querySelectorAll('.mdel').forEach(b => b.onclick = () => delMemo(Number(b.dataset.at)));
+}
+function addMemo(){
+  const inp = $('home-memo-input'); if(!inp) return;
+  const v = inp.value.trim(); if(!v){ toast('先写点什么吧'); return; }
+  const a = loadMemos(); a.push({ t:v, at:Date.now() }); saveMemos(a);
+  inp.value = ''; renderMemos(); toast('已记下 ✓');
+  memoAutoSync();
+}
+function delMemo(at){
+  saveMemos(loadMemos().filter(m => m.at !== at)); renderMemos(); toast('已删除');
+  memoAutoSync();
+}
+/* ---------- 备忘云端同步（v4.2.1：独立文件 data/<用户>/memo.json，与 sleep.json 同模式，先上传后下拉） ---------- */
+function memoPath(){ return userDir(state.user.name) + 'memo.json'; }
+async function pushMemoData(username){
+  const payload = JSON.stringify({ updatedAt: new Date().toISOString(), memos: loadMemos() }, null, 2);
+  await giteeWriteJSON(memoPath(), payload, 'sync memo ' + username + ' ' + new Date().toISOString());
+}
+async function pullMemoData(){
+  const remote = await giteeReadJSON(memoPath());
+  if(!remote) return false;                       // 云端无文件 → 保留本地
+  const rs = Array.isArray(remote.memos) ? remote.memos : [];
+  saveMemos(rs.filter(m => m && typeof m.t === 'string' && m.at));   // 以云端为准覆盖本地
+  renderMemos();
+  return true;
+}
+async function tryPullMemo(){
+  try{ return await pullMemoData(); }catch(err){ return false; }
+}
+function memoAutoSync(){
+  const token = getGiteeToken();
+  if(!token || !state.user) return;               // 未登录/未配令牌 → 仅存本机
+  pushMemoData(state.user.name)
+    .then(() => tryPullMemo())
+    .catch(() => {});                             // 静默失败，不影响本地使用
+}
+
+/* ---------- 衣橱子页面（v4.1.0：左侧导航 概览/衣物/云端 + 右侧功能页，粉色 HelloKitty 风格） ---------- */
+let clBound = false, clState = { panel:'overview' };
+function gotoCloth(){ showScreen('screen-cloth'); renderCloth(); }
+function renderCloth(){
+  if(!clBound){
+    clBound = true;
+    document.querySelectorAll('#clSide .lg-nav').forEach(b => b.onclick = () => clSwitch(b.dataset.cl));
+  }
+  clSwitch(clState.panel || 'overview');
+}
+function clSwitch(panel){
+  clState.panel = panel;
+  document.querySelectorAll('#clSide .lg-nav').forEach(b => b.classList.toggle('active', b.dataset.cl === panel));
+  document.querySelectorAll('#screen-cloth .lg-panel').forEach(p => p.classList.toggle('active', p.id === 'clp-' + panel));
+  const active = $('clp-' + panel);
+  if(active) spRenderBanner(active);   // 复用睡眠的 Kitty 头像 + emoji 散射 Banner（读取 #screen-ledger 的 --lg-avatar-*）
+  if(panel === 'overview') renderClothOverview();
+  else if(panel === 'list') renderClothList();
+}
+function renderClothOverview(){
+  $('cl-stats').innerHTML = '共 <b>' + state.clothes.length + '</b> 件衣物 · <b>' + state.groups.length + '</b> 个分组';
+  renderGrid(state.clothes, 'cl-grid');
+}
+function renderClothList(){
+  $('cl-groups').innerHTML = state.groups.map(g=>{
     const cnt = countInGroup(g.id);
     return '<button class="group-card press" onclick="openGroup(' + g.id + ')">' +
       '<span class="gc-emoji">' + g.emoji + '</span>' +
@@ -2801,14 +3079,17 @@ function renderHome(){
       '</span>' +
     '</button>';
   }).join('');
-  $('home-groups').innerHTML = cardsHtml;
-
-  // 衣物网格（全部预览）
-  renderGrid(state.clothes, 'home-grid');
-
-  // 页脚版本号（从 APP_VERSION 渲染，不写死在 HTML）
-  var v = $('home-version');
-  if(v) v.textContent = 'v' + APP_VERSION;
+}
+function clSync(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
+  return doSync();   // 复用「我的」页的双向同步（推送本地 + 拉回合并 + 恢复头像），返回 Promise 供转圈动画感知结束
+}
+/* 刷新按钮转圈包装（v4.2.2）：点击加 spinning 旋转，同步 Promise 结束（成功/失败）后恢复静止 */
+async function syncSpin(btn, fn){
+  if(!btn) return fn();
+  btn.classList.add('spinning');
+  try{ await fn(); } finally{ btn.classList.remove('spinning'); }
 }
 
 function renderGrid(items, containerId, emptyHtml){
@@ -3125,12 +3406,10 @@ function openGroup(gid){
     renderGrid(state.clothes.filter(c=>belongsTo(c,gid)), 'group-grid');
   }
   showScreen('screen-group');
-  setTab(1);
 }
 function goHome(){
   renderHome();
   showScreen('screen-home');
-  setTab(0);
 }
 
 /* 分组详情右上 +：带分组跳上传 */
@@ -3179,7 +3458,6 @@ function openUpload(presetGroup, editCloth){
   const ups = $('upGroupSearch'); if(ups) ups.value = '';
 
   showScreen('screen-upload');
-  setTab(3);
 }
 function selectUpGroup(gid){
   const i = upSelectedGroups.indexOf(gid);
@@ -4299,8 +4577,6 @@ function doLogout(){
   // 先把当前账号的数据存回它自己的 key，再重置游客空态（不残留任何衣物/分组给下一个账号）
   if(state.user){ saveState(); }
   resetToGuest();
-  showTabBar(false);
-  $('tab-bar').querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   $('form-login').querySelector('input').value = '';
   $('login-pass').value = '';
   switchAuthMode('login');
@@ -4347,6 +4623,8 @@ async function autoPullOnLaunch(){
   try{ await tryPullLedger(true); }catch(e){}
   // 睡眠独立从 sleep.json 恢复（保证即使衣物/记账缺失也能取回）
   try{ await tryPullSleep(true); }catch(e){}
+  // 备忘独立从 memo.json 恢复（v4.2.1：云端为准覆盖本机缓存，无云端文件则保留本地）
+  try{ await tryPullMemo(); }catch(e){}
 }
 
 /* =====================================================================
@@ -4681,8 +4959,8 @@ function lgPushLedgerCloud(){
 function lgSyncLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  tryPullLedger(false, false)
-    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
+  return pushLedgerData(state.user.name, new Date().toISOString())
+    .then(() => tryPullLedger(false, false))
     .then(() => { lgSetStamp('push'); lgSetStamp('pull'); toast('记账已双向同步 ✓'); })
     .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
 }
@@ -4911,7 +5189,7 @@ function lgBind(){
   $('lgStatNext').onclick = () => { lgState.statYM.m++; if(lgState.statYM.m > 12){ lgState.statYM.m = 1; lgState.statYM.y++; } lgRenderStats(); };
   $('lgQueryBtn').onclick = lgRunQuery;
   $('lgBudgetSet').onclick = lgSetBudget;
-  $('lgHeaderSync').onclick = () => { if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; } if(!state.user){ toast('请先登录'); return; } lgSyncLedgerCloud(); };
+  $('lgHeaderSync').onclick = () => { if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; } if(!state.user){ toast('请先登录'); return; } syncSpin($('lgHeaderSync'), lgSyncLedgerCloud); };
   $('lgSync').onclick = () => {
     if(!state.user){ toast('请先登录'); return; }
     if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
@@ -5223,8 +5501,8 @@ function spPushCloud(){
 function spSyncCloud(){
   if(!state.user){ toast('请先登录'); return; }
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  tryPullSleep(false, false)
-    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
+  return pushSleepData(state.user.name, new Date().toISOString())
+    .then(() => tryPullSleep(false, false))
     .then(() => { spSetStamp('push'); spSetStamp('pull'); toast('睡眠已双向同步 ✓'); })
     .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
 }
@@ -5320,7 +5598,6 @@ function renderSleep(){
     enterApp();
     autoPullOnLaunch();                    // 启动自动 pull 云端（以远端为准）
   }else{
-    showTabBar(false);
     showScreen('screen-auth');
   }
 })();
