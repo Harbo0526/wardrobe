@@ -1839,7 +1839,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '3.1.2';
+const APP_VERSION = '3.1.3';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -4094,10 +4094,11 @@ async function pullLedgerData(overwrite){
   state.ledger = { records: Array.from(map.values()), seeded: rl.seeded || state.ledger.seeded, budgets: budgets };
   return true;
 }
-async function tryPullLedger(overwrite){
+async function tryPullLedger(overwrite, doRefresh){
+  if(doRefresh === undefined) doRefresh = true;   // 默认拉取后刷新界面；自动同步传 false 以免重置回概览
   let changed = false;
   try{ changed = await pullLedgerData(overwrite); }catch(err){ return false; }
-  if(changed){ saveState(); refreshAfterSync(); }
+  if(changed && doRefresh){ saveState(); refreshAfterSync(); }
   return changed;
 }
 
@@ -4270,9 +4271,19 @@ function lgRenderRecent(){
   list.innerHTML = recs.map(lgOneRecHTML).join('');
   list.querySelectorAll('.del').forEach(b => b.onclick = () => lgDeleteRec(b.dataset.id));
 }
+// 渲染日历面板「当日明细」列表（与点击某天后展示的列表一致），删除后即时刷新且停留在日历界面
+function lgRenderCalDay(){
+  const dl = $('lgCalDayList'); if(!dl) return;
+  const recs = (state.ledger.records||[]).filter(r => r.date === lgState.selDate);
+  dl.innerHTML = recs.length ? recs.map(lgOneRecHTML).join('') : '<div class="empty"><span class="empty-emoji">🐱</span><div class="empty-text">这一天还没有记录</div></div>';
+  dl.querySelectorAll('.del').forEach(b => b.onclick = () => lgDeleteRec(b.dataset.id));
+  const t = $('lgCalDayTitle');
+  if(t) t.textContent = '当日明细 · ' + lgState.selDate + (recs.length ? '（' + recs.length + ' 笔）' : '');
+}
 function lgDeleteRec(id){
   state.ledger.records = (state.ledger.records||[]).filter(r => r.id !== id);
-  lgRenderRecent(lgState.selDate);
+  lgRenderRecent();
+  lgRenderCalDay();
   lgRenderDayChart(lgState.selDate);
   lgRenderCalendar(); lgRenderStats(); lgRenderOverview();
   toast('已删除');
@@ -4304,9 +4315,11 @@ function lgSave(){
 function lgAutoSync(){
   const token = getGiteeToken();
   if(!token || !state.user){ return; }
-  // 录入/删除/设预算后：先把云端合并进来（保留本地新录入，不覆盖），再把完整数据上传到云端，确保记录不丢
-  tryPullLedger(false)
-    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
+  // 录入/删除/设预算后：先【上传】本次增删改到云端（删除先落地，云端不再保留该记录），
+  // 再【合并】云端（此时云端已是删除后状态，不会把刚删的拉回；同时保留其它设备的新录入）。
+  // 注意：自动同步不触发整页 renderLedger（否则会重置回概览面板），界面停留在当前操作面板。
+  pushLedgerData(state.user.name, new Date().toISOString())
+    .then(() => tryPullLedger(false, false))
     .then(() => { lgSetStamp('push'); lgSetStamp('pull'); })
     .catch(() => {});
 }
@@ -4324,7 +4337,7 @@ function lgPushLedgerCloud(){
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
   const btn = $('lgSync');
   if(btn) btn.disabled = true;
-  tryPullLedger(false)
+  tryPullLedger(false, false)
     .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
     .then(() => { lgSetStamp('push'); toast('已上传记账数据到云端 ✓'); })
     .catch(e => toast('上传失败：' + (e && e.message ? e.message : '未知错误')))
@@ -4334,7 +4347,7 @@ function lgPushLedgerCloud(){
 function lgSyncLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  tryPullLedger(false)
+  tryPullLedger(false, false)
     .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
     .then(() => { lgSetStamp('push'); lgSetStamp('pull'); toast('记账已双向同步 ✓'); })
     .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
