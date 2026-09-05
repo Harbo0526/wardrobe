@@ -6,7 +6,8 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时）
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v2.8.2';
+const CACHE_NAME = 'wardrobe-v3.1.0';
+// v2.8.3 调酒备份页云端同步卡片新增上传/下拉时间戳（月/日/时/分），并升级 PWA 缓存名
 const APP_SHELL = [
   './',
   './index.html',
