@@ -391,6 +391,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-home .memo-item .mt{flex:1;min-width:0;font-size:13px;color:var(--ink);word-break:break-all;line-height:1.45;}
 #screen-home .memo-item .mtime{flex-shrink:0;font-size:10.5px;color:var(--ink-faint);padding-top:2px;}
 #screen-home .memo-item .mdel{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:13px;}
+/* 主页重启按钮（v4.2.5：区别于同步⟳，功能=重启程序/清缓存/检查更新） */
+#screen-home .home-reload{
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.65);color:#8a4b00;
+  font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;
+  border:1px solid rgba(255,255,255,.7);
+}
+#screen-home .home-reload:active{background:#ffd9a8;}
 .cloth-card{
   background:var(--card);
   border:1px solid var(--line);
@@ -1214,10 +1221,11 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <div class="home-greet" id="home-greet">午后好，小绿</div>
         <div class="home-date" id="home-date">2026年8月25日 · 星期二</div>
       </div>
+      <button class="home-reload press" onclick="hardReload()" title="重启程序 · 清理缓存 · 检查更新">⟲</button>
       <div class="avatar" id="home-avatar" onclick="navTo(4)" title="我的">绿</div>
     </div>
 
-    <!-- 励志卡（v4.2.0：加菲猫橘猫点缀 + 中英双语励志语，每次进首页随机切换） -->
+    <!-- 励志卡（v4.2.0：加菲猫橘猫点缀 + 中英双语励志语；v4.2.5 起每次启动只随机一次） -->
     <div class="home-hero">
       <div class="cat"></div>
       <div class="qt">
@@ -2290,7 +2298,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '4.2.2';
+const APP_VERSION = '4.2.5';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2963,11 +2971,29 @@ const HOME_QUOTES = [
   { zh: '所有的美好都会如约而至。', en: 'All good things come in time.' }
 ];
 const HOME_EMOJIS = ['🐱','😹','😼','😴','🍖','😋','🧀','⭐','🍊','💤','🐟','🍩'];
+let homeQuoteSeeded = false;
 function renderHomeQuote(){
+  if(homeQuoteSeeded) return;   // v4.2.5：每次启动只随机一次——启动期 renderHome 会被同步链路多次调用，避免励志语句来回跳变
   const q = HOME_QUOTES[Math.floor(Math.random()*HOME_QUOTES.length)];
   const zh = $('home-quote-zh'), en = $('home-quote-en');
   if(zh) zh.textContent = q.zh;
   if(en) en.textContent = q.en;
+  homeQuoteSeeded = true;
+}
+/* 主页重启按钮（v4.2.5）：清空全部 SW 缓存 + 注销 Service Worker + 整页重载 = 重启程序/刷新缓存/检查更新 */
+async function hardReload(){
+  if(!confirm('重启程序并清理本地缓存？\n（云端数据不受影响，重启后自动重新加载最新版本）')) return;
+  try{
+    if('caches' in window){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if(navigator.serviceWorker){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      regs.forEach(r => r.unregister());
+    }
+  }catch(e){}
+  location.reload();
 }
 function homeScatter(){
   const grid = $('home-hero-emojis'); if(!grid) return;
@@ -2991,8 +3017,17 @@ function homeScatter(){
 }
 /* 备忘：按账号隔离存本机 localStorage（key: memo_<用户名>） */
 function memoKey(){ return 'memo_' + (state.user && state.user.name ? state.user.name : 'guest'); }
-function loadMemos(){ try{ const a = JSON.parse(localStorage.getItem(memoKey())||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
-function saveMemos(a){ try{ localStorage.setItem(memoKey(), JSON.stringify(a)); }catch(e){} }
+/* 本地存储结构 v4.2.3：{ memos:[{t,at}], deleted:[at...] 墓碑 }；兼容 4.2.1 之前的纯数组旧格式 */
+function loadMemoStore(){
+  try{
+    const v = JSON.parse(localStorage.getItem(memoKey())||'null');
+    if(Array.isArray(v)) return { memos: v, deleted: [] };
+    if(v && Array.isArray(v.memos)) return { memos: v.memos, deleted: Array.isArray(v.deleted)?v.deleted:[] };
+  }catch(e){}
+  return { memos: [], deleted: [] };
+}
+function saveMemoStore(st){ try{ localStorage.setItem(memoKey(), JSON.stringify({ memos: st.memos, deleted: st.deleted })); }catch(e){} }
+function loadMemos(){ return loadMemoStore().memos; }
 function renderMemos(){
   const list = $('home-memo-list'); if(!list) return;
   const memos = loadMemos().sort((a,b)=>b.at-a.at);   // 最新在最上
@@ -3012,37 +3047,52 @@ function renderMemos(){
 function addMemo(){
   const inp = $('home-memo-input'); if(!inp) return;
   const v = inp.value.trim(); if(!v){ toast('先写点什么吧'); return; }
-  const a = loadMemos(); a.push({ t:v, at:Date.now() }); saveMemos(a);
+  const st = loadMemoStore(); st.memos.push({ t:v, at:Date.now() }); saveMemoStore(st);
   inp.value = ''; renderMemos(); toast('已记下 ✓');
   memoAutoSync();
 }
 function delMemo(at){
-  saveMemos(loadMemos().filter(m => m.at !== at)); renderMemos(); toast('已删除');
+  const st = loadMemoStore();
+  st.memos = st.memos.filter(m => m.at !== at);
+  if(!st.deleted.some(x => Number(x) === Number(at))) st.deleted.push(Number(at));   // 墓碑：合并时过滤，防止已删记录从其他设备复活
+  saveMemoStore(st); renderMemos(); toast('已删除');
   memoAutoSync();
 }
-/* ---------- 备忘云端同步（v4.2.1：独立文件 data/<用户>/memo.json，与 sleep.json 同模式，先上传后下拉） ---------- */
+/* ---------- 备忘云端同步（v4.2.3：合并式同步，多设备不互相覆盖） ----------
+   数据文件 data/<用户>/memo.json = { updatedAt, memos:[{t,at}], deleted:[at...] }。
+   核心改动：同步时先「拉云端 → 与本地按 id(at) 取并集 + 墓碑过滤 → 写回本地」，再把合并后的全量上传云端，
+   两台设备各记一条 → 云端为并集，谁也不覆盖谁；删除走墓碑列表，同样在全设备生效。 */
 function memoPath(){ return userDir(state.user.name) + 'memo.json'; }
+function mergeMemoStores(local, remote){
+  const del = new Set([...(local.deleted||[]), ...(remote.deleted||[])].map(Number));
+  const map = new Map();                                                        // id = at（创建时间戳，天然唯一）
+  (local.memos||[]).forEach(m => { if(m && typeof m.t === 'string' && m.at && !del.has(Number(m.at))) map.set(Number(m.at), m); });
+  (remote.memos||[]).forEach(m => { if(m && typeof m.t === 'string' && m.at && !del.has(Number(m.at))) if(!map.has(Number(m.at))) map.set(Number(m.at), m); });
+  return { memos: [...map.values()].sort((a,b)=>b.at-a.at), deleted: [...del] };
+}
 async function pushMemoData(username){
-  const payload = JSON.stringify({ updatedAt: new Date().toISOString(), memos: loadMemos() }, null, 2);
+  const st = loadMemoStore();
+  const payload = JSON.stringify({ updatedAt: new Date().toISOString(), memos: st.memos, deleted: st.deleted }, null, 2);
   await giteeWriteJSON(memoPath(), payload, 'sync memo ' + username + ' ' + new Date().toISOString());
 }
 async function pullMemoData(){
   const remote = await giteeReadJSON(memoPath());
-  if(!remote) return false;                       // 云端无文件 → 保留本地
-  const rs = Array.isArray(remote.memos) ? remote.memos : [];
-  saveMemos(rs.filter(m => m && typeof m.t === 'string' && m.at));   // 以云端为准覆盖本地
+  if(!remote) return false;                       // 云端无文件 → 保留本地，等下次推送建立
+  const remoteStore = { memos: Array.isArray(remote.memos)?remote.memos:[], deleted: Array.isArray(remote.deleted)?remote.deleted:[] };
+  saveMemoStore(mergeMemoStores(loadMemoStore(), remoteStore));   // 合并写回本地，绝不丢设备侧记录
   renderMemos();
   return true;
 }
 async function tryPullMemo(){
   try{ return await pullMemoData(); }catch(err){ return false; }
 }
-function memoAutoSync(){
+async function memoAutoSync(){
   const token = getGiteeToken();
   if(!token || !state.user) return;               // 未登录/未配令牌 → 仅存本机
-  pushMemoData(state.user.name)
-    .then(() => tryPullMemo())
-    .catch(() => {});                             // 静默失败，不影响本地使用
+  try{
+    await pullMemoData();                         // ① 拉云端并与本地合并（union + 墓碑过滤）
+    await pushMemoData(state.user.name);          // ② 上传合并后的全量 → 云端恒为所有设备并集
+  }catch(e){}                                     // 静默失败，不影响本地使用
 }
 
 /* ---------- 衣橱子页面（v4.1.0：左侧导航 概览/衣物/云端 + 右侧功能页，粉色 HelloKitty 风格） ---------- */
@@ -4553,8 +4603,12 @@ async function doSync(){
   btn.style.opacity = .7;
 
   try{
-    await pushUserData();   // 推送本地
+    await pullUserData();   // v4.2.5：推送前先把云端合并进本地（clothes/groups/materials/recipes 按 id 取并集）→ 云端恒为所有设备并集，互不覆盖
+    await pushUserData();   // 上传合并后的全量
     ckSetStamp('push');     // 记录调酒上传时间戳
+    // v4.2.4：头像补入双向同步——此前 ⟳ 只拉不推，设置头像时若上传失败将永无重试机会，
+    // 下次 ⟳ 还会用云端旧值覆盖本地导致头像丢失。本地有头像则先上传（本地为 null 时不推，避免误清云端）。
+    if(state.user && state.user.avatar){ await pushProfile(); }
     await pullUserData();   // 拉回合并（双向同步）
     await pullProfile();    // 同步恢复头像
     renderSyncStatus();
@@ -4619,10 +4673,10 @@ async function autoPullOnLaunch(){
   }
   // 头像独立从云端恢复（即使衣物拉取失败也尝试），无网络/无文件则保留本地
   try{ await pullProfile(); }catch(e){}
-  // 记账独立从 ledger.json 恢复（保证即使衣物清单缺失也能取回）
-  try{ await tryPullLedger(true); }catch(e){}
-  // 睡眠独立从 sleep.json 恢复（保证即使衣物/记账缺失也能取回）
-  try{ await tryPullSleep(true); }catch(e){}
+  // 记账独立从 ledger.json 恢复（合并模式 v4.2.5：以并集取回，不覆盖任何一方）
+  try{ await tryPullLedger(false); }catch(e){}
+  // 睡眠独立从 sleep.json 恢复（合并模式 v4.2.5：以并集取回，不覆盖任何一方）
+  try{ await tryPullSleep(false); }catch(e){}
   // 备忘独立从 memo.json 恢复（v4.2.1：云端为准覆盖本机缓存，无云端文件则保留本地）
   try{ await tryPullMemo(); }catch(e){}
 }
@@ -4631,38 +4685,40 @@ async function autoPullOnLaunch(){
    记账工作台（独立文件 ledger.json，按账号隔离，纯云端：本机不落盘）
    左侧 80px 垂直导航：录入 / 日历 / 统计 / 查询 / 云端
    ===================================================================== */
-function defaultLedger(){ return { records: [], seeded: false, budgets: {} }; }
+function defaultLedger(){ return { records: [], seeded: false, budgets: {}, deleted: [] }; }
 function normalizeLedger(L){
   const d = defaultLedger();
   if(!L || typeof L !== 'object') return d;
   return {
     records: Array.isArray(L.records) ? L.records : [],
     seeded: !!L.seeded,
-    budgets: (L.budgets && typeof L.budgets === 'object') ? L.budgets : {}
+    budgets: (L.budgets && typeof L.budgets === 'object') ? L.budgets : {},
+    deleted: Array.isArray(L.deleted) ? L.deleted : []
   };
 }
 function ledgerPath(){ return userDir(state.user.name) + 'ledger.json'; }
 
 async function pushLedgerData(username, updatedAt){
   const L = normalizeLedger(state.ledger);
-  const payload = JSON.stringify({ updatedAt: updatedAt, records: L.records, seeded: L.seeded, budgets: L.budgets }, null, 2);
+  const payload = JSON.stringify({ updatedAt: updatedAt, records: L.records, seeded: L.seeded, budgets: L.budgets, deleted: L.deleted }, null, 2);
   await giteeWriteJSON(ledgerPath(), payload, 'sync ledger ' + username + ' ' + updatedAt);
 }
 async function pullLedgerData(overwrite){
   const remote = await giteeReadJSON(ledgerPath());
   if(!remote) return false;
-  const rl = normalizeLedger({ records: remote.records, seeded: remote.seeded, budgets: remote.budgets });
+  const rl = normalizeLedger({ records: remote.records, seeded: remote.seeded, budgets: remote.budgets, deleted: remote.deleted });
   if(overwrite){
     // 强制覆盖（启动/手动下拉取回）：以云端为准
     state.ledger = rl;
     return true;
   }
-  // 合并模式：按 id 去重，云端 + 本地全部记录都保留（本地刚录入的不会被覆盖）；预算取双方并集
+  // 合并模式 v4.2.5：按 id 取并集（云端 + 本地全部保留），再按墓碑过滤（删除全设备生效，防复活）；预算取双方并集
+  const del = new Set([...(state.ledger.deleted||[]), ...(rl.deleted||[])].map(String));
   const map = new Map();
-  (state.ledger.records||[]).forEach(r => { if(r && r.id) map.set(r.id, r); });
-  (rl.records||[]).forEach(r => { if(r && r.id) map.set(r.id, r); });
+  (state.ledger.records||[]).forEach(r => { if(r && r.id != null && !del.has(String(r.id))) map.set(r.id, r); });
+  (rl.records||[]).forEach(r => { if(r && r.id != null && !del.has(String(r.id))) if(!map.has(r.id)) map.set(r.id, r); });
   const budgets = Object.assign({}, rl.budgets||{}, state.ledger.budgets||{});
-  state.ledger = { records: Array.from(map.values()), seeded: rl.seeded || state.ledger.seeded, budgets: budgets };
+  state.ledger = { records: Array.from(map.values()), seeded: rl.seeded || state.ledger.seeded, budgets: budgets, deleted: [...del] };
   return true;
 }
 async function tryPullLedger(overwrite, doRefresh){
@@ -4678,32 +4734,35 @@ async function tryPullLedger(overwrite, doRefresh){
    左侧垂直导航：概览 / 记录 / 日历 / 统计 / 云端（复用记账粉色主题）
    规则：归属「开始日期」+ 自动跨午夜（结束<=开始自动 +24h）；一天允许多条，按天求和。
    ===================================================================== */
-function defaultSleep(){ return { records: [] }; }
+function defaultSleep(){ return { records: [], deleted: [] }; }
 function normalizeSleep(S){
   const d = defaultSleep();
   if(!S || typeof S !== 'object') return d;
-  return { records: Array.isArray(S.records) ? S.records : [] };
+  return { records: Array.isArray(S.records) ? S.records : [], deleted: Array.isArray(S.deleted) ? S.deleted : [] };
 }
 function sleepPath(){ return userDir(state.user.name) + 'sleep.json'; }
 
 async function pushSleepData(username, updatedAt){
   const S = normalizeSleep(state.sleep);
-  const payload = JSON.stringify({ updatedAt: updatedAt, records: S.records }, null, 2);
+  const payload = JSON.stringify({ updatedAt: updatedAt, records: S.records, deleted: S.deleted }, null, 2);
   await giteeWriteJSON(sleepPath(), payload, 'sync sleep ' + username + ' ' + updatedAt);
 }
 async function pullSleepData(overwrite){
   const remote = await giteeReadJSON(sleepPath());
   if(!remote) return false;
   const rs = Array.isArray(remote.records) ? remote.records : [];
+  const rd = Array.isArray(remote.deleted) ? remote.deleted : [];
   if(overwrite){
-    state.sleep = { records: rs };   // 强制覆盖（启动/手动下拉取回）：以云端为准
+    state.sleep = normalizeSleep({ records: rs, deleted: rd });   // 强制覆盖（启动/手动下拉取回）：以云端为准
     return true;
   }
-  // 合并模式：按 id 去重，云端 + 本地全部保留（本地刚录入的不会被覆盖）
+  // 合并模式 v4.2.5：按 id 取并集（云端 + 本地全部保留，本地刚录入的不会被覆盖），
+  // 并集后再按墓碑过滤（两台设备各自的删除在此统一生效，防止已删记录从另一台设备复活）
+  const del = new Set([...(state.sleep.deleted||[]), ...rd].map(String));
   const map = new Map();
-  (state.sleep.records||[]).forEach(r => { if(r && r.id) map.set(r.id, r); });
-  rs.forEach(r => { if(r && r.id) map.set(r.id, r); });
-  state.sleep = { records: Array.from(map.values()) };
+  (state.sleep.records||[]).forEach(r => { if(r && r.id != null && !del.has(String(r.id))) map.set(r.id, r); });
+  rs.forEach(r => { if(r && r.id != null && !del.has(String(r.id))) if(!map.has(r.id)) map.set(r.id, r); });
+  state.sleep = normalizeSleep({ records: Array.from(map.values()), deleted: [...del] });
   return true;
 }
 async function tryPullSleep(overwrite, doRefresh){
@@ -4894,6 +4953,8 @@ function lgRenderCalDay(){
 }
 function lgDeleteRec(id){
   state.ledger.records = (state.ledger.records||[]).filter(r => r.id !== id);
+  state.ledger.deleted = state.ledger.deleted || [];
+  if(!state.ledger.deleted.some(x => String(x) === String(id))) state.ledger.deleted.push(id);   // 墓碑：合并时过滤，防已删记录从其他设备复活
   lgRenderRecent();
   lgRenderCalDay();
   lgRenderDayChart(lgState.selDate);
@@ -4930,8 +4991,9 @@ function lgAutoSync(){
   // 录入/删除/设预算后：先【上传】本次增删改到云端（删除先落地，云端不再保留该记录），
   // 再【合并】云端（此时云端已是删除后状态，不会把刚删的拉回；同时保留其它设备的新录入）。
   // 注意：自动同步不触发整页 renderLedger（否则会重置回概览面板），界面停留在当前操作面板。
-  pushLedgerData(state.user.name, new Date().toISOString())
-    .then(() => tryPullLedger(false, false))
+  // v4.2.5 合并式同步：先拉云端与本地取并集（墓碑过滤），再上传合并后的全量 → 云端恒为所有设备并集
+  tryPullLedger(false, false)
+    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
     .then(() => { lgSetStamp('push'); lgSetStamp('pull'); })
     .catch(() => {});
 }
@@ -4959,8 +5021,8 @@ function lgPushLedgerCloud(){
 function lgSyncLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  return pushLedgerData(state.user.name, new Date().toISOString())
-    .then(() => tryPullLedger(false, false))
+  return tryPullLedger(false, false)
+    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
     .then(() => { lgSetStamp('push'); lgSetStamp('pull'); toast('记账已双向同步 ✓'); })
     .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
 }
@@ -5290,6 +5352,8 @@ function spRenderOverview(){
 }
 function spDeleteRec(id){
   state.sleep.records = (state.sleep.records||[]).filter(r => r.id !== id);
+  state.sleep.deleted = state.sleep.deleted || [];
+  if(!state.sleep.deleted.some(x => String(x) === String(id))) state.sleep.deleted.push(id);   // 墓碑：合并时过滤，防已删记录从其他设备复活
   spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
   toast('已删除');
   spAutoSync();
@@ -5322,8 +5386,9 @@ function spSave(){
 function spAutoSync(){
   const token = getGiteeToken();
   if(!token || !state.user) return;
-  pushSleepData(state.user.name, new Date().toISOString())
-    .then(() => tryPullSleep(false, false))
+  // v4.2.5 合并式同步：先拉云端与本地取并集（墓碑过滤），再上传合并后的全量 → 云端恒为所有设备并集
+  tryPullSleep(false, false)
+    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
     .then(() => { spSetStamp('push'); spSetStamp('pull'); })
     .catch(() => {});
 }
@@ -5501,8 +5566,8 @@ function spPushCloud(){
 function spSyncCloud(){
   if(!state.user){ toast('请先登录'); return; }
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  return pushSleepData(state.user.name, new Date().toISOString())
-    .then(() => tryPullSleep(false, false))
+  return tryPullSleep(false, false)
+    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
     .then(() => { spSetStamp('push'); spSetStamp('pull'); toast('睡眠已双向同步 ✓'); })
     .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
 }
