@@ -963,6 +963,91 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-ledger .lg-rec.exp .amt{color:var(--lg-exp);}
 #screen-ledger .lg-rec.inc .amt{color:var(--lg-inc);}
 #screen-ledger .lg-rec .del{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--lg-soft);color:var(--lg-exp);display:flex;align-items:center;justify-content:center;font-size:15px;}
+/* ============ 睡眠屏（复用记账粉色主题，作用域 #screen-sleep） ============ */
+/* 主题变量：--lg-* 原本只定义在 #screen-ledger 上，睡眠屏必须自持一份，否则 var() 全部失效
+   （症状：上传按钮 background 解析失败变透明 + 白字，白卡片上完全看不见） */
+#screen-sleep{
+  --lg-primary:#ff8fb3;   /* 少女粉主色 */
+  --lg-deep:#ff6b9d;      /* 深粉 */
+  --lg-soft:#ffd6e7;      /* 浅粉 */
+  --lg-exp:#FF6B8A;       /* 支出：樱花粉 */
+  --lg-red:#FF4D6D;       /* 超支/负：红 */
+  --lg-inc:#69D19D;       /* 收入/正：薄荷绿 */
+  --lg-ink:#5a3d4e;
+}
+#screen-sleep .btn-secondary{background:var(--lg-soft);color:var(--lg-deep);}
+#screen-sleep .btn-accent{background:var(--lg-deep);color:#fff;opacity:1;}
+#screen-sleep .lg-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:rgba(255,143,179,.85);backdrop-filter:blur(10px);color:#fff;border-bottom:1px solid rgba(255,255,255,.25);}
+#screen-sleep .lg-head h2{font-size:18px;font-weight:800;display:flex;align-items:center;gap:6px;}
+#screen-sleep .lg-sync{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;}
+#screen-sleep .lg-sync:active{background:rgba(255,255,255,.45);}
+#screen-sleep .lg-shell{flex:1;min-height:0;display:flex;}
+#screen-sleep .lg-side{flex:0 0 80px;width:80px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-right:1px solid rgba(255,214,231,.6);display:flex;flex-direction:column;padding:8px 0;gap:6px;overflow-y:auto;}
+#screen-sleep .lg-nav{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0 6px;padding:10px 2px;border-radius:16px;color:var(--lg-ink);background:transparent;font-size:11px;font-weight:700;}
+#screen-sleep .lg-nav .lg-emoji{font-size:22px;line-height:1;}
+#screen-sleep .lg-nav.active{background:var(--lg-soft);color:var(--lg-deep);box-shadow:inset 0 0 0 1.5px var(--lg-primary);}
+#screen-sleep .lg-main{flex:1;min-width:0;overflow-y:auto;padding:12px;position:relative;z-index:1;}
+#screen-sleep .lg-panel{display:none;}
+#screen-sleep .lg-panel.active{display:block;animation:fadeIn .25s ease;}
+#screen-sleep .lg-banner{position:relative;border-radius:22px;padding:14px 16px;margin-bottom:12px;background:linear-gradient(135deg,rgba(255,214,231,.88),rgba(255,239,246,.78));backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(255,143,179,.12);overflow:hidden;min-height:92px;border:1px solid rgba(255,255,255,.5);}
+#screen-sleep .lg-banner-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(255,143,179,.28);background-size:cover;background-position:center;background-color:#fff;flex-shrink:0;}
+#screen-sleep .lg-banner-text{flex:1;min-width:0;margin-left:12px;z-index:2;}
+#screen-sleep .lg-banner-text h3{margin:0;font-size:16px;font-weight:800;color:var(--lg-deep);}
+#screen-sleep .lg-banner-text p{margin:3px 0 0;font-size:12px;color:var(--lg-ink);opacity:.82;}
+#screen-sleep .lg-banner-row{display:flex;align-items:center;position:relative;}
+#screen-sleep .lg-banner-emojis{position:absolute;inset:0;z-index:1;pointer-events:none;}
+#screen-sleep .lg-banner-emoji{position:absolute;font-size:18px;line-height:1;transform-origin:center;filter:saturate(1.1);}
+#screen-sleep .lg-ov-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+#screen-sleep .lg-ov-card{padding:16px 10px;text-align:center;}
+#screen-sleep .lg-ov-card .k{font-size:12px;color:var(--lg-ink);opacity:.72;}
+#screen-sleep .lg-ov-card .v{font-size:21px;font-weight:800;margin-top:6px;}
+#screen-sleep .lg-ov-card.inc .v{color:var(--lg-inc);}
+#screen-sleep .lg-ov-card.exp .v{color:var(--lg-exp);}
+#screen-sleep .lg-ov-card.net .v{color:var(--lg-primary);}
+#screen-sleep .lg-ov-card.save .v{color:var(--lg-deep);}
+#screen-sleep .lg-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+#screen-sleep .lg-cal-head button{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.85);color:var(--lg-deep);font-size:18px;box-shadow:0 2px 8px rgba(255,143,179,.12);}
+#screen-sleep .lg-cal-head span{font-size:15px;font-weight:700;color:var(--lg-ink);}
+#screen-sleep .lg-cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
+#screen-sleep .lg-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+#screen-sleep .lg-cell{border-radius:12px;background:rgba(255,255,255,.80);min-height:46px;padding:4px 1px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;box-shadow:0 2px 6px rgba(255,143,179,.08);}
+#screen-sleep .lg-cell.empty{background:transparent;box-shadow:none;}
+#screen-sleep .lg-cell .lg-d{font-size:12px;font-weight:600;color:var(--lg-ink);}
+#screen-sleep .lg-cell.today .lg-d{color:var(--lg-deep);}
+#screen-sleep .lg-cell.today{background:var(--lg-soft);}
+#screen-sleep .lg-cell.sel{box-shadow:inset 0 0 0 2px var(--lg-primary);}
+#screen-sleep .lg-cell .lg-c{font-size:9px;line-height:1.2;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#screen-sleep .lg-cell .lg-c.exp{color:var(--lg-exp);}
+#screen-sleep .lg-cell .lg-c.inc{color:var(--lg-inc);}
+#screen-sleep .lg-c.sl{color:var(--lg-deep);background:var(--lg-soft);border-radius:6px;padding:0 3px;}
+#screen-sleep .lg-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 12px;}
+#screen-sleep .lg-sum{padding:16px 4px;text-align:center;}
+#screen-sleep .lg-sum .v{font-size:18px;font-weight:800;color:var(--lg-deep);}
+#screen-sleep .lg-sum.inc .v{color:var(--lg-inc);}
+#screen-sleep .lg-sum.exp .v{color:var(--lg-exp);}
+#screen-sleep .lg-sum.net .v{color:var(--lg-primary);}
+#screen-sleep .lg-sum.save .v{color:var(--lg-deep);}
+#screen-sleep .lg-sum .k{font-size:11px;color:var(--lg-ink);opacity:.7;margin-top:3px;}
+#screen-sleep .lg-chart{width:100%;overflow-x:auto;background:rgba(255,255,255,.80);border-radius:16px;padding:10px;box-shadow:0 4px 14px rgba(255,143,179,.08);}
+#screen-sleep .lg-daybars{display:flex;align-items:flex-end;gap:4px;height:84px;overflow-x:auto;padding:4px 0;}
+#screen-sleep .lg-daybar{flex:0 0 auto;width:16px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;cursor:pointer;}
+#screen-sleep .lg-daybar .bi{display:flex;align-items:flex-end;gap:1px;width:100%;height:64px;justify-content:center;}
+#screen-sleep .lg-daybar i{display:block;width:6px;border-radius:2px 2px 0 0;min-height:2px;}
+#screen-sleep .lg-daybar i.inc{background:var(--lg-inc);}
+#screen-sleep .lg-daybar i.exp{background:var(--lg-red);}
+#screen-sleep .lg-daybar i.sl{background:#ff6b9d;}
+#screen-sleep .lg-daybar small{font-size:8px;text-align:center;color:var(--ink-faint);margin-top:2px;}
+#screen-sleep .lg-legend{display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:12px;color:var(--lg-ink);}
+#screen-sleep .lg-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:middle;}
+#screen-sleep .lg-rec{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(255,214,231,.6);}
+#screen-sleep .lg-rec:last-child{border-bottom:none;}
+#screen-sleep .lg-rec .dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--lg-exp);}
+#screen-sleep .lg-rec .ri{flex:1;min-width:0;}
+#screen-sleep .lg-rec .ri .t{font-size:14px;font-weight:600;color:var(--lg-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#screen-sleep .lg-rec .ri .s{font-size:11px;color:var(--lg-ink);opacity:.6;margin-top:1px;}
+#screen-sleep .lg-rec .amt{font-weight:800;font-size:15px;flex:0 0 auto;color:var(--lg-deep);}
+#screen-sleep .lg-rec .del{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--lg-soft);color:var(--lg-exp);display:flex;align-items:center;justify-content:center;font-size:15px;}
+
 </style>
 </head>
 <body>
@@ -1043,6 +1128,15 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       <div class="avatar" id="home-avatar">绿</div>
     </div>
     <div class="home-stats" id="home-stats"></div>
+
+    <!-- 快捷入口：睡眠等功能卡片（独立容器，避免被 renderHome 重写 #home-groups 覆盖） -->
+    <div class="sec-title" style="margin-top:14px;">快捷入口</div>
+    <div class="home-groups" id="home-quick">
+      <button class="group-card press" onclick="gotoSleep()">
+        <span class="gc-emoji">🌙</span>
+        <span class="gc-info"><span class="gc-name">睡眠</span><span class="gc-count">记录你的睡眠</span></span>
+      </button>
+    </div>
 
     <!-- 分组导航卡片 -->
     <div class="sec-title">我的分组</div>
@@ -1627,6 +1721,155 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     </div>
   </section>
 
+  <!-- ============ 屏：睡眠 ============ -->
+  <section class="screen" id="screen-sleep">
+    <div class="lg-head">
+      <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
+      <h2>🌙 Harbo睡眠</h2>
+      <button class="lg-sync press" id="spHeaderSync" title="同步到云端" onclick="spGuardSync() && spSyncCloud()">⟳</button>
+    </div>
+    <div class="lg-shell">
+      <aside class="lg-side" id="spSide">
+        <button class="lg-nav active" data-sp="overview"><span class="lg-emoji">🏠</span><span class="lg-label">概览</span></button>
+        <button class="lg-nav" data-sp="entry"><span class="lg-emoji">✍️</span><span class="lg-label">记录</span></button>
+        <button class="lg-nav" data-sp="calendar"><span class="lg-emoji">📅</span><span class="lg-label">日历</span></button>
+        <button class="lg-nav" data-sp="stats"><span class="lg-emoji">📊</span><span class="lg-label">统计</span></button>
+        <button class="lg-nav" data-sp="bak"><span class="lg-emoji">☁️</span><span class="lg-label">云端</span></button>
+      </aside>
+
+      <main class="lg-main">
+
+        <!-- 概览 -->
+        <div class="lg-panel" id="spp-overview">
+          <div class="lg-banner" data-title="🌙 概览" data-sub="昨晚睡得好吗">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>🌙 概览</h3><p>昨晚睡得好吗</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="lg-ov-cards">
+            <div class="lg-ov-card inc"><div class="k">今日睡眠</div><div class="v" id="spOvToday">0</div></div>
+            <div class="lg-ov-card exp"><div class="k">近7天日均</div><div class="v" id="spOv7">0</div></div>
+            <div class="lg-ov-card net"><div class="k">本月总时长</div><div class="v" id="spOvMonth">0</div></div>
+            <div class="lg-ov-card save"><div class="k">平均入睡</div><div class="v" id="spOvBed">--:--</div></div>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <div class="ck-sec"><h3 id="spOvTitle">最近记录</h3></div>
+            <div id="spOvList"></div>
+          </div>
+        </div>
+
+        <!-- 记录 -->
+        <div class="lg-panel" id="spp-entry">
+          <div class="lg-banner" data-title="✍️ 记睡眠" data-sub="记下入睡与起床时间">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>✍️ 记睡眠</h3><p>记下入睡与起床时间</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="field" style="margin-top:10px;">
+              <label>日期（归属开始那晚）</label>
+              <input class="input" type="date" id="spDate">
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label>入睡时间</label>
+              <input class="input" type="time" id="spStart">
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label>起床时间（≤入睡自动跨午夜）</label>
+              <input class="input" type="time" id="spEnd">
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label>备注</label>
+              <input class="input" id="spNote" placeholder="如：午睡 / 晚觉">
+            </div>
+            <button class="btn btn-primary" id="spSave" style="margin-top:14px;">保存记录</button>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-sec"><h3 id="spDayTitle">最近记录</h3></div>
+            <div id="spDayList"></div>
+          </div>
+        </div>
+
+        <!-- 日历 -->
+        <div class="lg-panel" id="spp-calendar">
+          <div class="lg-banner" data-title="📅 日历" data-sub="看看每晚睡了多久">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>📅 日历</h3><p>看看每晚睡了多久</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="lg-cal-head">
+              <button class="press" id="spCalPrev">‹</button>
+              <span id="spCalTitle">2026年9月</span>
+              <button class="press" id="spCalNext">›</button>
+            </div>
+            <div class="lg-cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+            <div class="lg-cal-grid" id="spCalGrid"></div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-sec"><h3 id="spCalDayTitle">当日明细</h3></div>
+            <div id="spCalDayList"></div>
+          </div>
+        </div>
+
+        <!-- 统计 -->
+        <div class="lg-panel" id="spp-stats">
+          <div class="lg-banner" data-title="📊 统计" data-sub="睡眠趋势一目了然">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>📊 统计</h3><p>睡眠趋势一目了然</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="lg-cal-head">
+              <button class="press" id="spStatPrev">‹</button>
+              <span id="spStatTitle">2026年9月</span>
+              <button class="press" id="spStatNext">›</button>
+            </div>
+            <div class="lg-summary">
+              <div class="lg-sum inc"><div class="v" id="spStatTotal">0</div><div class="k">月总时长</div></div>
+              <div class="lg-sum exp"><div class="v" id="spStatAvg">0</div><div class="k">日均时长</div></div>
+              <div class="lg-sum net"><div class="v" id="spStatBed">--:--</div><div class="k">平均入睡</div></div>
+              <div class="lg-sum save"><div class="v" id="spStatWake">--:--</div><div class="k">平均起床</div></div>
+            </div>
+            <div class="ck-sec" style="margin-top:6px;"><h3>📅 每日睡眠时长（柱：小时）</h3></div>
+            <div id="spStatChart" class="lg-chart"></div>
+          </div>
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-sec"><h3>📊 每日时长</h3></div>
+            <div id="spStatDays" class="lg-daybars"></div>
+          </div>
+        </div>
+
+        <!-- 云端 -->
+        <div class="lg-panel" id="spp-bak">
+          <div class="lg-banner" data-title="☁️ 云端" data-sub="数据云端备份，换设备也不丢">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>☁️ 云端</h3><p>数据云端备份，换设备也不丢</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
+            <p class="ck-hint">睡眠数据独立存于云端 <b>sleep.json</b>（按账号隔离，与衣物/记账/调酒分开）。换设备点「从云端下拉」即可取回，仅影响睡眠数据。</p>
+            <button class="btn btn-secondary" id="spPull" style="margin-top:10px;" onclick="spGuardSync() && spPullCloud()">⬇ 从云端下拉</button>
+            <button class="btn btn-accent" id="spSync" style="margin-top:8px;" onclick="spGuardSync() && spPushCloud()">⬆ 上传云端</button>
+            <div id="spSyncStamps" class="ck-hint" style="margin-top:10px;color:var(--lg-deep);font-weight:600;"></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </section>
+
   <!-- ============ 底部导航（登录态展示） ============ -->
   <nav class="tab-bar" id="tab-bar" hidden>
     <button class="tab-item press active" data-tab="0" onclick="navTo(0)">
@@ -1839,7 +2082,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '3.1.3';
+const APP_VERSION = '4.0.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -1892,7 +2135,8 @@ function defaultState(){
     clothes:[],
     lastSync:null,                   // 上次同步时间戳
     cocktail: defaultCocktail(),     // 调酒：材料库 + 配方（按账号隔离，随衣橱统一同步）
-    ledger: defaultLedger()          // 记账：收支记录（按账号隔离，独立 ledger.json）
+    ledger: defaultLedger(),         // 记账：收支记录（按账号隔离，独立 ledger.json）
+    sleep: defaultSleep()            // 睡眠：入睡/起床记录（按账号隔离，独立 sleep.json）
   };
 }
 function loadState(){
@@ -1928,6 +2172,7 @@ function loadUserWorkspace(name){
   state.lastSync = null;
   state.cocktail = defaultCocktail();
   state.ledger = defaultLedger();
+  state.sleep = defaultSleep();
   // 头像随账号保留在内存（login 时已写入 state.user.avatar，且 saveState 将其存入 LS_KEY_SESSION）
   saveState();   // 仅写登录态配置
 }
@@ -1941,6 +2186,7 @@ function resetToGuest(){
   state.lastSync = null;
   state.cocktail = defaultCocktail();
   state.ledger = defaultLedger();
+  state.sleep = defaultSleep();
   saveState();
 }
 
@@ -2336,7 +2582,7 @@ function countInGroup(id){
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 /* ---------- 3. 屏幕导航 ---------- */
-const SCREENS = ['screen-auth','screen-home','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger'];
+const SCREENS = ['screen-auth','screen-home','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep'];
 
 function showScreen(id){
   SCREENS.forEach(s=>$(s).classList.remove('active'));
@@ -3799,6 +4045,7 @@ function refreshAfterSync(){
   else if(cur==='screen-mine'){ renderMine(); }
   else if(cur==='screen-ledger'){ renderLedger(); }
   else if(cur==='screen-cocktail'){ renderCocktail(); }
+  else if(cur==='screen-sleep'){ renderSleep(); }
 }
 
 /* ---------- 拉取：Gitee → 本地（清单 + 图片补齐） ----------
@@ -4054,6 +4301,8 @@ async function autoPullOnLaunch(){
   try{ await pullProfile(); }catch(e){}
   // 记账独立从 ledger.json 恢复（保证即使衣物清单缺失也能取回）
   try{ await tryPullLedger(true); }catch(e){}
+  // 睡眠独立从 sleep.json 恢复（保证即使衣物/记账缺失也能取回）
+  try{ await tryPullSleep(true); }catch(e){}
 }
 
 /* =====================================================================
@@ -4098,6 +4347,47 @@ async function tryPullLedger(overwrite, doRefresh){
   if(doRefresh === undefined) doRefresh = true;   // 默认拉取后刷新界面；自动同步传 false 以免重置回概览
   let changed = false;
   try{ changed = await pullLedgerData(overwrite); }catch(err){ return false; }
+  if(changed && doRefresh){ saveState(); refreshAfterSync(); }
+  return changed;
+}
+
+/* =====================================================================
+   睡眠记录（独立文件 sleep.json，按账号隔离，纯云端：本机不落盘）
+   左侧垂直导航：概览 / 记录 / 日历 / 统计 / 云端（复用记账粉色主题）
+   规则：归属「开始日期」+ 自动跨午夜（结束<=开始自动 +24h）；一天允许多条，按天求和。
+   ===================================================================== */
+function defaultSleep(){ return { records: [] }; }
+function normalizeSleep(S){
+  const d = defaultSleep();
+  if(!S || typeof S !== 'object') return d;
+  return { records: Array.isArray(S.records) ? S.records : [] };
+}
+function sleepPath(){ return userDir(state.user.name) + 'sleep.json'; }
+
+async function pushSleepData(username, updatedAt){
+  const S = normalizeSleep(state.sleep);
+  const payload = JSON.stringify({ updatedAt: updatedAt, records: S.records }, null, 2);
+  await giteeWriteJSON(sleepPath(), payload, 'sync sleep ' + username + ' ' + updatedAt);
+}
+async function pullSleepData(overwrite){
+  const remote = await giteeReadJSON(sleepPath());
+  if(!remote) return false;
+  const rs = Array.isArray(remote.records) ? remote.records : [];
+  if(overwrite){
+    state.sleep = { records: rs };   // 强制覆盖（启动/手动下拉取回）：以云端为准
+    return true;
+  }
+  // 合并模式：按 id 去重，云端 + 本地全部保留（本地刚录入的不会被覆盖）
+  const map = new Map();
+  (state.sleep.records||[]).forEach(r => { if(r && r.id) map.set(r.id, r); });
+  rs.forEach(r => { if(r && r.id) map.set(r.id, r); });
+  state.sleep = { records: Array.from(map.values()) };
+  return true;
+}
+async function tryPullSleep(overwrite, doRefresh){
+  if(doRefresh === undefined) doRefresh = true;   // 默认拉取后刷新界面；自动同步传 false 以免重置回概览
+  let changed = false;
+  try{ changed = await pullSleepData(overwrite); }catch(err){ return false; }
   if(changed && doRefresh){ saveState(); refreshAfterSync(); }
   return changed;
 }
@@ -4588,6 +4878,320 @@ function lgBind(){
     if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
     lgPullLedgerCloud();
   };
+}
+
+/* =====================================================================
+   睡眠屏交互（#screen-sleep）：概览 / 记录 / 日历 / 统计 / 云端
+   规则：归属「开始日期」+ 自动跨午夜（结束<=开始自动 +24h）；一天允许多条，按天求和。
+   ===================================================================== */
+let spState = { calYM:null, statYM:null, selDate:null };
+
+function spPad(n){ return n < 10 ? '0' + n : '' + n; }
+function spTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + spPad(d.getMonth()+1) + '-' + spPad(d.getDate()); }
+function spIso(d){ return d.getFullYear() + '-' + spPad(d.getMonth()+1) + '-' + spPad(d.getDate()); }
+function spEsc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* 时长（分钟）：结束<=开始 → 自动跨午夜 +24h（如 23:00→07:00 = 8h） */
+function spDuration(start, end){
+  const a = start.split(':').map(Number), b = end.split(':').map(Number);
+  let s = a[0]*60 + a[1], e = b[0]*60 + b[1];
+  if(e <= s) e += 24*60;
+  return e - s;
+}
+function spFmtDur(min){
+  min = Math.round(min);
+  const h = Math.floor(min/60), m = min % 60;
+  if(h && m) return h + '小时' + m + '分';
+  if(h) return h + '小时';
+  return m + '分钟';
+}
+function spFmtShort(min){ return (Math.round(min/6)/10) + 'h'; }   // 日历格：如 8.0h
+function spAvgTime(arr){
+  if(!arr.length) return '--:--';
+  let tot = 0; arr.forEach(m => tot += m);
+  let avg = Math.round(tot / arr.length);
+  avg = ((avg % (24*60)) + 24*60) % (24*60);
+  return spPad(Math.floor(avg/60)) + ':' + spPad(avg % 60);
+}
+function spDayRecs(date){ return (state.sleep.records||[]).filter(r => r.date === date); }
+function spDayTotal(date){ return spDayRecs(date).reduce((s,r) => s + (r.minutes||0), 0); }
+function spMonthRecs(prefix){ return (state.sleep.records||[]).filter(r => r.date && r.date.indexOf(prefix) === 0); }
+
+function spOneRecHTML(r){
+  return '<div class="lg-rec"><span class="dot"></span>' +
+    '<div class="ri"><div class="t">' + spEsc(r.start) + ' → ' + spEsc(r.end) + ' · ' + spFmtDur(r.minutes) + (r.note ? ' · ' + spEsc(r.note) : '') + '</div>' +
+    '<div class="s">' + (r.date||'') + ' · 睡眠</div></div>' +
+    '<span class="amt">' + spFmtDur(r.minutes) + '</span>' +
+    '<button class="del press" data-id="' + r.id + '">✕</button></div>';
+}
+function spFillList(elId, recs, titleId, titlePrefix){
+  const el = $(elId); if(!el) return;
+  if(!recs.length){ el.innerHTML = '<div class="empty"><span class="empty-emoji">🌙</span><div class="empty-text">还没有睡眠记录</div></div>'; }
+  else { el.innerHTML = recs.map(spOneRecHTML).join(''); el.querySelectorAll('.del').forEach(b => b.onclick = () => spDeleteRec(b.dataset.id)); }
+  const t = $(titleId); if(t) t.textContent = (titlePrefix||'') + (recs.length ? '（' + recs.length + ' 条）' : '');
+}
+/* 最近记录：全量按创建时间倒序取最近 5 条（最新在最上）；日历面板仍按选中日期过滤 */
+function spRenderToday(){
+  const all = (state.sleep.records||[]).slice().sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+  const recs = all.slice(0, 5);
+  spFillList('spOvList', recs, 'spOvTitle', '最近记录');
+  spFillList('spDayList', recs, 'spDayTitle', '最近记录');
+  if(spState.selDate) spFillList('spCalDayList', spDayRecs(spState.selDate), 'spCalDayTitle', '当日明细 · ' + spState.selDate);
+}
+function spRenderOverview(){
+  const t = spTodayStr();
+  const todayMin = spDayTotal(t);
+  let sum7 = 0, cnt7 = 0;
+  for(let i = 6; i >= 0; i--){ const d = new Date(); d.setDate(d.getDate() - i); const m = spDayTotal(spIso(d)); if(m > 0){ sum7 += m; cnt7++; } }
+  const avg7 = cnt7 ? sum7 / cnt7 : 0;
+  const prefix = t.slice(0,7);
+  let monthMin = 0; spMonthRecs(prefix).forEach(r => monthMin += (r.minutes||0));
+  const bed = []; spMonthRecs(prefix).forEach(r => { const a = r.start.split(':').map(Number); bed.push(a[0]*60 + a[1]); });
+  $('spOvToday').textContent = spFmtDur(todayMin);
+  $('spOv7').textContent = spFmtDur(avg7);
+  $('spOvMonth').textContent = spFmtDur(monthMin);
+  $('spOvBed').textContent = spAvgTime(bed);
+}
+function spDeleteRec(id){
+  state.sleep.records = (state.sleep.records||[]).filter(r => r.id !== id);
+  spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
+  toast('已删除');
+  spAutoSync();
+}
+function spSave(){
+  if(!state.user){ toast('请先登录'); return; }
+  const date = $('spDate').value || spTodayStr();
+  const start = $('spStart').value, end = $('spEnd').value;
+  if(!start || !end){ toast('请填写入睡和起床时间'); return; }
+  const minutes = spDuration(start, end);
+  if(minutes <= 0){ toast('睡眠时长需大于 0'); return; }
+  const rec = {
+    id: 'S' + Date.now() + Math.floor(Math.random()*1000),
+    date: date, start: start, end: end, minutes: minutes,
+    note: $('spNote').value.trim(), createdAt: new Date().toISOString()
+  };
+  state.sleep.records.push(rec);
+  $('spNote').value = '';
+  spState.selDate = date;
+  spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
+  toast('已保存 ✓');
+  spAutoSync();
+}
+function spAutoSync(){
+  const token = getGiteeToken();
+  if(!token || !state.user) return;
+  pushSleepData(state.user.name, new Date().toISOString())
+    .then(() => tryPullSleep(false, false))
+    .then(() => { spSetStamp('push'); spSetStamp('pull'); })
+    .catch(() => {});
+}
+function spRenderCalendar(){
+  const ym = spState.calYM;
+  const first = new Date(ym.y, ym.m - 1, 1);
+  const startDow = first.getDay();
+  const days = new Date(ym.y, ym.m, 0).getDate();
+  const cells = [];
+  for(let i = 0; i < startDow; i++) cells.push(null);
+  for(let d = 1; d <= days; d++) cells.push(d);
+  while(cells.length % 7) cells.push(null);
+  let html = '';
+  cells.forEach(d => {
+    if(d === null){ html += '<div class="lg-cell empty"></div>'; return; }
+    const ds = ym.y + '-' + spPad(ym.m) + '-' + spPad(d);
+    const tot = spDayTotal(ds);
+    const isToday = ds === spTodayStr();
+    const isSel = ds === spState.selDate;
+    html += '<div class="lg-cell' + (isToday ? ' today' : '') + (isSel ? ' sel' : '') + '" data-date="' + ds + '">' +
+      '<div class="lg-d">' + d + '</div>' +
+      (tot > 0 ? '<div class="lg-c sl">' + spFmtShort(tot) + '</div>' : '') +
+    '</div>';
+  });
+  const grid = $('spCalGrid');
+  grid.innerHTML = html;
+  $('spCalTitle').textContent = ym.y + '年' + ym.m + '月';
+  grid.querySelectorAll('.lg-cell[data-date]').forEach(c => c.onclick = () => {
+    spState.selDate = c.dataset.date;
+    $('spDate').value = c.dataset.date;
+    const recs = spDayRecs(c.dataset.date);
+    spRenderCalendar();
+    spFillList('spCalDayList', recs, 'spCalDayTitle', '当日明细 · ');
+  });
+}
+function spBarSVG(labels, arr, color){
+  const n = labels.length;
+  const W = Math.max(280, n * 46), H = 180, padL = 44, padB = 34, padT = 14, padR = 8;
+  const cw = W - padL - padR, ch = H - padT - padB;
+  const max = Math.max(1, ...arr);
+  const gw = cw / n;
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
+  for(let i = 0; i <= 4; i++){
+    const y = padT + ch * i / 4, v = Math.round(max * (1 - i / 4) / 6) / 10;
+    svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#eee"/>';
+    svg += '<text x="' + (padL - 4) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="#aaa">' + v + '</text>';
+  }
+  for(let i = 0; i < n; i++){
+    const gx = padL + gw * i, bw = Math.min(gw * 0.6, 26);
+    const x = gx + (gw - bw) / 2;
+    const h = ch * (arr[i] || 0) / max;
+    const mins = arr[i] || 0;
+    svg += '<rect x="' + x + '" y="' + (padT + ch - h) + '" width="' + bw + '" height="' + h + '" rx="3" fill="' + color + '" title="' + labels[i] + '日 ' + spFmtDur(mins) + '"/>';
+    let lb = labels[i]; if(lb && lb.length > 5) lb = lb.slice(0,5);
+    svg += '<text x="' + (gx + gw / 2) + '" y="' + (H - padB + 12) + '" text-anchor="middle" font-size="9" fill="#888">' + spEsc('' + lb) + '</text>';
+  }
+  svg += '</svg>';
+  return svg;
+}
+function spRenderStats(){
+  const ym = spState.statYM;
+  $('spStatTitle').textContent = ym.y + '年' + ym.m + '月';
+  const prefix = ym.y + '-' + spPad(ym.m);
+  const totalDays = new Date(ym.y, ym.m, 0).getDate();
+  const byDay = {};
+  let totalMin = 0; const bedMin = [], wakeMin = [];
+  spMonthRecs(prefix).forEach(r => {
+    byDay[r.date] = (byDay[r.date] || 0) + (r.minutes || 0);
+    totalMin += (r.minutes || 0);
+    const bs = r.start.split(':').map(Number); bedMin.push(bs[0]*60 + bs[1]);
+    const we = r.end.split(':').map(Number); let wm = we[0]*60 + we[1]; if(wm <= bs[0]*60 + bs[1]) wm += 24*60; wakeMin.push(wm);
+  });
+  const daysWith = Object.keys(byDay).length;
+  const avg = daysWith ? totalMin / daysWith : 0;
+  $('spStatTotal').textContent = spFmtDur(totalMin);
+  $('spStatAvg').textContent = spFmtDur(avg);
+  $('spStatBed').textContent = spAvgTime(bedMin);
+  $('spStatWake').textContent = spAvgTime(wakeMin);
+  const labels = [], arr = [];
+  for(let d = 1; d <= totalDays; d++){ const ds = prefix + '-' + spPad(d); labels.push(d); arr.push(Math.round(byDay[ds] || 0)); }
+  $('spStatChart').innerHTML = spBarSVG(labels, arr, '#ff6b9d');
+  const box = $('spStatDays');
+  const days = Object.keys(byDay).sort();
+  if(!days.length){ box.innerHTML = '<div class="empty"><span class="empty-emoji">📭</span><div class="empty-text">本月暂无记录</div></div>'; return; }
+  const maxv = Math.max(1, ...days.map(d => byDay[d]));
+  box.innerHTML = days.map(d => {
+    const m = byDay[d]; const h = Math.max(2, 56 * m / maxv);
+    return '<div class="lg-daybar" title="' + d + ' ' + spFmtDur(m) + '"><div class="bi"><i class="sl" style="height:' + h + 'px"></i></div><small>' + parseInt(d.slice(8), 10) + '</small></div>';
+  }).join('');
+}
+function spSetStamp(kind){
+  try{ localStorage.setItem(kind === 'push' ? 'sp_push_at' : 'sp_pull_at', new Date().toISOString()); }catch(e){}
+  spRenderStamps();
+}
+function spRenderStamps(){
+  const el = $('spSyncStamps'); if(!el) return;
+  let push = '', pull = '';
+  try{
+    const p = localStorage.getItem('sp_push_at'), l = localStorage.getItem('sp_pull_at');
+    if(p) push = '上次上传 ' + lgFmtStamp(new Date(p));
+    if(l) pull = '上次下拉 ' + lgFmtStamp(new Date(l));
+  }catch(e){}
+  el.textContent = (push || '尚未上传') + '　·　' + (pull || '尚未下拉');
+}
+/* ---------- Banner：HelloKitty 九宫格头像 + emoji 散射（与记账 lgRenderBanner 严格一致） ---------- */
+function spRenderBanner(panel){
+  const el = (typeof panel === 'string') ? $('spp-' + panel) : panel;
+  if(!el) return;
+  const banner = el.querySelector('.lg-banner'); if(!banner) return;
+  const title = banner.dataset.title || '睡眠', sub = banner.dataset.sub || '';
+  const h3 = banner.querySelector('h3'); if(h3) h3.textContent = title;
+  const p = banner.querySelector('p'); if(p) p.textContent = sub;
+  // 圆形头像：HelloKitty 九宫格随机 9 选 1（--lg-avatar-* 与记账同源，直接读 #screen-ledger 上的变量）
+  const avatarIdx = Math.floor(Math.random()*9) + 1;
+  const avatar = getComputedStyle($('screen-ledger')).getPropertyValue('--lg-avatar-' + avatarIdx).trim();
+  const avatarEl = banner.querySelector('.lg-banner-avatar');
+  if(avatarEl) avatarEl.style.backgroundImage = avatar;
+  // emoji 散射：4 列 x 2 行网格，每格随机偏移 / 旋转 / 大小 / 透明度，仅取点不拥挤
+  const emojis = ['🌸','💕','🎀','🍓','🌷','⭐','🧸','🍰','💗','🍡','🌙','☁️','🍒','🧁','💝','🍑'];
+  const grid = banner.querySelector('.lg-banner-emojis'); if(!grid) return;
+  grid.innerHTML = '';
+  const cols = 4, rows = 2;
+  const cellW = (banner.clientWidth || el.clientWidth) / cols, cellH = (banner.clientHeight || 76) / rows;
+  for(let r = 0; r < rows; r++){
+    for(let c = 0; c < cols; c++){
+      const span = document.createElement('span');
+      span.className = 'lg-banner-emoji';
+      span.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      const size = 17 + Math.random()*5;            // 17~22px
+      const left = c*cellW + Math.random()*(cellW - size);
+      const top = r*cellH + Math.random()*(cellH - size);
+      const rot = (Math.random()*22 - 11).toFixed(1); // ±11°
+      const op = (0.34 + Math.random()*0.16).toFixed(2); // .34~.50
+      span.style.left = left + 'px';
+      span.style.top = top + 'px';
+      span.style.fontSize = size.toFixed(1) + 'px';
+      span.style.transform = 'rotate(' + rot + 'deg)';
+      span.style.opacity = op;
+      grid.appendChild(span);
+    }
+  }
+}
+function spSwitch(panel){
+  document.querySelectorAll('#spSide .lg-nav').forEach(b => b.classList.toggle('active', b.dataset.sp === panel));
+  document.querySelectorAll('#screen-sleep .lg-panel').forEach(p => p.classList.toggle('active', p.id === 'spp-' + panel));
+  const active = $('spp-' + panel);
+  if(active) spRenderBanner(active);   // 每次切换模块重新随机 Kitty 头像 + emoji 散射（与记账一致）
+  if(panel === 'stats') spRenderStats();
+  else if(panel === 'calendar') spRenderCalendar();
+  else if(panel === 'overview') spRenderOverview();
+  else if(panel === 'bak') spRenderStamps();
+}
+/* 云端按钮统一守卫（供内联 onclick 使用；先登录态后令牌，与记账一致） */
+function spGuardSync(){
+  if(!state.user){ toast('请先登录'); return false; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return false; }
+  return true;
+}
+function spPullCloud(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
+  tryPullSleep(true).then(() => { spSetStamp('pull'); toast('已从云端下拉睡眠数据 ✓'); }).catch(e => toast('下拉失败：' + (e && e.message ? e.message : '未知错误')));
+}
+function spPushCloud(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
+  const btn = $('spSync'); if(btn) btn.disabled = true;
+  tryPullSleep(false, false)
+    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
+    .then(() => { spSetStamp('push'); toast('已上传睡眠数据到云端 ✓'); })
+    .catch(e => toast('上传失败：' + (e && e.message ? e.message : '未知错误')))
+    .finally(() => { if(btn) btn.disabled = false; });
+}
+function spSyncCloud(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
+  tryPullSleep(false, false)
+    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
+    .then(() => { spSetStamp('push'); spSetStamp('pull'); toast('睡眠已双向同步 ✓'); })
+    .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
+}
+let spBound = false;
+function spBind(){
+  if(spBound) return; spBound = true;
+  document.querySelectorAll('#spSide .lg-nav').forEach(b => b.onclick = () => spSwitch(b.dataset.sp));
+  $('spSave').onclick = spSave;
+  $('spCalPrev').onclick = () => { spState.calYM.m--; if(spState.calYM.m < 1){ spState.calYM.m = 12; spState.calYM.y--; } spRenderCalendar(); };
+  $('spCalNext').onclick = () => { spState.calYM.m++; if(spState.calYM.m > 12){ spState.calYM.m = 1; spState.calYM.y++; } spRenderCalendar(); };
+  $('spStatPrev').onclick = () => { spState.statYM.m--; if(spState.statYM.m < 1){ spState.statYM.m = 12; spState.statYM.y--; } spRenderStats(); };
+  $('spStatNext').onclick = () => { spState.statYM.m++; if(spState.statYM.m > 12){ spState.statYM.m = 1; spState.statYM.y++; } spRenderStats(); };
+  // 云端三按钮（头部⟳ / 上传 / 下拉）已改为 HTML 内联 onclick + spGuardSync，不再依赖此处绑定
+}
+function gotoSleep(){ showScreen('screen-sleep'); renderSleep(); }
+function renderSleep(){
+  try{
+    const screen = $('screen-sleep');
+    // 随机选一张柔和粉色背景图铺满睡眠页（--lg-bg-1..5 与记账同源）
+    const bgIdx = Math.floor(Math.random()*5) + 1;
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--lg-bg-' + bgIdx).trim();
+    if(screen) screen.style.backgroundImage = bg || 'linear-gradient(160deg,#fff0f6,#ffe3ee 60%,#ffd9ea)';
+    if(!spState.calYM){ const d = new Date(); spState.calYM = { y:d.getFullYear(), m:d.getMonth()+1 }; }
+    if(!spState.statYM){ const d = new Date(); spState.statYM = { y:d.getFullYear(), m:d.getMonth()+1 }; }
+    if(!spState.selDate) spState.selDate = spTodayStr();
+    $('spDate').value = spState.selDate;
+    spBind();
+    spSwitch('overview');
+    spRenderToday();
+    spRenderCalendar();
+    spRenderStats();
+    spRenderStamps();
+  }catch(e){ console.error('renderSleep 异常：', e); }
 }
 
 (async function init(){
