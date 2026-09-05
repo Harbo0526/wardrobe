@@ -1047,6 +1047,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-sleep .lg-rec .ri .s{font-size:11px;color:var(--lg-ink);opacity:.6;margin-top:1px;}
 #screen-sleep .lg-rec .amt{font-weight:800;font-size:15px;flex:0 0 auto;color:var(--lg-deep);}
 #screen-sleep .lg-rec .del{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--lg-soft);color:var(--lg-exp);display:flex;align-items:center;justify-content:center;font-size:15px;}
+#screen-sleep .lg-rec{cursor:pointer;}
+#screen-sleep .lg-rec:active{background:rgba(255,214,231,.4);border-radius:12px;}
+#screen-sleep .sp-modal-mask{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;padding:18px;}
+#screen-sleep .sp-modal{max-width:340px;width:100%;background:#fff;border-radius:22px;padding:16px 16px 18px;box-shadow:0 12px 44px rgba(255,143,179,.32);animation:fadeIn .2s ease;}
+#screen-sleep .sp-modal .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+#screen-sleep .sp-modal .mh h3{margin:0;font-size:16px;font-weight:800;color:var(--lg-deep);}
+#screen-sleep .sp-ed-dur{margin-top:10px;font-size:13px;color:var(--lg-deep);font-weight:700;}
 
 </style>
 </head>
@@ -1781,6 +1788,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             <div class="field" style="margin-top:10px;">
               <label>起床时间（≤入睡自动跨午夜）</label>
               <input class="input" type="time" id="spEnd">
+              <div class="field" style="margin-top:10px;">
+                <label>起床日期（跨日请选次日；留空＝入睡当晚）</label>
+                <input class="input" type="date" id="spEndDate">
+              </div>
             </div>
             <div class="field" style="margin-top:10px;">
               <label>备注</label>
@@ -1868,6 +1879,39 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
       </main>
     </div>
+
+    <!-- 睡眠记录：点击卡片弹出的二次编辑图窗 -->
+    <div class="sp-modal-mask" id="spRecMask" style="display:none;" onclick="if(event.target===this)spCloseRec()">
+      <div class="sp-modal">
+        <div class="mh"><h3>✏️ 编辑睡眠记录</h3><button class="del press" onclick="spCloseRec()">✕</button></div>
+        <div class="field" style="margin-top:8px;">
+          <label>日期（归属开始那晚）</label>
+          <input class="input" type="date" id="spEdDate" oninput="spEdRefresh()">
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>入睡时间</label>
+          <input class="input" type="time" id="spEdStart" oninput="spEdRefresh()">
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>起床日期（跨日请选次日；留空＝入睡当晚）</label>
+          <input class="input" type="date" id="spEdEndDate" oninput="spEdRefresh()">
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>起床时间（≤入睡自动跨午夜）</label>
+          <input class="input" type="time" id="spEdEnd" oninput="spEdRefresh()">
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>备注</label>
+          <input class="input" id="spEdNote" placeholder="如：午睡 / 晚觉">
+        </div>
+        <div class="sp-ed-dur" id="spEdDur"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="spSaveEdit()">保存修改</button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="spDeleteFromModal()">删除</button>
+        </div>
+      </div>
+    </div>
+
   </section>
 
   <!-- ============ 底部导航（登录态展示） ============ -->
@@ -2082,7 +2126,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '4.0.2';
+const APP_VERSION = '4.0.4';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -4884,7 +4928,7 @@ function lgBind(){
    睡眠屏交互（#screen-sleep）：概览 / 记录 / 日历 / 统计 / 云端
    规则：归属「开始日期」+ 自动跨午夜（结束<=开始自动 +24h）；一天允许多条，按天求和。
    ===================================================================== */
-let spState = { calYM:null, statYM:null, selDate:null };
+let spState = { calYM:null, statYM:null, selDate:null, editId:null };
 
 function spPad(n){ return n < 10 ? '0' + n : '' + n; }
 function spTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + spPad(d.getMonth()+1) + '-' + spPad(d.getDate()); }
@@ -4896,6 +4940,14 @@ function spDuration(start, end){
   let s = a[0]*60 + a[1], e = b[0]*60 + b[1];
   if(e <= s) e += 24*60;
   return e - s;
+}
+/* 跨日期时长（分钟）：结合入睡/起床的 日期+时间；未跨日且 起床<=入睡 自动 +24h */
+function spDuration2(startDate, start, endDate, end){
+  const sd = new Date(startDate + 'T' + start);
+  const ed = new Date((endDate || startDate) + 'T' + end);
+  let mins = Math.round((ed - sd) / 60000);
+  if(mins < 0) mins += 24*60;
+  return mins;
 }
 function spFmtDur(min){
   min = Math.round(min);
@@ -4917,16 +4969,23 @@ function spDayTotal(date){ return spDayRecs(date).reduce((s,r) => s + (r.minutes
 function spMonthRecs(prefix){ return (state.sleep.records||[]).filter(r => r.date && r.date.indexOf(prefix) === 0); }
 
 function spOneRecHTML(r){
-  return '<div class="lg-rec"><span class="dot"></span>' +
-    '<div class="ri"><div class="t">' + spEsc(r.start) + ' → ' + spEsc(r.end) + ' · ' + spFmtDur(r.minutes) + (r.note ? ' · ' + spEsc(r.note) : '') + '</div>' +
-    '<div class="s">' + (r.date||'') + ' · 睡眠</div></div>' +
-    '<span class="amt">' + spFmtDur(r.minutes) + '</span>' +
-    '<button class="del press" data-id="' + r.id + '">✕</button></div>';
+  const hasEnd = !!r.end;
+  const line = spEsc(r.start) + (hasEnd ? ' → ' + spEsc(r.end) : ' → 未填起床') + ' · ' + (hasEnd ? spFmtDur(r.minutes) : '入睡中') + (r.note ? ' · ' + spEsc(r.note) : '');
+  const amt = hasEnd ? spFmtDur(r.minutes) : '⏳';
+  const endTag = (r.endDate && r.endDate !== r.date) ? ' · 起床 ' + spEsc(r.endDate) : '';
+  return '<div class="lg-rec" data-id="' + r.id + '"><span class="dot"></span>' +
+    '<div class="ri"><div class="t">' + line + '</div>' +
+    '<div class="s">' + (r.date||'') + ' · 睡眠' + endTag + '</div></div>' +
+    '<span class="amt">' + amt + '</span>' +
+    '</div>';
 }
 function spFillList(elId, recs, titleId, titlePrefix){
   const el = $(elId); if(!el) return;
   if(!recs.length){ el.innerHTML = '<div class="empty"><span class="empty-emoji">🌙</span><div class="empty-text">还没有睡眠记录</div></div>'; }
-  else { el.innerHTML = recs.map(spOneRecHTML).join(''); el.querySelectorAll('.del').forEach(b => b.onclick = () => spDeleteRec(b.dataset.id)); }
+  else {
+    el.innerHTML = recs.map(spOneRecHTML).join('');
+    el.querySelectorAll('.lg-rec').forEach(c => c.onclick = () => spOpenRec(c.dataset.id));
+  }
   const t = $(titleId); if(t) t.textContent = (titlePrefix||'') + (recs.length ? '（' + recs.length + ' 条）' : '');
 }
 /* 最近记录：全量按创建时间倒序取最近 5 条（最新在最上）；日历面板仍按选中日期过滤 */
@@ -4960,20 +5019,26 @@ function spDeleteRec(id){
 function spSave(){
   if(!state.user){ toast('请先登录'); return; }
   const date = $('spDate').value || spTodayStr();
-  const start = $('spStart').value, end = $('spEnd').value;
-  if(!start || !end){ toast('请填写入睡和起床时间'); return; }
-  const minutes = spDuration(start, end);
-  if(minutes <= 0){ toast('睡眠时长需大于 0'); return; }
+  const start = $('spStart').value;
+  const end = $('spEnd').value;
+  const endDate = $('spEndDate').value || '';
+  if(!start){ toast('请填写入睡时间'); return; }
+  let minutes = 0;
+  if(end){
+    minutes = spDuration2(date, start, endDate || date, end);
+    if(minutes <= 0){ toast('睡眠时长需大于 0，请检查起床时间'); return; }
+  }
   const rec = {
     id: 'S' + Date.now() + Math.floor(Math.random()*1000),
-    date: date, start: start, end: end, minutes: minutes,
+    date: date, start: start, endDate: endDate, end: end, minutes: minutes,
     note: $('spNote').value.trim(), createdAt: new Date().toISOString()
   };
   state.sleep.records.push(rec);
   $('spNote').value = '';
+  $('spEnd').value = ''; $('spEndDate').value = '';
   spState.selDate = date;
   spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
-  toast('已保存 ✓');
+  toast(end ? '已保存 ✓' : '已保存（待起床）✓');
   spAutoSync();
 }
 function spAutoSync(){
@@ -5048,6 +5113,7 @@ function spRenderStats(){
   const byDay = {};
   let totalMin = 0; const bedMin = [], wakeMin = [];
   spMonthRecs(prefix).forEach(r => {
+    if(!r.end || !r.start) return;              // 未填起床的「待起床」记录不计入统计
     byDay[r.date] = (byDay[r.date] || 0) + (r.minutes || 0);
     totalMin += (r.minutes || 0);
     const bs = r.start.split(':').map(Number); bedMin.push(bs[0]*60 + bs[1]);
@@ -5172,6 +5238,49 @@ function spBind(){
   $('spStatPrev').onclick = () => { spState.statYM.m--; if(spState.statYM.m < 1){ spState.statYM.m = 12; spState.statYM.y--; } spRenderStats(); };
   $('spStatNext').onclick = () => { spState.statYM.m++; if(spState.statYM.m > 12){ spState.statYM.m = 1; spState.statYM.y++; } spRenderStats(); };
   // 云端三按钮（头部⟳ / 上传 / 下拉）已改为 HTML 内联 onclick + spGuardSync，不再依赖此处绑定
+}
+/* ---------- 记录卡片点击：放大图窗 + 二次编辑 ---------- */
+function spOpenRec(id){
+  const rec = (state.sleep.records||[]).find(r => r.id === id);
+  if(!rec){ return; }
+  spState.editId = id;
+  $('spEdDate').value = rec.date || spTodayStr();
+  $('spEdStart').value = rec.start || '';
+  $('spEdEndDate').value = rec.endDate || '';
+  $('spEdEnd').value = rec.end || '';
+  $('spEdNote').value = rec.note || '';
+  spEdRefresh();
+  $('spRecMask').style.display = 'flex';
+}
+function spCloseRec(){ $('spRecMask').style.display = 'none'; spState.editId = null; }
+function spEdRefresh(){
+  const start = $('spEdStart').value, end = $('spEdEnd').value;
+  const date = $('spEdDate').value || spTodayStr();
+  const endDate = $('spEdEndDate').value || '';
+  const box = $('spEdDur'); if(!box) return;
+  if(!start){ box.textContent = '请填写入睡时间'; return; }
+  if(!end){ box.textContent = '入睡中（未填起床）'; return; }
+  const m = spDuration2(date, start, endDate || date, end);
+  box.textContent = '时长：' + (m > 0 ? spFmtDur(m) : '无效，请检查起床时间');
+}
+function spSaveEdit(){
+  const id = spState.editId; const rec = (state.sleep.records||[]).find(r => r.id === id);
+  if(!rec){ spCloseRec(); return; }
+  const date = $('spEdDate').value || spTodayStr();
+  const start = $('spEdStart').value;
+  const end = $('spEdEnd').value;
+  const endDate = $('spEdEndDate').value || '';
+  if(!start){ toast('请填写入睡时间'); return; }
+  let minutes = 0;
+  if(end){ minutes = spDuration2(date, start, endDate || date, end); if(minutes <= 0){ toast('睡眠时长需大于 0'); return; } }
+  rec.date = date; rec.start = start; rec.endDate = endDate; rec.end = end; rec.minutes = minutes;
+  rec.note = $('spEdNote').value.trim();
+  spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
+  toast('已修改 ✓'); spCloseRec(); spAutoSync();
+}
+function spDeleteFromModal(){
+  const id = spState.editId; if(!id) return;
+  spDeleteRec(id); spCloseRec();
 }
 function gotoSleep(){ showScreen('screen-sleep'); renderSleep(); }
 function renderSleep(){
