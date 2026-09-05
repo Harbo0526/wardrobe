@@ -1618,7 +1618,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
             <p class="ck-hint">记账数据独立存于云端 <b>ledger.json</b>（按账号隔离，与衣物/调酒分开）。换设备点「从云端下拉」即可取回，仅影响记账数据。</p>
             <button class="btn btn-secondary" id="lgPull" style="margin-top:10px;">⬇ 从云端下拉</button>
-            <button class="btn btn-accent" id="lgSync" style="margin-top:8px;">🔄 云端下拉</button>
+            <button class="btn btn-accent" id="lgSync" style="margin-top:8px;">⬆ 上传云端</button>
             <div id="lgSyncStamps" class="ck-hint" style="margin-top:10px;color:var(--lg-deep);font-weight:600;"></div>
           </div>
         </div>
@@ -1790,6 +1790,17 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       </div>
     </div>
   </div>
+  <!-- 材料操作菜单（三个点 → 编辑 / 删除） -->
+  <div class="overlay" id="sheet-mat-menu" onclick="closeSheetOnBg(event,'sheet-mat-menu')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><h3>材料操作</h3><button class="sheet-close press" onclick="closeSheet('sheet-mat-menu')">✕</button></div>
+      <div class="cm-list">
+        <button class="cm-btn press" onclick="ckEditFromMenu()"><span class="cm-ico">✏️</span><span>编辑</span></button>
+        <button class="cm-btn cm-danger press" onclick="ckDelFromMenu()"><span class="cm-ico">🗑️</span><span>删除</span></button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast -->
   <div id="toast"></div>
@@ -1828,7 +1839,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '3.1.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2026,11 +2037,9 @@ function ckRenderMats(){
         '<div class="ck-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + ckCatIcon(m.cat) + '</svg></div>' +
         '<div class="ck-info"><div class="nm">' + ckEsc(m.name) + '</div>' +
           '<div class="sub">' + (m.cat === '基酒' ? ('酒精度 ' + m.abv + '% · ') : '') + m.vol + 'ml / ' + ckMoney(m.price) + ' · 单价 <b>' + ckMoney(ckUnit(m)) + '/ml</b></div></div>' +
-        '<button class="ck-iconbtn" data-cke="' + m.id + '" aria-label="编辑"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>' +
-        '<button class="ck-iconbtn del" data-ckd="' + m.id + '" aria-label="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>' +
+        '<button class="ck-iconbtn ck-more" data-ckmore="' + m.id + '" aria-label="更多操作"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>' +
       '</div>').join('');
-    box.querySelectorAll('[data-cke]').forEach(b => { b.onclick = () => ckOpenMat(b.dataset.cke); });
-    box.querySelectorAll('[data-ckd]').forEach(b => { b.onclick = () => ckDelMat(b.dataset.ckd); });
+    box.querySelectorAll('[data-ckmore]').forEach(b => { b.onclick = (e) => { e.stopPropagation(); openMatMenu(b.dataset.ckmore); }; });
   }
   $('ckStatMat').textContent = r.materials.length;
   $('ckStatRec').textContent = r.recipes.length;
@@ -2042,6 +2051,11 @@ function ckDelMat(id){
   ckMix = ckMix.filter(x => x.matId !== id);
   ckSave(); ckRenderMats(); ckRenderMix();
 }
+// 材料操作菜单（三个点 → 编辑 / 删除）
+let ckMenuId = null;
+function openMatMenu(id){ ckMenuId = id; openSheet('sheet-mat-menu'); }
+function ckEditFromMenu(){ closeSheet('sheet-mat-menu'); if(ckMenuId) ckOpenMat(ckMenuId); }
+function ckDelFromMenu(){ closeSheet('sheet-mat-menu'); if(ckMenuId) ckDelMat(ckMenuId); }
 function ckOpenMat(id){
   ckEditId = id || null;
   $('ckMatTitle').textContent = id ? '编辑材料' : '新增材料';
@@ -4066,8 +4080,18 @@ async function pushLedgerData(username, updatedAt){
 async function pullLedgerData(overwrite){
   const remote = await giteeReadJSON(ledgerPath());
   if(!remote) return false;
-  const rl = normalizeLedger({ records: remote.records, seeded: remote.seeded });
-  state.ledger = rl;
+  const rl = normalizeLedger({ records: remote.records, seeded: remote.seeded, budgets: remote.budgets });
+  if(overwrite){
+    // 强制覆盖（启动/手动下拉取回）：以云端为准
+    state.ledger = rl;
+    return true;
+  }
+  // 合并模式：按 id 去重，云端 + 本地全部记录都保留（本地刚录入的不会被覆盖）；预算取双方并集
+  const map = new Map();
+  (state.ledger.records||[]).forEach(r => { if(r && r.id) map.set(r.id, r); });
+  (rl.records||[]).forEach(r => { if(r && r.id) map.set(r.id, r); });
+  const budgets = Object.assign({}, rl.budgets||{}, state.ledger.budgets||{});
+  state.ledger = { records: Array.from(map.values()), seeded: rl.seeded || state.ledger.seeded, budgets: budgets };
   return true;
 }
 async function tryPullLedger(overwrite){
@@ -4280,18 +4304,40 @@ function lgSave(){
 function lgAutoSync(){
   const token = getGiteeToken();
   if(!token || !state.user){ return; }
-  // 只下拉云端记账数据，不上传：以云端 ledger.json 为准覆盖本机
-  tryPullLedger(true)
-    .then(() => lgSetStamp('pull'))
+  // 录入/删除/设预算后：先把云端合并进来（保留本地新录入，不覆盖），再把完整数据上传到云端，确保记录不丢
+  tryPullLedger(false)
+    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
+    .then(() => { lgSetStamp('push'); lgSetStamp('pull'); })
     .catch(() => {});
 }
-// 手动从云端下拉记账数据（仅下载，不写入云端）
+// 手动从云端下拉记账数据（强制覆盖本机，用于跨设备取回 / 还原）
 function lgPullLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
   if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
   tryPullLedger(true)
     .then(() => { lgSetStamp('pull'); toast('已从云端下拉记账数据 ✓'); })
     .catch(e => toast('下拉失败：' + (e && e.message ? e.message : '未知错误')));
+}
+// 手动上传本地记账数据到云端（先合并云端再整体上传，不丢本地新录入）
+function lgPushLedgerCloud(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
+  const btn = $('lgSync');
+  if(btn) btn.disabled = true;
+  tryPullLedger(false)
+    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
+    .then(() => { lgSetStamp('push'); toast('已上传记账数据到云端 ✓'); })
+    .catch(e => toast('上传失败：' + (e && e.message ? e.message : '未知错误')))
+    .finally(() => { if(btn) btn.disabled = false; });
+}
+// 双向同步（头部同步按钮）：先合并下拉，再整体上传，保证录入不丢且能取回
+function lgSyncLedgerCloud(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
+  tryPullLedger(false)
+    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
+    .then(() => { lgSetStamp('push'); lgSetStamp('pull'); toast('记账已双向同步 ✓'); })
+    .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
 }
 
 /* ---------- 日历 ---------- */
@@ -4518,16 +4564,16 @@ function lgBind(){
   $('lgStatNext').onclick = () => { lgState.statYM.m++; if(lgState.statYM.m > 12){ lgState.statYM.m = 1; lgState.statYM.y++; } lgRenderStats(); };
   $('lgQueryBtn').onclick = lgRunQuery;
   $('lgBudgetSet').onclick = lgSetBudget;
-  $('lgHeaderSync').onclick = () => { if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; } if(!state.user){ toast('请先登录'); return; } lgPullLedgerCloud(); };
+  $('lgHeaderSync').onclick = () => { if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; } if(!state.user){ toast('请先登录'); return; } lgSyncLedgerCloud(); };
   $('lgSync').onclick = () => {
     if(!state.user){ toast('请先登录'); return; }
     if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-    lgPullLedgerCloud();
+    lgPushLedgerCloud();
   };
   $('lgPull').onclick = () => {
     if(!state.user){ toast('请先登录'); return; }
     if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-    pullUserData().then(() => { lgSetStamp('pull'); toast('已从云端下拉 ✓'); }).catch(e => toast('下拉失败：' + (e && e.message ? e.message : '未知错误')));
+    lgPullLedgerCloud();
   };
 }
 
