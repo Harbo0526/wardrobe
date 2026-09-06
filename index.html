@@ -2320,7 +2320,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '4.3.1';
+const APP_VERSION = '4.3.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3028,7 +3028,14 @@ function renderHomeQuote(){
   if(zh) zh.textContent = homeQuoteCurrent.zh;
   if(en) en.textContent = homeQuoteCurrent.en || '';
   const cat = document.querySelector('#screen-home .home-hero .cat');
-  if(cat) cat.style.backgroundImage = "url('" + (QUOTE_MOOD_IMG[homeQuoteCurrent.mood] || 'avatars/garfield-cat.png') + "')";
+  const moodUrl = QUOTE_MOOD_IMG[homeQuoteCurrent.mood] || 'avatars/garfield-cat.png';
+  if(cat){
+    cat.style.backgroundImage = "url('" + moodUrl + "')";
+    // 视觉兜底：意境图加载失败（离线未缓存等）自动回退基础橘猫头像
+    var probe = new Image();
+    probe.onerror = function(){ if(cat) cat.style.backgroundImage = "url('avatars/garfield-cat.png')"; };
+    probe.src = moodUrl;
+  }
 }
 /* 云端语录库：Gitee data/quotes.json（不随版本发版即可扩充）；仅当当前显示的还是内建语录时切换一次 */
 async function loadQuoteLibrary(){

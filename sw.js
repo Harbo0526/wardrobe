@@ -6,7 +6,7 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v4.3.1';
+const CACHE_NAME = 'wardrobe-v4.3.2';
 // v2.8.3 调酒备份页云端同步卡片新增上传/下拉时间戳（月/日/时/分），并升级 PWA 缓存名
 const APP_SHELL = [
   './',
@@ -29,11 +29,18 @@ const APP_SHELL = [
   './avatars/quote-hope.jpg'
 ];
 
-/* 安装：预缓存 app shell，立即接管 */
+/* 安装：预缓存 app shell，立即接管
+   v4.3.2：弃用 addAll（一损俱损——清单内任一文件拉取失败会导致整个 SW 安装失败，
+   手机弱网下 SW 卡死在旧版本：新功能/图片永远不更新）。改为逐文件容错预缓存，
+   单个失败仅跳过，运行时「缓存优先」策略会在网络可用时自动补上。 */
 self.addEventListener('install', function(e){
   e.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function(c){ return c.addAll(APP_SHELL); })
+      .then(function(c){
+        return Promise.all(APP_SHELL.map(function(u){
+          return c.add(u).catch(function(){ /* 单文件失败不拖垮安装 */ });
+        }));
+      })
       .then(function(){ return self.skipWaiting(); })
   );
 });
