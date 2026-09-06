@@ -398,6 +398,15 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   border:1px solid rgba(255,255,255,.7);
 }
 #screen-home .home-reload:active{background:#ffd9a8;}
+/* 备忘编辑弹窗（v4.3.0：点击备忘条放大，二次编辑内容） */
+#screen-home .memo-modal-mask{position:fixed;inset:0;z-index:60;background:rgba(90,58,20,.42);display:flex;align-items:center;justify-content:center;padding:18px;}
+#screen-home .memo-modal{max-width:340px;width:100%;background:#fff;border-radius:22px;padding:16px 16px 18px;box-shadow:0 12px 44px rgba(255,167,38,.35);animation:fadeIn .2s ease;}
+#screen-home .memo-modal .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+#screen-home .memo-modal .mh h3{margin:0;font-size:16px;font-weight:800;color:#8a4b00;}
+#screen-home .memo-modal textarea{width:100%;min-height:110px;box-sizing:border-box;border:1.5px solid #ffd9a8;border-radius:14px;padding:10px 12px;font-size:14px;color:var(--ink);line-height:1.5;resize:vertical;background:#fffdf8;font-family:inherit;}
+#screen-home .memo-modal textarea:focus{outline:none;border-color:#ffb14e;}
+#screen-home .memo-edit-time{margin-top:8px;font-size:11.5px;color:var(--ink-faint);}
+#screen-home .memo-modal .mdel{width:28px;height:28px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
 .cloth-card{
   background:var(--card);
   border:1px solid var(--line);
@@ -1275,6 +1284,19 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
     <!-- 页脚版本号（自然流内，滚动到底可见；文字由 renderHome 从 APP_VERSION 渲染） -->
     <div class="home-version" id="home-version"></div>
+
+    <!-- 备忘点击放大弹窗（v4.3.0：二次编辑内容，只改文本不改创建时间） -->
+    <div class="memo-modal-mask" id="memoEditMask" style="display:none;" onclick="if(event.target===this)memoCloseEdit()">
+      <div class="memo-modal">
+        <div class="mh"><h3>📝 编辑备忘</h3><button class="mdel press" onclick="memoCloseEdit()">✕</button></div>
+        <textarea id="memoEditText" placeholder="备忘内容…"></textarea>
+        <div class="memo-edit-time" id="memoEditTime"></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="btn btn-primary press" style="flex:1;" onclick="memoSaveEdit()">保存修改</button>
+          <button class="btn btn-danger press" style="flex:1;" onclick="memoDeleteEdit()">删除</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ============ 屏：衣橱（左侧导航 概览/衣物/云端 + 右侧功能页，粉色 HelloKitty 风格） ============ -->
@@ -2298,7 +2320,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '4.2.5';
+const APP_VERSION = '4.3.1';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2949,8 +2971,9 @@ function renderHome(){
   const he = $('he-cloth');
   if(he) he.textContent = state.clothes.length + ' 件衣物 · ' + state.groups.length + ' 个分组';
 
-  // 加菲猫首页：励志语随机切换 + emoji 散射 + 备忘列表（v4.2.0）
+  // 加菲猫首页：励志语（内建 → 云端语录库到达后更新一次）+ emoji 散射 + 备忘列表
   renderHomeQuote();
+  loadQuoteLibrary();
   homeScatter();
   renderMemos();
 
@@ -2959,26 +2982,70 @@ function renderHome(){
   if(v) v.textContent = 'v' + APP_VERSION;
 }
 
-/* ---------- 总首页：励志卡 / 备忘卡（v4.2.0，加菲猫橘色主题） ---------- */
+/* ---------- 总首页：励志卡 / 备忘卡（v4.3.0：云端语录库 + 意境图片跟随切换） ---------- */
 const HOME_QUOTES = [
-  { zh: '生活就像意面，总能连在一起。', en: 'Life is like pasta - everything connects.' },
-  { zh: '今天的烦恼，先睡一觉再说。', en: 'Never put off till tomorrow what you can forget today.' },
-  { zh: '吃饱了才有力气做喜欢的事。', en: 'Eat well first, then chase your dreams.' },
-  { zh: '热爱可抵岁月漫长。', en: 'Love makes time pass slower.' },
-  { zh: '慢慢来，比较快。', en: 'Slow down and you will speed up.' },
-  { zh: '今天的你，已经很棒了。', en: 'You did great today. Keep it up.' },
-  { zh: '把日子过成自己喜欢的样子。', en: 'Make your days the way you love.' },
-  { zh: '所有的美好都会如约而至。', en: 'All good things come in time.' }
+  { id: 'b1', mood: 'food',   zh: '生活就像意面，总能连在一起。', en: 'Life is like pasta - everything connects.' },
+  { id: 'b2', mood: 'sleep',  zh: '今天的烦恼，先睡一觉再说。', en: 'Never put off till tomorrow what you can forget today.' },
+  { id: 'b3', mood: 'food',   zh: '吃饱了才有力气做喜欢的事。', en: 'Eat well first, then chase your dreams.' },
+  { id: 'b4', mood: 'love',   zh: '热爱可抵岁月漫长。', en: 'Love makes time pass slower.' },
+  { id: 'b5', mood: 'strive', zh: '慢慢来，比较快。', en: 'Slow down and you will speed up.' },
+  { id: 'b6', mood: 'self',   zh: '今天的你，已经很棒了。', en: 'You did great today. Keep it up.' },
+  { id: 'b7', mood: 'life',   zh: '把日子过成自己喜欢的样子。', en: 'Make your days the way you love.' },
+  { id: 'b8', mood: 'hope',   zh: '所有的美好都会如约而至。', en: 'All good things come in time.' }
 ];
 const HOME_EMOJIS = ['🐱','😹','😼','😴','🍖','😋','🧀','⭐','🍊','💤','🐟','🍩'];
-let homeQuoteSeeded = false;
+/* 意境 → 插画：语句带什么 mood 标签，卡片左侧圆图就切哪张（8 张与云端语录库 data/quotes.json 对应） */
+const QUOTE_MOOD_IMG = {
+  sleep:  'avatars/quote-sleep.jpg',  food: 'avatars/quote-food.jpg',  love: 'avatars/quote-love.jpg',
+  strive: 'avatars/quote-strive.jpg', morning: 'avatars/quote-morning.jpg', self: 'avatars/quote-self.jpg',
+  life:   'avatars/quote-life.jpg',   hope: 'avatars/quote-hope.jpg'
+};
+let homeQuoteCurrent = null;     // 当前语录（v4.3.1 修复：选句与渲染分离——启动期 renderHome 被同步链路多次调用，重绘只显示同一句，绝不重选）
+let homeQuoteFromCloud = false;  // 当前语录是否已来自云端库（保证会话内最多切换一次）
+let homeQuotePool = null;        // 云端语录库缓存（会话内）
+let homeQuoteLibTried = false;   // 云端语录库每次启动只拉一次
+function quoteSeenKey(){ return 'quote_seen_' + (state.user && state.user.name ? state.user.name : 'guest'); }
+/* 不重复轮转：localStorage 记录已展示 id，优先选没展示过的；一轮展示完才重置历史 */
+function pickQuote(pool){
+  let seen = [];
+  try{ seen = JSON.parse(localStorage.getItem(quoteSeenKey())||'[]'); }catch(e){}
+  const seenSet = new Set(seen.map(String));
+  const keyOf = q => (q.id != null ? 'i' + q.id : q.zh);
+  let unseen = pool.filter(q => !seenSet.has(keyOf(q)));
+  if(!unseen.length){ seenSet.clear(); unseen = pool.slice(); }
+  const q = unseen[Math.floor(Math.random()*unseen.length)];
+  seenSet.add(keyOf(q));
+  try{ localStorage.setItem(quoteSeenKey(), JSON.stringify([...seenSet])); }catch(e){}
+  return q;
+}
 function renderHomeQuote(){
-  if(homeQuoteSeeded) return;   // v4.2.5：每次启动只随机一次——启动期 renderHome 会被同步链路多次调用，避免励志语句来回跳变
-  const q = HOME_QUOTES[Math.floor(Math.random()*HOME_QUOTES.length)];
+  if(!homeQuoteCurrent){
+    homeQuoteCurrent = pickQuote((homeQuotePool && homeQuotePool.length) ? homeQuotePool : HOME_QUOTES);
+    homeQuoteFromCloud = !!(homeQuotePool && homeQuotePool.length);
+  }
+  // 重绘当前语录（不重选）——无论 renderHome 被调用多少次，画面上的语句保持稳定
   const zh = $('home-quote-zh'), en = $('home-quote-en');
-  if(zh) zh.textContent = q.zh;
-  if(en) en.textContent = q.en;
-  homeQuoteSeeded = true;
+  if(zh) zh.textContent = homeQuoteCurrent.zh;
+  if(en) en.textContent = homeQuoteCurrent.en || '';
+  const cat = document.querySelector('#screen-home .home-hero .cat');
+  if(cat) cat.style.backgroundImage = "url('" + (QUOTE_MOOD_IMG[homeQuoteCurrent.mood] || 'avatars/garfield-cat.png') + "')";
+}
+/* 云端语录库：Gitee data/quotes.json（不随版本发版即可扩充）；仅当当前显示的还是内建语录时切换一次 */
+async function loadQuoteLibrary(){
+  if(homeQuoteLibTried) return;
+  homeQuoteLibTried = true;
+  if(!getGiteeToken() || !state.user) return;   // 未登录/无令牌 → 使用内置语录
+  try{
+    const remote = await giteeReadJSON('data/quotes.json');
+    if(remote && Array.isArray(remote.quotes) && remote.quotes.length){
+      homeQuotePool = remote.quotes;
+      if(!homeQuoteFromCloud){
+        homeQuoteCurrent = pickQuote(remote.quotes);   // 内建 → 云端，会话内唯一一次切换
+        homeQuoteFromCloud = true;
+      }
+      renderHomeQuote();
+    }
+  }catch(e){ /* 静默失败，使用内置语录 */ }
 }
 /* 主页重启按钮（v4.2.5）：清空全部 SW 缓存 + 注销 Service Worker + 整页重载 = 重启程序/刷新缓存/检查更新 */
 async function hardReload(){
@@ -3040,9 +3107,10 @@ function renderMemos(){
   list.innerHTML = memos.map(m=>{
     const d = new Date(m.at);
     const t = (d.getMonth()+1)+'/'+d.getDate()+' ' + ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-    return '<div class="memo-item"><span class="mt">' + spEsc(m.t) + '</span><span class="mtime">' + t + '</span><button class="mdel press" data-at="' + m.at + '">✕</button></div>';
+    return '<div class="memo-item" data-at="' + m.at + '"><span class="mt">' + spEsc(m.t) + '</span><span class="mtime">' + t + '</span><button class="mdel press" data-at="' + m.at + '">✕</button></div>';
   }).join('');
-  list.querySelectorAll('.mdel').forEach(b => b.onclick = () => delMemo(Number(b.dataset.at)));
+  list.querySelectorAll('.memo-item').forEach(c => c.onclick = () => memoOpenEdit(c.dataset.at));
+  list.querySelectorAll('.mdel').forEach(b => b.onclick = (e) => { e.stopPropagation(); delMemo(Number(b.dataset.at)); });
 }
 function addMemo(){
   const inp = $('home-memo-input'); if(!inp) return;
@@ -3093,6 +3161,33 @@ async function memoAutoSync(){
     await pullMemoData();                         // ① 拉云端并与本地合并（union + 墓碑过滤）
     await pushMemoData(state.user.name);          // ② 上传合并后的全量 → 云端恒为所有设备并集
   }catch(e){}                                     // 静默失败，不影响本地使用
+}
+/* ---------- 备忘编辑弹窗（v4.3.0：点击备忘条放大，只改内容不改创建时间） ---------- */
+let memoEditAt = null;
+function memoOpenEdit(at){
+  const m = loadMemoStore().memos.find(x => Number(x.at) === Number(at));
+  if(!m) return;
+  memoEditAt = Number(at);
+  $('memoEditText').value = m.t;
+  const d = new Date(m.at);
+  $('memoEditTime').textContent = '创建于 ' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+  $('memoEditMask').style.display = 'flex';
+}
+function memoCloseEdit(){ $('memoEditMask').style.display = 'none'; memoEditAt = null; }
+function memoSaveEdit(){
+  const v = $('memoEditText').value.trim();
+  if(!v){ toast('内容不能为空'); return; }
+  const st = loadMemoStore();
+  const m = st.memos.find(x => Number(x.at) === Number(memoEditAt));
+  if(m){ m.t = v; saveMemoStore(st); }
+  memoCloseEdit(); renderMemos(); toast('已修改 ✓');
+  memoAutoSync();
+}
+function memoDeleteEdit(){
+  if(memoEditAt == null) return;
+  const at = memoEditAt;
+  memoCloseEdit();
+  delMemo(at);
 }
 
 /* ---------- 衣橱子页面（v4.1.0：左侧导航 概览/衣物/云端 + 右侧功能页，粉色 HelloKitty 风格） ---------- */
