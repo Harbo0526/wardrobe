@@ -1,8 +1,8 @@
 {
-  "name": "电子衣橱",
-  "version": "4.3.5",
-  "short_name": "电子衣橱",
-  "description": "拍照归档衣物、按分组管理、Gitee 云同步的私人在线衣橱",
+  "name": "生活象限",
+  "version": "5.1.14",
+  "short_name": "生活象限",
+  "description": "衣橱 / 调酒 / 记账 / 睡眠一站式私人生活管理，数据 Supabase 云端同步",
   "lang": "zh-CN",
   "start_url": "./index.html",
   "scope": "./",
