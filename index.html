@@ -17,7 +17,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>电子衣橱</title>
+<title>生活象限</title>
 <!-- ============ PWA：可添加到主屏幕，像原生 App 一样全屏运行 ============ -->
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="favicon.ico">
@@ -63,7 +63,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="电子衣橱">
+<meta name="apple-mobile-web-app-title" content="生活象限">
 <style>
 /* ============ 1. 设计令牌 ============ */
 :root{
@@ -1187,8 +1187,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <path d="M12 3c-1.5 2.5-4 4-7 4 0 4 2 7 5 8.5V21h4v-5.5c3-1.5 5-4.5 5-8.5-3 0-5.5-1.5-7-4z"/>
         </svg>
       </div>
-      <div class="auth-title" id="auth-title">嗨，欢迎回来</div>
-      <div class="auth-sub">把今天的穿搭，交给你的私人小衣橱</div>
+      <div class="auth-title" id="auth-title">Yo~，欢迎回来</div>
+      <div class="auth-sub">把今天的日常，交给生活象限</div>
     </div>
 
     <div class="card auth-card">
@@ -1544,7 +1544,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;">
           <circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/>
         </svg>
-        <div class="row-main"><div class="row-title">关于电子衣橱</div><div class="row-sub" id="about-ver"></div></div>
+        <div class="row-main"><div class="row-title">关于生活象限</div><div class="row-sub" id="about-ver"></div></div>
         <span class="row-chev">›</span>
       </div>
       <div class="row press" onclick="navTo(3)">
@@ -2396,7 +2396,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.0.2';
+const APP_VERSION = '5.0.3';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3143,7 +3143,7 @@ async function doLogin(e){
     return false;
   }
   const u = await WBAuth.getCurrentUser();
-  state.user = { name: (u.email || '').split('@')[0], id: u.id, email: u.email, role: 'user' };
+  state.user = { name: (u.email || '').split('@')[0], id: u.id, email: u.email, role: 'user', created_at: u.created_at };
   enterApp();                       // 内部经 sbLoadAll 从 Supabase 加载数据
   toast('欢迎回来，' + state.user.name + ' ✓');
   return false;
@@ -3198,7 +3198,7 @@ async function doRegister(e){
       return false;
     }
     const u = await WBAuth.getCurrentUser();
-    state.user = { name: email.split('@')[0], id: u ? u.id : (r.user && r.user.id), email: email, role: 'user' };
+    state.user = { name: email.split('@')[0], id: u ? u.id : (r.user && r.user.id), email: email, role: 'user', created_at: (u && u.created_at) || (r.user && r.user.created_at) || new Date().toISOString() };
   }catch(err){
     const n = WBErrors.normalize(err);
     if(n.code === 'AUTH_EMAIL_EXISTS'){ toast('该邮箱已被注册，请直接登录'); }
@@ -5195,7 +5195,7 @@ async function doSync(){
 }
 
 function showAbout(){
-  toast('电子衣橱 v' + APP_VERSION + ' · 轻量 · 免费 · 数据自主可控');
+  toast('生活象限 v' + APP_VERSION + ' · 轻量 · 免费 · 数据自主可控');
 }
 
 async function doLogout(){
@@ -6276,7 +6276,7 @@ function renderSleep(){
     try{
       const u = await WBAuth.getCurrentUser();
       if(u){
-        state.user = { name: (u.email || '').split('@')[0], id: u.id, email: u.email, role: 'user' };
+        state.user = { name: (u.email || '').split('@')[0], id: u.id, email: u.email, role: 'user', created_at: u.created_at };
         enterApp();                          // 内部经 sbLoadAll 从 Supabase 加载全部模块数据
       }else{
         showScreen('screen-auth');
