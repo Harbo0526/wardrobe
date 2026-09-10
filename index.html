@@ -360,12 +360,14 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   padding:12px 0 4px;letter-spacing:.3px;
 }
 /* ============ 总首页 v4.2.0：加菲猫橘色主题 + 励志卡 + 备忘卡 ============ */
+/* v5.1.19：首页背景改为「海底卡通图」（用户提供的 home-bg.png），cover 铺满并居中裁切；
+   底色用海水蓝兜底。背景随元素固定（默认 attachment:scroll），内容在其上滚动。 */
 #screen-home{
-  background:linear-gradient(168deg,#fff8ec 0%,#ffe9c8 38%,#ffd9a8 68%,#ffc98a 100%);
+  background:#a9e4f7 url('home-bg.png') center center / cover no-repeat;
 }
 #screen-home .home-hero{
   position:relative;border-radius:22px;padding:14px 16px;margin:10px 16px 12px;
-  background:linear-gradient(135deg,rgba(255,236,214,.92),rgba(255,224,178,.88));
+  background:linear-gradient(135deg,rgba(255,236,214,.4),rgba(255,224,178,.4));   /* v5.1.20：卡片背景透明 40%（文字不变） */
   box-shadow:0 4px 14px rgba(255,167,38,.18);overflow:hidden;min-height:104px;
   border:1px solid rgba(255,255,255,.65);display:flex;align-items:center;gap:12px;
 }
@@ -381,9 +383,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-home .home-hero .scat{position:absolute;inset:0;z-index:1;pointer-events:none;}
 #screen-home .home-hero .scat span{position:absolute;line-height:1;filter:saturate(1.1);}
 #screen-home .memo-card{
-  margin:0 16px 12px;background:rgba(255,255,255,.88);border-radius:20px;padding:12px 14px;
+  margin:0 16px 12px;background:rgba(255,255,255,.4);border-radius:20px;padding:12px 14px;
   box-shadow:0 4px 14px rgba(255,167,38,.12);border:1px solid rgba(255,255,255,.6);
 }
+/* v5.1.20：首页卡片背景统一透明 40%（仅背景；文字/图标/头像不变）。
+   .group-card 是通用类，这里仅限定 #screen-home 内；:active 单列以保留按压反馈。 */
+#screen-home .group-card{background:rgba(255,255,255,.4);}
+#screen-home .group-card:active{background:rgba(143,211,168,.55);}
 #screen-home .memo-head{display:flex;align-items:center;gap:8px;}
 #screen-home .memo-head .memo-title{font-size:13px;font-weight:800;color:#8a4b00;}
 #screen-home .memo-head .memo-cnt{font-size:11px;color:#b0762e;}
@@ -1169,6 +1175,48 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-cloth .lg-main{flex:1;min-width:0;overflow-y:auto;padding:12px;position:relative;z-index:1;}
 #screen-cloth .lg-panel{display:none;}
 #screen-cloth .lg-panel.active{display:block;animation:fadeIn .25s ease;}
+
+/* ============ v5.1.16：屏内独立滚动区底部安全区 ============
+   记账/睡眠/衣橱(.lg-main)、调酒(.ck-main)、分组衣物网格(.cloth-grid) 都是「屏内独立滚动」容器，
+   原先底部内边距仅 12px，在安卓全面屏上会被系统导航条遮住最后一张卡片。
+   这里统一加大底部内边距（12px + 系统安全区 + 20px 呼吸），确保底部卡片可完整滚出。 */
+#screen-ledger .lg-main,
+#screen-sleep .lg-main,
+#screen-cloth .lg-main,
+.ck-main,
+#screen-group .cloth-grid{
+  padding-bottom:calc(12px + var(--safe-b) + 20px);
+}
+
+/* ============ v5.1.17：左侧导航栏统一 60px ============ */
+.group-rail,
+.ck-side,
+#screen-ledger .lg-side,
+#screen-sleep .lg-side,
+#screen-cloth .lg-side{
+  flex:0 0 60px;
+  width:60px;
+}
+/* 60px 下收窄导航项左右外边距与内边距，保证图标/文字不被挤 */
+#screen-ledger .lg-nav,
+#screen-sleep .lg-nav,
+#screen-cloth .lg-nav{margin:0 4px;}
+.ck-side{padding:10px 6px;}
+.group-rail{padding:10px 4px 14px;}
+
+/* ============ v5.1.17：左侧导航「长按排序模式」（方案A：▲▼ 调整 + 云端保存） ============ */
+.lg-side.sorting .lg-nav,
+.ck-side.sorting .ck-scard{
+  animation:navShake .3s ease-in-out infinite alternate;
+}
+@keyframes navShake{ from{transform:translateX(-1.5px);} to{transform:translateX(1.5px);} }
+.nav-mv{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
+.nav-mv b{
+  font-size:11px;line-height:1;padding:3px 8px;border-radius:8px;cursor:pointer;
+  background:rgba(255,255,255,.92);color:var(--lg-deep);box-shadow:0 1px 3px rgba(0,0,0,.14);
+  user-select:none;
+}
+.nav-mv b:active{background:var(--lg-soft);}
 #screen-cloth .lg-banner{position:relative;border-radius:22px;padding:14px 16px;margin-bottom:12px;background:linear-gradient(135deg,rgba(255,214,231,.88),rgba(255,239,246,.78));backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(255,143,179,.12);overflow:hidden;min-height:92px;border:1px solid rgba(255,255,255,.5);}
 #screen-cloth .lg-banner-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(255,143,179,.28);background-size:cover;background-position:center;background-color:#fff;flex-shrink:0;}
 #screen-cloth .lg-banner-text{flex:1;min-width:0;margin-left:12px;z-index:2;}
@@ -2388,7 +2436,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.1.15';
+const APP_VERSION = '5.2.1';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3077,6 +3125,141 @@ window.addEventListener('popstate', function(){
 // 初始压入哨兵（刷新后 history.state 仍在，不会重复叠加）
 if(!history.state || !history.state.wb){ wbPushTrap(); }
 
+/* ============ v5.1.17：左侧导航自定义排序（长按 → ▲▼ → 云端保存） ============
+   数据 = profiles.nav_orders（jsonb，形如 {cl:[...],lg:[...],sp:[...],ck:[...]}）。
+   交互 = 长按侧栏 0.5s 进入排序模式（轻微抖动 + 每项出现 ▲▼），▲▼ 交换并即时保存；
+          点击侧栏以外区域 / 再次长按 → 退出排序模式。 */
+const NAV_META = {
+  cl: {
+    box:'clSide', attr:'data-cl', fn:'clSwitch', def:['overview','list','bak'],
+    items:{ overview:{emoji:'🏠',label:'概览'}, list:{emoji:'👗',label:'衣物'}, bak:{emoji:'☁️',label:'云端'} }
+  },
+  lg: {
+    box:'lgSide', attr:'data-lg', fn:'lgSwitch', def:['overview','entry','calendar','stats','query','bak'],
+    items:{ overview:{emoji:'🏠',label:'概览'}, entry:{emoji:'✍️',label:'录入'}, calendar:{emoji:'📅',label:'日历'},
+            stats:{emoji:'📊',label:'统计'}, query:{emoji:'🔍',label:'查询'}, bak:{emoji:'☁️',label:'云端'} }
+  },
+  sp: {
+    box:'spSide', attr:'data-sp', fn:'spSwitch', def:['overview','entry','calendar','stats','bak'],
+    items:{ overview:{emoji:'🏠',label:'概览'}, entry:{emoji:'✍️',label:'记录'}, calendar:{emoji:'📅',label:'日历'},
+            stats:{emoji:'📊',label:'统计'}, bak:{emoji:'☁️',label:'云端'} }
+  },
+  ck: {
+    box:'ckSide', attr:'data-ck', fn:'ckSwitch', def:['mix','mat','rec','bak'],
+    items:{
+      mix:{label:'调酒', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg>'},
+      mat:{label:'材料库', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>'},
+      rec:{label:'配方', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'},
+      bak:{label:'备份', svg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M12 7v5l3 2"/></svg>'}
+    }
+  }
+};
+let navOrders = {};      // 各模块顺序
+let navSortKey = null;   // 正在排序的模块（null = 非排序模式）
+const NAV_KEYS = ['cl','lg','sp','ck'];
+
+function navFullOrder(key){
+  const m = NAV_META[key];
+  const src = Array.isArray(navOrders[key]) ? navOrders[key] : [];
+  const out = src.filter(function(k){ return m.items[k]; });
+  m.def.forEach(function(k){ if(out.indexOf(k) < 0) out.push(k); });
+  return out;
+}
+function renderNav(key){
+  const m = NAV_META[key];
+  const box = $(m.box); if(!box) return;
+  const order = navFullOrder(key);
+  navOrders[key] = order;
+  const prev = box.querySelector('.active');
+  const prevKey = prev ? prev.getAttribute(m.attr) : null;
+  const sorting = (navSortKey === key);
+  box.classList.toggle('sorting', sorting);
+  const isCk = (key === 'ck');
+  box.innerHTML = order.map(function(k, i){
+    const it = m.items[k];
+    const ic = isCk ? (it.svg || '') : ('<span class="lg-emoji">' + (it.emoji || '') + '</span>');
+    const lb = isCk ? it.label : ('<span class="lg-label">' + it.label + '</span>');
+    const mv = sorting ? ('<span class="nav-mv"><b data-mv="up" data-i="' + i + '">▲</b><b data-mv="down" data-i="' + i + '">▼</b></span>') : '';
+    return '<button class="' + (isCk ? 'ck-scard' : 'lg-nav') + '" ' + m.attr + '="' + k + '">' + ic + lb + mv + '</button>';
+  }).join('');
+  const target = prevKey || m.def[0];
+  box.querySelectorAll('[' + m.attr + ']').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute(m.attr) === target);
+    b.onclick = function(){ if(navSortKey) return; window[m.fn](b.getAttribute(m.attr)); };
+  });
+  if(sorting){
+    box.querySelectorAll('[data-mv]').forEach(function(b){
+      b.onclick = function(ev){ ev.stopPropagation(); moveNav(key, parseInt(b.dataset.i, 10), b.dataset.mv); };
+    });
+  }
+}
+function moveNav(key, i, dir){
+  const arr = navOrders[key] || navFullOrder(key);
+  const j = (dir === 'up') ? i - 1 : i + 1;
+  if(j < 0 || j >= arr.length) return;
+  const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  navOrders[key] = arr;
+  renderNav(key);
+  saveNavOrder();
+}
+function enterNavSort(key){
+  if(navSortKey === key){ exitNavSort(); return; }   // 同一侧栏再长按 = 退出
+  if(navSortKey) renderNav(navSortKey);
+  navSortKey = key;
+  renderNav(key);
+  toast('排序模式：用 ▲▼ 调整顺序，点空白处完成');
+}
+function exitNavSort(){
+  if(!navSortKey) return;
+  const k = navSortKey; navSortKey = null;
+  renderNav(k);
+}
+function bindNavLongPress(key){
+  const box = $(NAV_META[key].box);
+  if(!box || box._lp) return;
+  box._lp = true;
+  let timer = null, sy = 0, moved = false;
+  box.addEventListener('pointerdown', function(e){
+    sy = e.clientY; moved = false;
+    if(timer) clearTimeout(timer);
+    timer = setTimeout(function(){ timer = null; if(!moved) enterNavSort(key); }, 500);
+  });
+  box.addEventListener('pointermove', function(e){ if(Math.abs(e.clientY - sy) > 8) moved = true; });
+  const stop = function(){ if(timer){ clearTimeout(timer); timer = null; } };
+  box.addEventListener('pointerup', stop);
+  box.addEventListener('pointercancel', stop);
+  box.addEventListener('pointerleave', stop);
+  box.addEventListener('contextmenu', function(e){ e.preventDefault(); });   // 长按不弹系统菜单
+}
+document.addEventListener('pointerdown', function(e){
+  if(!navSortKey) return;
+  const box = $(NAV_META[navSortKey].box);
+  if(box && box.contains(e.target)) return;    // 点在侧栏内 → 保持
+  exitNavSort();
+}, true);
+async function loadNavOrder(){
+  try{
+    const u = await WBAuth.getCurrentUser(); if(!u) return;
+    const r = await getSupabaseClient().from('profiles').select('nav_orders').eq('id', u.id).maybeSingle();
+    if(r && r.data && r.data.nav_orders && typeof r.data.nav_orders === 'object') navOrders = r.data.nav_orders;
+  }catch(e){ /* 静默：用默认顺序 */ }
+  NAV_KEYS.forEach(function(k){ renderNav(k); });
+}
+let _navSaveT = null;
+function saveNavOrder(){
+  if(_navSaveT) clearTimeout(_navSaveT);
+  _navSaveT = setTimeout(async function(){
+    try{
+      const u = await WBAuth.getCurrentUser(); if(!u) return;
+      await getSupabaseClient().from('profiles').update({ nav_orders: navOrders }).eq('id', u.id);
+    }catch(e){ /* 静默：仅本次顺序未上云 */ }
+  }, 600);
+}
+function initNavSort(){
+  NAV_KEYS.forEach(function(k){ renderNav(k); bindNavLongPress(k); });
+}
+initNavSort();   // 脚本位于 body 末尾，DOM 已就绪：先按默认顺序渲染 + 绑定长按
+
 /* 底部导航栏已移除（v4.1.0）：navTo 保留函数供既有调用点使用，仅做屏间跳转 */
 function navTo(idx){
   if(idx===0){ renderHome(); showScreen('screen-home'); }               // 总首页（每次进入重渲染）
@@ -3253,6 +3436,7 @@ function enterApp(){
   showScreen('screen-home');
   sbLoadAll();   // DAL 并行加载 groups/clothes/materials/recipes/ledger/sleep/memos → state → 渲染
   loadMyAvatar().catch(function(){});   // 登录后异步加载头像（失败静默，占位）
+  loadNavOrder();   // v5.1.17：拉取云端「左侧导航自定义顺序」并重渲染四个侧栏
 }
 
 /* ---------- 5. 衣橱主页 ---------- */
@@ -6054,15 +6238,17 @@ function spRenderCalendar(){
     spFillList('spCalDayList', recs, 'spCalDayTitle', '当日明细 · ');
   });
 }
-function spBarSVG(labels, arr, color, withLine){
+function spBarSVG(labels, arr, color, withLine, fitW){
   const n = labels.length;
   /* v4.3.4：图表放大重做——SVG 带固有宽度（width 属性）+ 容器横向滚动，
      不再用 preserveAspectRatio 整体压缩（31 天的月份曾把 9px 字压成 2px，完全看不清）；
-     高度 180→240，字号 9→12/11，月份天数多时自动收窄每柱间距以减少滚动 */
+     高度 180→240，字号 9→12/11，月份天数多时自动收窄每柱间距以减少滚动。
+     v5.1.16：新增可选 fitW —— 传入容器可用宽度时，SVG 按该宽度自适应铺满（近7日无需横向滚动）。 */
   const perBar = n > 16 ? 26 : 40;
-  const W = Math.max(320, n * perBar), H = 240, padL = 50, padB = 42, padT = 18, padR = 10;
+  const W = fitW ? Math.max(240, Math.round(fitW)) : Math.max(320, n * perBar), H = 240, padL = 50, padB = 42, padT = 18, padR = 10;
   const cw = W - padL - padR, ch = H - padT - padB;
-  const max = Math.max(1, ...arr);
+  const GOAL = 8 * 60;                             /* v5.1.18：8 小时目标线 */
+  const max = Math.max(GOAL, 1, ...arr);           /* 纵轴至少 8h；若有超 8h 的记录则按实际最大值自适应 */
   const gw = cw / n;
   let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block">';
   for(let i = 0; i <= 4; i++){
@@ -6070,6 +6256,10 @@ function spBarSVG(labels, arr, color, withLine){
     svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#eee"/>';
     svg += '<text x="' + (padL - 6) + '" y="' + (y + 4) + '" text-anchor="end" font-size="12" fill="#b0768f">' + v + '</text>';
   }
+  /* v5.1.18：8h 目标虚线（平行于横轴）+ 右侧标注 */
+  const gy = padT + ch * (1 - GOAL / max);
+  svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#ff4d6d" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.9"/>';
+  svg += '<text x="' + (W - padR) + '" y="' + (gy - 4) + '" text-anchor="end" font-size="10" font-weight="700" fill="#ff4d6d">目标 8h</text>';
   for(let i = 0; i < n; i++){
     const gx = padL + gw * i, bw = Math.min(gw * 0.66, 30);
     const x = gx + (gw - bw) / 2;
@@ -6121,7 +6311,9 @@ function spRenderStats(){
     labels.push((d.getMonth()+1) + '/' + d.getDate());
     arr.push(Math.round(spDayTotal(ds)));
   }
-  $('spStatChart').innerHTML = spBarSVG(labels, arr, '#ff6b9d', true);
+  const _chartEl = $('spStatChart');
+  const _fitW = _chartEl ? (_chartEl.clientWidth - 24) : 0;   // 减 .lg-chart 左右 padding(12+12) → 近7日铺满、无需横向滚动
+  if(_chartEl) _chartEl.innerHTML = spBarSVG(labels, arr, '#ff6b9d', true, _fitW > 0 ? _fitW : 0);
   const box = $('spStatDays');
   const days = Object.keys(byDay).sort();
   if(!days.length){ box.innerHTML = '<div class="empty"><span class="empty-emoji">📭</span><div class="empty-text">本月暂无记录</div></div>'; return; }
