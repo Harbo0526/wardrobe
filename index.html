@@ -2268,7 +2268,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             </div>
           </div>
           <div class="lg-ov-cards">
-            <div class="lg-ov-card inc"><div class="k">今日睡眠</div><div class="v" id="spOvToday">0</div></div>
+            <div class="lg-ov-card inc"><div class="k">昨夜睡眠</div><div class="v" id="spOvToday">0</div></div>
             <div class="lg-ov-card exp"><div class="k">近7天日均</div><div class="v" id="spOv7">0</div></div>
             <div class="lg-ov-card net"><div class="k">本月总时长</div><div class="v" id="spOvMonth">0</div></div>
             <div class="lg-ov-card save"><div class="k">平均入睡</div><div class="v" id="spOvBed">--:--</div></div>
@@ -2667,7 +2667,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.5.1';
+const APP_VERSION = '5.5.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -6651,6 +6651,31 @@ function spAvgTime(arr){
 }
 function spDayRecs(date){ return (state.sleep.records||[]).filter(r => r.date === date); }
 function spDayTotal(date){ return spDayRecs(date).reduce((s,r) => s + (r.minutes||0), 0); }
+
+/* v5.5.2：昨夜睡眠时长 = 「昨天 19:00 ~ 今天 12:00」这个窗口内实际发生的睡眠时长求和。
+   做法：把每条记录还原成真实的开始/结束时刻（结束 ≤ 开始则视为跨午夜 +24h），
+   再与该窗口求交集、只累加落在窗口内的分钟数（按窗口裁剪），因此：
+   · 23:00~07:30 的夜觉 → 8.5h 全计入；
+   · 18:30~21:00 的早睡 → 只计 19:00~21:00 的 2h；
+   · 11:00~14:00 的午觉 → 只计 11:00~12:00 的 1h；
+   · 未填起床时间（入睡中）的记录不计入。 */
+function spLastNightMin(){
+  const now = new Date();
+  const ws = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 19, 0, 0, 0).getTime();  /* 昨日 19:00 */
+  const we = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0).getTime();       /* 今日 12:00 */
+  if(!(we > ws)) return 0;
+  let sum = 0;
+  (state.sleep && state.sleep.records ? state.sleep.records : []).forEach(function(r){
+    if(!r.date || !r.start || !r.end) return;                     /* 缺起床时间 → 无法计算 */
+    const sd = new Date(r.date + 'T' + r.start);
+    let ed = new Date((r.endDate || r.date) + 'T' + r.end);
+    if(isNaN(sd.getTime()) || isNaN(ed.getTime())) return;
+    if(ed.getTime() <= sd.getTime()) ed = new Date(ed.getTime() + 24*60*60*1000);   /* 跨午夜 */
+    const a = Math.max(sd.getTime(), ws), b = Math.min(ed.getTime(), we);
+    if(b > a) sum += (b - a) / 60000;
+  });
+  return Math.round(sum);
+}
 function spMonthRecs(prefix){ return (state.sleep.records||[]).filter(r => r.date && r.date.indexOf(prefix) === 0); }
 
 function spOneRecHTML(r){
@@ -6683,14 +6708,14 @@ function spRenderToday(){
 }
 function spRenderOverview(){
   const t = spTodayStr();
-  const todayMin = spDayTotal(t);
+  const lastNightMin = spLastNightMin();   /* v5.5.2：昨夜睡眠 = 昨日19:00~今日12:00 窗口内的睡眠时长 */
   let sum7 = 0, cnt7 = 0;
   for(let i = 6; i >= 0; i--){ const d = new Date(); d.setDate(d.getDate() - i); const m = spDayTotal(spIso(d)); if(m > 0){ sum7 += m; cnt7++; } }
   const avg7 = cnt7 ? sum7 / cnt7 : 0;
   const prefix = t.slice(0,7);
   let monthMin = 0; spMonthRecs(prefix).forEach(r => monthMin += (r.minutes||0));
   const bed = []; spMonthRecs(prefix).forEach(r => { const a = r.start.split(':').map(Number); bed.push(a[0]*60 + a[1]); });
-  $('spOvToday').textContent = spFmtDur(todayMin);
+  $('spOvToday').textContent = spFmtDur(lastNightMin);
   $('spOv7').textContent = spFmtDur(avg7);
   $('spOvMonth').textContent = spFmtDur(monthMin);
   $('spOvBed').textContent = spAvgTime(bed);
@@ -7032,21 +7057,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.5.1"></script>
-<script src="./js/data/supabase.js?v=5.5.1"></script>
+<script src="./js/config.js?v=5.5.2"></script>
+<script src="./js/data/supabase.js?v=5.5.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.5.1"></script>
-<script src="./js/data/query.js?v=5.5.1"></script>
-<script src="./js/auth/session.js?v=5.5.1"></script>
-<script src="./js/data/groups.js?v=5.5.1"></script>
-<script src="./js/data/clothgroups.js?v=5.5.1"></script>
-<script src="./js/data/clothes.js?v=5.5.1"></script>
-<script src="./js/data/modules.js?v=5.5.1"></script>
-<script src="./js/data/index.js?v=5.5.1"></script>
-<script src="./js/storage/paths.js?v=5.5.1"></script>
-<script src="./js/storage/images.js?v=5.5.1"></script>
-<script src="./js/storage/index.js?v=5.5.1"></script>
-<script src="./js/auth/index.js?v=5.5.1"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.5.1"></script>
+<script src="./js/data/errors.js?v=5.5.2"></script>
+<script src="./js/data/query.js?v=5.5.2"></script>
+<script src="./js/auth/session.js?v=5.5.2"></script>
+<script src="./js/data/groups.js?v=5.5.2"></script>
+<script src="./js/data/clothgroups.js?v=5.5.2"></script>
+<script src="./js/data/clothes.js?v=5.5.2"></script>
+<script src="./js/data/modules.js?v=5.5.2"></script>
+<script src="./js/data/index.js?v=5.5.2"></script>
+<script src="./js/storage/paths.js?v=5.5.2"></script>
+<script src="./js/storage/images.js?v=5.5.2"></script>
+<script src="./js/storage/index.js?v=5.5.2"></script>
+<script src="./js/auth/index.js?v=5.5.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.5.2"></script>
 </body>
 </html>
