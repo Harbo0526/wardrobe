@@ -1233,6 +1233,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <label>确认密码</label>
           <input class="input" id="reg-pass2" type="password" placeholder="再次输入密码" autocomplete="new-password">
         </div>
+        <div class="field">
+          <label>昵称（可选）</label>
+          <input class="input" id="reg-name" type="text" placeholder="留空则默认用邮箱前缀" autocomplete="nickname" maxlength="24">
+        </div>
         <button class="btn btn-primary press" type="submit">注 册 并 登 录</button>
       </form>
     </div>
@@ -1322,7 +1326,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="lg-head">
       <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
       <h2>👕 Harbo衣橱</h2>
-      <button class="lg-sync press" title="上传云端+下拉云端" onclick="syncSpin(this, clSync)">⟳</button>
+      <button class="lg-sync press" title="上传云端+下拉云端" onclick="syncSpin(this, clRefresh)">⟳</button>
     </div>
     <div class="lg-shell">
       <aside class="lg-side" id="clSide">
@@ -1376,7 +1380,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <div class="card">
             <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
             <p class="ck-hint">衣物与分组数据存于远程仓库，换设备填入同一 Gitee 令牌即可同步取回。</p>
-            <button class="btn btn-accent press" style="margin-top:10px;" onclick="clSync()">⇅ 立即同步（上传 + 拉回）</button>
+            <button class="btn btn-accent press" style="margin-top:10px;" onclick="clRefresh()">⇅ 立即同步（上传 + 拉回）</button>
           </div>
         </div>
 
@@ -1393,7 +1397,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <span class="title" id="group-title">上衣</span>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clSync)">⟳</button>
+        <button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clRefresh)">⟳</button>
         <button class="head-btn press" onclick="openUploadWithGroup()" title="上传衣物">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
@@ -1479,47 +1483,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
   <!-- ============ 屏 5：我的 / 设置 ============ -->
   <section class="screen" id="screen-mine">
-    <div class="screen-head"><button class="back press" onclick="goHome()" title="返回首页">‹</button><span class="title">我的</span><button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clSync)">⟳</button></div>
+    <div class="screen-head"><button class="back press" onclick="goHome()" title="返回首页">‹</button><span class="title">我的</span><button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clRefresh)">⟳</button></div>
 
     <div class="card profile-card">
       <div class="profile-avatar" id="mine-avatar" onclick="openAvatarEditor()" title="点击设置头像">绿</div>
       <div>
-        <div class="profile-name" id="mine-name">小绿</div>
-        <div class="profile-meta" id="mine-meta">加入于 2026-08-25</div>
-      </div>
-    </div>
-
-    <!-- 数据同步（Gitee 云同步） -->
-    <div class="card sync-card">
-      <div class="card-title">数据同步</div>
-
-      <!-- Gitee 令牌：Phase 14 起停用（数据源已切换 Supabase；保留 DOM 供回滚） -->
-      <div class="row" hidden>
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-          <rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6"/>
-        </svg>
-        <div class="row-main">
-          <div class="row-title">远程仓库 令牌</div>
-          <div class="row-sub">填一次存本机，用于云端同步</div>
-        </div>
-      </div>
-      <div class="token-row" hidden>
-        <input class="input" type="password" id="gitee-token" placeholder="填一次存本机" autocomplete="off">
-        <button class="btn-sm btn-primary press" onclick="saveGiteeToken()">保存</button>
-      </div>
-      <div class="sync-note" hidden>数据存入远程仓库，换设备填入同一令牌即可同步</div>
-
-      <!-- 云端同步 -->
-      <div class="row">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-          <path d="M4 12a8 8 0 0 1 14.5-4.5"/><path d="M20 12a8 8 0 0 1-14.5 4.5"/>
-          <path d="M18 3v5h-5M6 21v-5h5"/>
-        </svg>
-        <div class="row-main">
-          <div class="row-title">上传云端</div>
-          <div class="sync-status"><span class="dot"></span><span id="sync-status">尚未同步</span></div>
-        </div>
-        <button class="btn-sm btn-accent press" onclick="doSync()" id="sync-btn">立即同步</button>
+        <div class="profile-name"><span id="mine-name">小绿</span><span class="dn-pencil press" onclick="openDisplayNameEditor()" title="修改用户名" aria-label="修改用户名" style="margin-left:6px;font-size:0.78em;color:var(--accent);cursor:pointer;">✎</span></div>
+        <!--div class="profile-meta" id="mine-meta">加入于 2026-08-25</div-->
       </div>
     </div>
 
@@ -2202,6 +2172,24 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       </div>
     </div>
   </div>
+
+  <!-- ============ Sheet：修改用户名 ============ -->
+  <div class="overlay" id="sheet-displayname" onclick="closeSheetOnBg(event,'sheet-displayname')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-head"><h3>修改用户名</h3><button class="sheet-close" onclick="closeSheet('sheet-displayname')">✕</button></div>
+      <div class="dn-body">
+        <div class="field">
+          <label>用户名（可任意修改，最多 24 字）</label>
+          <input class="input" id="dn-input" type="text" maxlength="24" placeholder="输入新用户名" autocomplete="off">
+        </div>
+        <div class="dn-tip">用户名仅用于本应用展示，不影响登录邮箱。</div>
+        <div class="dn-btns">
+          <button class="btn btn-secondary press" onclick="closeSheet('sheet-displayname')">取消</button>
+          <button class="btn btn-accent press" onclick="saveDisplayName()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <input type="file" id="avatarAlbumInput" accept="image/*" hidden>
   <input type="file" id="avatarCameraInput" accept="image/*" capture="user" hidden>
 
@@ -2396,7 +2384,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.0.3';
+const APP_VERSION = '5.1.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3191,7 +3179,10 @@ async function doRegister(e){
     var regRedirect = (location.hostname === 'harbo0526.github.io')
       ? (location.origin + '/wardrobe')
       : (location.origin + '/index.html');
-    const r = await WBAuth.signUp({ email: email, password: p1, options: { emailRedirectTo: regRedirect } });
+    const dn = ($('reg-name').value || '').trim();
+    const regOpts = { emailRedirectTo: regRedirect };
+    if(dn) regOpts.data = { display_name: dn };
+    const r = await WBAuth.signUp({ email: email, password: p1, options: regOpts });
     if(r.needsConfirmation){
       toast('注册成功！请查收邮箱并点击确认链接，然后即可登录');
       switchAuthMode('login');
@@ -3240,6 +3231,7 @@ async function legacyDoRegisterGitee(e){
 
 /* 进入登录态主界面（Phase 14：数据源 = Supabase DAL；旧 Gitee pull 已停用） */
 function enterApp(){
+  refreshUserName();   // 补全 display_name（用户名）；异步，不阻塞主流程
   renderHome();
   showScreen('screen-home');
   sbLoadAll();   // DAL 并行加载 groups/clothes/materials/recipes/ledger/sleep/memos → state → 渲染
@@ -3529,10 +3521,15 @@ function renderClothList(){
     '</button>';
   }).join('');
 }
-function clSync(){
+async function clRefresh(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  return doSync();   // 复用「我的」页的双向同步（推送本地 + 拉回合并 + 恢复头像），返回 Promise 供转圈动画感知结束
+  try{
+    await sbLoadAll();   // Supabase：重新下拉全部模块云端数据（自动上传已实时进行，此按钮仅做手动刷新）
+    toast('已刷新云端数据 ✓');
+  }catch(e){
+    const n = WBErrors.normalize(e);
+    toast('刷新失败：' + (n.message || '请重试'));
+  }
 }
 /* 刷新按钮转圈包装（v4.2.2）：点击加 spinning 旋转，同步 Promise 结束（成功/失败）后恢复静止 */
 async function syncSpin(btn, fn){
@@ -4381,9 +4378,7 @@ function renderMine(){
   applyAvatar('mine-avatar');
   $('mine-name').textContent = u.name;
   const d = new Date(u.createdAt);
-  $('mine-meta').textContent = '加入于 ' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' · ' + state.clothes.length + ' 件衣物';
-  renderSyncStatus();
-  renderGiteeTokenInput();
+  //$('mine-meta').textContent = '加入于 ' + d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' · ' + state.clothes.length + ' 件衣物';
 
   // 版本页脚（与首页页脚一致，读 APP_VERSION，不写死在 HTML）
   var v = $('mine-version');
@@ -4391,6 +4386,48 @@ function renderMine(){
   // 关于行版本（统一读 APP_VERSION，避免硬编码失同步）
   var av = $('about-ver');
   if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
+}
+
+/* ---------- 10.2 用户名（display_name，可任意修改） ----------
+ * 数据源 = profiles.display_name（非唯一，可任意改，无重名冲突）。
+ * handle_new_user 触发器已为新用户建档（display_name = metadata.display_name 或邮箱前缀）；
+ * enterApp() 统一 await→fire refreshUserName() 补全，避免刷新后被邮箱前缀覆盖。 */
+async function refreshUserName(){
+  try{
+    const u = await WBAuth.getCurrentUser();
+    if(!u || !state.user) return;
+    const { data, error } = await getSupabaseClient().from('profiles')
+      .select('display_name, username').eq('id', u.id).maybeSingle();
+    if(error || !data) return;            // 静默失败，保留邮箱前缀兜底
+    const dn = (data.display_name || data.username || '').trim();
+    if(dn){ state.user.name = dn; renderMine(); }
+  }catch(e){ /* 不影响主流程 */ }
+}
+function openDisplayNameEditor(){
+  const inp = $('dn-input');
+  if(inp && state.user) inp.value = state.user.name || '';
+  openSheet('sheet-displayname');
+  if(inp) setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 50);
+}
+async function saveDisplayName(){
+  const inp = $('dn-input');
+  const nn = (inp && inp.value || '').trim();
+  if(!nn){ toast('用户名不能为空'); return false; }
+  if(nn.length > 24){ toast('用户名最多 24 个字符'); return false; }
+  try{
+    const user = await WBAuth.requireUser();           // 校验已登录本人
+    const { error } = await getSupabaseClient().from('profiles')
+      .update({ display_name: nn, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+    if(error){ toast('保存失败：' + (error.message || '未知错误')); return false; }
+    state.user.name = nn;
+    renderMine();
+    closeSheet('sheet-displayname');
+    toast('用户名已更新 ✓');
+  }catch(e){
+    toast('保存失败：' + (e && e.message ? e.message : '未知错误'));
+  }
+  return false;
 }
 
 /* ---------- 10.5 头像（Supabase private avatars bucket + profiles.avatar_path 持久） ----------
@@ -4556,13 +4593,7 @@ function maskToken(token){
   if(!token) return '填一次存本机';
   return token.length <= 4 ? '••••' : token.slice(0,4) + '••••';
 }
-/* 令牌输入回显：已保存 → 用占位符显示掩码（前4位+••••），密码框内不落明文 */
-function renderGiteeTokenInput(){
-  const inp = $('gitee-token');
-  if(!inp) return;
-  inp.placeholder = maskToken(getGiteeToken());
-  inp.value = '';
-}
+
 /* [ROLLBACK-ONLY · Phase 17 起停用] 旧 Gitee 令牌保存入口。
    UI 已于 Phase 14 隐藏；即使被调用写入令牌，giteeFetch 也已硬阻断，不会产生任何 Gitee 请求。 */
 function saveGiteeToken(){

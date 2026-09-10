@@ -1,1 +1,1 @@
-﻿
+# Disable Jekyll so dot-prefixed directories like .well-known are published by GitHub Pages
