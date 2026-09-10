@@ -2646,7 +2646,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.4.5';
+const APP_VERSION = '5.4.6';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -5974,6 +5974,7 @@ function lgRenderBanner(panel){
   }
 }
 function lgSwitch(panel){
+  lgState.panel = panel;   /* v5.4.6：记录当前面板，供云端数据到达后按需重渲染 */
   document.querySelectorAll('#lgSide .lg-nav').forEach(b => b.classList.toggle('active', b.dataset.lg === panel));
   document.querySelectorAll('#screen-ledger .lg-panel').forEach(p => p.classList.toggle('active', p.id === 'lgp-' + panel));
   const active = $('lgp-' + panel);
@@ -6770,6 +6771,7 @@ function spRenderBanner(panel){
   }
 }
 function spSwitch(panel){
+  spState.panel = panel;   /* v5.4.6：记录当前面板，供云端数据到达后按需重渲染 */
   document.querySelectorAll('#spSide .lg-nav').forEach(b => b.classList.toggle('active', b.dataset.sp === panel));
   document.querySelectorAll('#screen-sleep .lg-panel').forEach(p => p.classList.toggle('active', p.id === 'spp-' + panel));
   const active = $('spp-' + panel);
@@ -6882,6 +6884,17 @@ function renderSleep(){
         if(ev === 'PASSWORD_RECOVERY'){ openNewPasswordSheet(); }
       });
     }catch(e){ /* 监听失败不影响主流程 */ }
+    /* v5.4.6：前端脚本版本守卫。历史故障（2026-09-10 油费记录"保存后消失"）：线上只更新了 index.html /
+       sw.js，js/ 目录仍停留在旧版 → 页面有油费 UI 但 DAL/bridge 没有 fuel 模块，保存直接抛错且被静默吞掉。
+       此处显式比对页面版本与 js/ 版本并告警，让「部署遗漏」立刻可见，不再静默。 */
+    try{
+      const jsVer = (typeof WB_JS_VERSION === 'undefined') ? null : WB_JS_VERSION;
+      if(jsVer !== APP_VERSION){
+        const m = '前端脚本版本不一致（页面 v' + APP_VERSION + ' / js/ v' + (jsVer || '未加载') + '）：请刷新页面；若仍不一致，说明 js/ 目录未随版本一并部署';
+        console.error('[版本守卫] ' + m);
+        toast(m);
+      }
+    }catch(e){ /* 守卫异常不影响主流程 */ }
     try{
       const u = await WBAuth.getCurrentUser();
       if(u){
@@ -6898,21 +6911,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.0.2"></script>
-<script src="./js/data/supabase.js?v=5.0.2"></script>
+<script src="./js/config.js?v=5.4.6"></script>
+<script src="./js/data/supabase.js?v=5.4.6"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.0.2"></script>
-<script src="./js/data/query.js?v=5.0.2"></script>
-<script src="./js/auth/session.js?v=5.0.2"></script>
-<script src="./js/data/groups.js?v=5.0.2"></script>
-<script src="./js/data/clothgroups.js?v=5.0.2"></script>
-<script src="./js/data/clothes.js?v=5.0.2"></script>
-<script src="./js/data/modules.js?v=5.0.2"></script>
-<script src="./js/data/index.js?v=5.0.2"></script>
-<script src="./js/storage/paths.js?v=5.0.2"></script>
-<script src="./js/storage/images.js?v=5.0.2"></script>
-<script src="./js/storage/index.js?v=5.0.2"></script>
-<script src="./js/auth/index.js?v=5.0.2"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.0.2"></script>
+<script src="./js/data/errors.js?v=5.4.6"></script>
+<script src="./js/data/query.js?v=5.4.6"></script>
+<script src="./js/auth/session.js?v=5.4.6"></script>
+<script src="./js/data/groups.js?v=5.4.6"></script>
+<script src="./js/data/clothgroups.js?v=5.4.6"></script>
+<script src="./js/data/clothes.js?v=5.4.6"></script>
+<script src="./js/data/modules.js?v=5.4.6"></script>
+<script src="./js/data/index.js?v=5.4.6"></script>
+<script src="./js/storage/paths.js?v=5.4.6"></script>
+<script src="./js/storage/images.js?v=5.4.6"></script>
+<script src="./js/storage/index.js?v=5.4.6"></script>
+<script src="./js/auth/index.js?v=5.4.6"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.4.6"></script>
 </body>
 </html>

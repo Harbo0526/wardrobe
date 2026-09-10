@@ -79,6 +79,16 @@
     requiredCreate: ['content']
   });
 
+  /* 油费（v5.3.0）：record_date=加油日期、amount=金额、unit_price=单价、volume=升数、note=备注 */
+  const fuel = F({
+    table: 'fuel_records',
+    createFields: ['record_date', 'amount', 'unit_price', 'volume', 'note', 'legacy_id'],
+    updateFields: ['record_date', 'amount', 'unit_price', 'volume', 'note'],
+    orderWhitelist: ['record_date', 'created_at', 'updated_at'],
+    defaultOrder: 'record_date',
+    requiredCreate: ['record_date', 'amount']
+  });
+
   window.WBData = {
     clothes: window.WBClothes,
     groups: window.WBGroupsApi,
@@ -89,7 +99,8 @@
     ledger: ledger,
     ledgerBudgets: ledgerBudgets,
     sleep: sleep,
-    memos: memos
+    memos: memos,
+    fuel: fuel
   };
 
   /* 便捷调用：WBData.call(asyncFn) → { data, error } 统一返回结构 */

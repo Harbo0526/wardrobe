@@ -21,15 +21,36 @@
     catch (_) { toast(fallback); }
   }
 
+  /* v5.4.6：模块缺失守卫。历史故障：线上 js/ 目录停留在旧版（DAL 无 fuel 模块），
+     sbSaveObj 取到 undefined 后同步抛出 TypeError，异常逃出 onclick 被浏览器吞掉 →
+     用户以为"已保存"，实际从未上云，重开程序记录即消失。现改为显式提示 + 安全返回，绝不静默。 */
+  function requireApi(module, action) {
+    const api = window.WBData && window.WBData[module];
+    if (!api || typeof api[action] !== 'function') {
+      const m = '前端脚本版本过旧：缺少「' + module + '」模块，本次操作未同步云端。请刷新页面；若仍不行，说明 js/ 目录未随版本部署';
+      try { console.error('[脚本版本] ' + m); } catch (e) {}
+      try { toast(m); } catch (e) {}
+      return null;
+    }
+    return api;
+  }
+
   /* 新对象（id=客户端 UUID）→ create；已同步对象（_sbSaved）→ update。
    * payload 为 DB 字段名（不含 id）；失败 toast 不阻塞内存 UI。 */
   window.sbSaveObj = function (module, localObj, payload) {
     if (!localObj || !localObj.id) return Promise.resolve();
-    const api = window.WBData[module];
+    const api = requireApi(module, 'create');
+    if (!api) return Promise.resolve();
     const p = Object.assign({}, payload); delete p.id; delete p.user_id;
     const isNew = !localObj._sbSaved;
-    const pr = isNew ? api.create(Object.assign({ id: localObj.id }, p)) : api.update(localObj.id, p);
-    return pr.then(function (r) {
+    let pr;
+    try {
+      pr = isNew ? api.create(Object.assign({ id: localObj.id }, p)) : api.update(localObj.id, p);
+    } catch (e) {   /* 同步异常（参数/校验）同样不得逃出调用栈 */
+      toastErr(e, '云端保存失败');
+      return Promise.resolve();
+    }
+    return Promise.resolve(pr).then(function (r) {
       if (r.error) throw r.error;
       localObj._sbSaved = true;
     }).catch(function (e) { toastErr(e, '云端保存失败'); });
@@ -37,7 +58,16 @@
 
   window.sbRemoveObj = function (module, localObj) {
     if (!localObj || !localObj.id) return Promise.resolve();
-    return window.WBData[module].remove(localObj.id).then(function (r) {
+    const api = requireApi(module, 'remove');
+    if (!api) return Promise.resolve();
+    let pr;
+    try {
+      pr = api.remove(localObj.id);
+    } catch (e) {
+      toastErr(e, '云端删除失败');
+      return Promise.resolve();
+    }
+    return Promise.resolve(pr).then(function (r) {
       if (r.error) throw r.error;
       if (localObj) localObj._sbSaved = false;
     }).catch(function (e) { toastErr(e, '云端删除失败'); });
@@ -60,24 +90,35 @@
     const gen = WBSession.getSessionGeneration();
     const uid = (state.user && state.user.id) || null;
     toast('正在加载云端数据…');
-    let res;
-    try {
-      res = await Promise.all([
-        D.groups.list({ limit: 500 }),
-        D.clothes.list({ limit: 500, withGroups: true }),
-        D.materials.list({ limit: 500 }),
-        D.recipes.list({ limit: 500 }),
-        D.recipeItems.list({ limit: 500 }),
-        D.ledger.list({ limit: 500 }),
-        D.ledgerBudgets.list({ limit: 500 }),
-        D.sleep.list({ limit: 500 }),
-        D.memos.list({ limit: 500 })
-      ]);
-    } catch (e) {
-      toastErr(e, '云端加载失败，已显示空数据');
-      res = [[], [], [], [], [], [], [], [], []];
+    /* v5.4.6：按模块容错加载——单个模块查询失败/模块缺失不再让整批数据变空。
+       （历史故障：部署遗漏导致 Promise.all 整体 reject → 全部模块都显示为空数据。） */
+    const MODULE_LOAD = [
+      ['衣橱分组', 'groups'], ['衣物', 'clothes'], ['调酒材料', 'materials'], ['调酒配方', 'recipes'],
+      ['配方明细', 'recipeItems'], ['记账', 'ledger'], ['记账预算', 'ledgerBudgets'],
+      ['睡眠', 'sleep'], ['备忘', 'memos'], ['油费', 'fuel']
+    ];
+    const failedModules = [];
+    const res = await Promise.all(MODULE_LOAD.map(function (m) {
+      const label = m[0], mod = m[1];
+      const api = D && D[mod];
+      if (!api || typeof api.list !== 'function') {
+        failedModules.push(label + '（模块缺失）');
+        return Promise.resolve([]);
+      }
+      return Promise.resolve()
+        .then(function () { return api.list({ limit: 500 }); })
+        .catch(function (e) {
+          failedModules.push(label);
+          console.warn('[云端加载] ' + label + ' 失败：', e);
+          return [];
+        });
+    }));
+    if (failedModules.length) {
+      const m = '部分模块云端加载失败：' + failedModules.join('、') + '（其余数据正常）';
+      console.warn('[云端加载] ' + m);
+      toast(m);
     }
-    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8];
+    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9];
 
     /* 分组（id 即 UUID，旧 UI 的内联调用点已加引号适配） */
     state.groups = gl.map(function (x) {
@@ -130,6 +171,16 @@
       }), deleted: []
     };
 
+    /* 油费（v5.3.0）：record_date/amount/unit_price/volume/note */
+    state.fuel = {
+      records: fue.map(function (x) {
+        return { id: x.id, date: x.record_date, amount: Number(x.amount) || 0,
+                 price: (x.unit_price == null ? null : Number(x.unit_price)),
+                 vol: (x.volume == null ? null : Number(x.volume)),
+                 note: x.note || '', createdAt: x.created_at, _sbSaved: true };
+      }), deleted: []
+    };
+
     /* 备忘（at 语义保存在 legacy_id；_id 供删除/编辑定位） */
     state.memos = {
       memos: mem.map(function (x) {
@@ -148,6 +199,18 @@
       renderGroupChips();
       renderMemos();
       if (typeof ckRenderAll === 'function') ckRenderAll();
+    } catch (e) { /* 渲染容错，不阻塞 */ }
+
+    /* v5.4.6：按需刷新当前可见面板——若用户在云端加载完成前就切到记账/睡眠（含油费）面板，
+       该面板会停留在加载前的旧数据（表现为"刚保存的记录不见了"）。数据到达后按当前面板重渲染一次。 */
+    try {
+      const cur = document.querySelector('.screen.active');
+      const sid = cur ? cur.id : '';
+      if (sid === 'screen-ledger' && typeof lgSwitch === 'function') {
+        lgSwitch(typeof lgState !== 'undefined' && lgState.panel ? lgState.panel : 'overview');
+      } else if (sid === 'screen-sleep' && typeof spSwitch === 'function') {
+        spSwitch(typeof spState !== 'undefined' && spState.panel ? spState.panel : 'overview');
+      }
     } catch (e) { /* 渲染容错，不阻塞 */ }
 
     hideLegacyCloudUI();
