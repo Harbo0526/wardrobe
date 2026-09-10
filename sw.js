@@ -6,13 +6,13 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v5.5.2';
+const CACHE_NAME = 'wardrobe-v5.6.2';
 // Phase 14：js/ 模块（DAL/Auth/Storage/bridge）纳入预缓存；Supabase API 跨域请求不缓存（fetch 拦截器对跨域直接放行）
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',   /* cocktail.html 已移除：V2.5.0 起调酒内嵌进 index.html，不再作为独立页面缓存 */
-  './home-bg.png',     /* v5.1.19：首页背景图（离线可用） */
+  './home-bg.jpg',     /* v5.6.2：首页背景图（PNG→JPEG，4.38MB→345KB，离线可用） */
   './favicon.ico',
   './icon-192.png',
   './icon-512.png',

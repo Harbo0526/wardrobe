@@ -95,7 +95,7 @@
     const MODULE_LOAD = [
       ['衣橱分组', 'groups'], ['衣物', 'clothes'], ['调酒材料', 'materials'], ['调酒配方', 'recipes'],
       ['配方明细', 'recipeItems'], ['记账', 'ledger'], ['记账预算', 'ledgerBudgets'],
-      ['睡眠', 'sleep'], ['备忘', 'memos'], ['油费', 'fuel']
+      ['睡眠', 'sleep'], ['备忘', 'memos'], ['油费', 'fuel'], ['公告', 'announcements']
     ];
     const failedModules = [];
     const res = await Promise.all(MODULE_LOAD.map(function (m) {
@@ -118,7 +118,7 @@
       console.warn('[云端加载] ' + m);
       toast(m);
     }
-    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9];
+    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9], ann = res[10];
 
     /* 分组（id 即 UUID，旧 UI 的内联调用点已加引号适配） */
     state.groups = gl.map(function (x) {
@@ -196,6 +196,15 @@
       deleted: []
     };
 
+    /* v5.6.0 公告：全局共享（所有登录用户可读）；按发布时间倒序，最新在前 */
+    state.announcements = (ann || []).map(function (x) {
+      return { id: x.id, title: x.title || '', body: x.body || '', version: x.version || '',
+               at: x.published_at || x.created_at || null, _sbSaved: true };
+    }).filter(function (a) { return !!a.body; });
+    state.announcements.sort(function (a, b) {
+      return String(b.at || '').localeCompare(String(a.at || ''));
+    });
+
     /* 会话隔离：加载耗时较长，完成时若已切换用户则丢弃整批结果（不写 state / 不渲染 / 不补图） */
     if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
 
@@ -219,6 +228,11 @@
         spSwitch(typeof spState !== 'undefined' && spState.panel ? spState.panel : 'overview');
       }
     } catch (e) { /* 渲染容错，不阻塞 */ }
+
+    /* v5.6.0：公告自动弹（有未读公告才弹、同一次会话只弹一次；放在其它渲染之后，避免被遮挡） */
+    try {
+      if (typeof maybeShowAnnouncement === 'function') maybeShowAnnouncement();
+    } catch (e) { /* 容错，不阻塞 */ }
 
     hideLegacyCloudUI();
     /* 异步补图（衣物 + 配方；objectURL 仅本次会话有效） */

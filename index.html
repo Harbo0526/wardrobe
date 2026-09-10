@@ -360,10 +360,12 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   padding:12px 0 4px;letter-spacing:.3px;
 }
 /* ============ 总首页 v4.2.0：加菲猫橘色主题 + 励志卡 + 备忘卡 ============ */
-/* v5.1.19：首页背景改为「海底卡通图」（用户提供的 home-bg.png），cover 铺满并居中裁切；
-   底色用海水蓝兜底。背景随元素固定（默认 attachment:scroll），内容在其上滚动。 */
+/* v5.1.19：首页背景改为「海底卡通图」，cover 铺满并居中裁切；底色用海水蓝兜底。
+   v5.6.2：同一张图（1535×2551）由 PNG 换成 JPEG（q82），体积 4.38MB → 345KB（约 8%），
+   文件名相应改为 home-bg.jpg；画质档位高、分辨率不变，手机首屏加载显著变快。
+   背景随元素固定（默认 attachment:scroll），内容在其上滚动。 */
 #screen-home{
-  background:#a9e4f7 url('home-bg.png') center center / cover no-repeat;
+  background:#a9e4f7 url('home-bg.jpg') center center / cover no-repeat;
 }
 #screen-home .home-hero{
   position:relative;border-radius:22px;padding:14px 16px;margin:10px 16px 12px;
@@ -1255,6 +1257,25 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .lg-recent-item .rc-amt{font-size:14.5px;font-weight:700;color:var(--lg-exp);}
 .lg-recent-item .rc-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
+/* ============ v5.6.0：公告弹层 + 我的页公告管理 ============
+   注意：弹层挂在 body 级（不在各 #screen-* 作用域内），因此只能用 :root 里的全局令牌
+   （--ink/--ink-sub/--ink-faint/--line/--accent…），不可用 --lg-* 等屏内变量。 */
+.ann-body{max-height:56vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:2px;}
+.ann-item{padding:10px 0;border-bottom:1px dashed var(--line);}
+.ann-item:last-child{border-bottom:none;}
+.ann-item .ann-t{font-size:15px;font-weight:800;color:var(--ink);}
+.ann-item .ann-time{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+.ann-item .ann-text{margin-top:6px;font-size:13.5px;line-height:1.6;color:var(--ink);white-space:pre-wrap;word-break:break-word;}
+.ann-foot{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-faint);text-align:center;}
+.ann-empty{padding:26px 8px;text-align:center;font-size:13px;color:var(--ink-sub);}
+.ann-note{margin-top:10px;font-size:11.5px;line-height:1.5;color:var(--ink-faint);}
+.ann-his{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);}
+.ann-his:last-child{border-bottom:none;}
+.ann-his .ann-his-main{flex:1;min-width:0;}
+.ann-his .ann-his-t{font-size:12.5px;font-weight:700;color:var(--ink);}
+.ann-his .ann-his-b{font-size:11.5px;color:var(--ink-sub);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
+.ann-del{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#ffe3e3;color:#c0392b;font-size:12px;display:flex;align-items:center;justify-content:center;}
+
 /* ============ v5.4.1：首页卡片 = 海底悬浮气泡（位置固定，仅自身光泽流动） ============
    气泡质感：淡蓝白半透明底(60%) + 背景模糊 + 白色内高光 + 水色内阴影 + 柔和外投影；
    浮动感：卡片**位置完全固定**（不做任何位移/缩放），改为「内部高光光斑缓慢横向流动」
@@ -1741,6 +1762,23 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <div class="row-main"><div class="row-title">调酒小工具</div><div class="row-sub">材料库 · 配方 · 调酒计算</div></div>
         <span class="row-chev">›</span>
       </div>
+    </div>
+
+    <!-- ============ 公告发布（v5.6.0，仅管理员可见：renderMine 按 state.user.role==='admin' 显示） ============ -->
+    <div class="card mine-card" id="mine-ann-card" style="display:none;">
+      <div class="card-title">📢 发布公告</div>
+      <div class="field" style="margin-top:10px;">
+        <label>标题（可选）</label>
+        <input class="input" id="annTitle" maxlength="30" placeholder="如：版本更新说明">
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <label>正文</label>
+        <textarea class="input" id="annBody" rows="4" maxlength="500" placeholder="输入要发布的公告内容（所有用户下次打开都会看到）"></textarea>
+      </div>
+      <button class="btn btn-primary press" id="annPublish" style="margin-top:12px;">发布公告</button>
+      <div class="card-title" style="margin-top:16px;" id="annHisTitle">历史公告</div>
+      <div id="annHisList"></div>
+      <div class="ann-note">仅管理员可发布 / 删除；数据库层已限制写入权限。</div>
     </div>
 
     <div style="padding:8px 16px 0;">
@@ -2476,6 +2514,17 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   <input type="file" id="avatarAlbumInput" accept="image/*" hidden>
   <input type="file" id="avatarCameraInput" accept="image/*" capture="user" hidden>
 
+  <!-- ============ 弹层：公告（v5.6.0；启动自动弹 / 我的页「关于生活象限」点开最近三条） ============ -->
+  <div class="overlay ck-center" id="annModal" onclick="closeAnnModal()">
+    <div class="ck-modal" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <h3 id="annModalTitle">📢 公告</h3>
+        <button class="sheet-close" onclick="closeAnnModal()">✕</button>
+      </div>
+      <div id="annModalBody" class="ann-body"></div>
+    </div>
+  </div>
+
   <!-- ============ Sheet：分组管理 ============ -->
   <div class="overlay" id="sheet-group" onclick="closeSheetOnBg(event,'sheet-group')">
     <div class="sheet" onclick="event.stopPropagation()">
@@ -2667,7 +2716,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.5.2';
+const APP_VERSION = '5.6.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2721,7 +2770,8 @@ function defaultState(){
     lastSync:null,                   // 上次同步时间戳
     cocktail: defaultCocktail(),     // 调酒：材料库 + 配方（按账号隔离，随衣橱统一同步）
     ledger: defaultLedger(),         // 记账：收支记录（按账号隔离，独立 ledger.json）
-    sleep: defaultSleep()            // 睡眠：入睡/起床记录（按账号隔离，独立 sleep.json）
+    sleep: defaultSleep(),           // 睡眠：入睡/起床记录（按账号隔离，独立 sleep.json）
+    announcements: []                // v5.6.0：公告（全局共享数据，登录后由 sbLoadAll 拉取）
   };
 }
 function loadState(){
@@ -2759,6 +2809,8 @@ function loadUserWorkspace(name){
   state.ledger = defaultLedger();
   state.sleep = defaultSleep();
   state.fuel = defaultFuel();
+  state.announcements = [];        // v5.6.0：公告（全局数据，登录后由 sbLoadAll 拉取）
+  annShownThisSession = false;     // 换账号/重新登录后，未读公告可再弹一次
   // 头像随账号保留在内存（login 时已写入 state.user.avatar，且 saveState 将其存入 LS_KEY_SESSION）
   saveState();   // 仅写登录态配置
 }
@@ -2774,6 +2826,8 @@ function resetToGuest(){
   state.ledger = defaultLedger();
   state.sleep = defaultSleep();
   state.fuel = defaultFuel();
+  state.announcements = [];        // v5.6.0：登出清空公告（全局数据，不残留给下一个账号）
+  annShownThisSession = false;
   saveState();
 }
 
@@ -4859,6 +4913,18 @@ function renderMine(){
   // 关于行版本（统一读 APP_VERSION，避免硬编码失同步）
   var av = $('about-ver');
   if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
+
+  // v5.6.0：公告发布卡片仅管理员可见（真正的写入权限由数据库 RLS 卡死，此处只是入口显隐）
+  var annCard = $('mine-ann-card');
+  if(annCard){
+    if(annIsAdmin()){
+      annCard.style.display = '';
+      var pub = $('annPublish'); if(pub) pub.onclick = annPublish;
+      annRenderHistory();
+    }else{
+      annCard.style.display = 'none';
+    }
+  }
 }
 
 /* ---------- 10.2 用户名（display_name，可任意修改） ----------
@@ -4870,10 +4936,13 @@ async function refreshUserName(){
     const u = await WBAuth.getCurrentUser();
     if(!u || !state.user) return;
     const { data, error } = await getSupabaseClient().from('profiles')
-      .select('display_name, username').eq('id', u.id).maybeSingle();
+      .select('display_name, username, role').eq('id', u.id).maybeSingle();
     if(error || !data) return;            // 静默失败，保留邮箱前缀兜底
     const dn = (data.display_name || data.username || '').trim();
-    if(dn){ state.user.name = dn; renderMine(); }
+    if(dn) state.user.name = dn;
+    /* v5.6.0：把 profiles.role 同步到内存（'admin' 才显示公告发布入口） */
+    if(data.role) state.user.role = data.role;
+    renderMine();
   }catch(e){ /* 不影响主流程 */ }
 }
 function openDisplayNameEditor(){
@@ -5704,8 +5773,122 @@ async function doSync(){
   }
 }
 
+/* =====================================================================
+   v5.6.0：公告（announcements）
+   · 数据源 = Supabase public.announcements（读：所有登录用户；写：仅 profiles.role='admin'）
+     —— 数据库 RLS 强制，前端入口只是体验层，别人伪造请求也写不进去。
+   · 启动自动弹：有「未读」公告才弹（同一次会话只弹一次）；关闭即把 id 记到本机 → 之后不再弹。
+   · 「我的 → 关于生活象限」点开：最近三条公告（底部带版本信息）。
+   · 「我的 → 📢 发布公告」：仅管理员可见（发布 / 查看历史 / 删除）。
+   ===================================================================== */
+const ANN_SEEN_PREFIX = 'wardrobe.v1.annSeen.';   /* 本机已读公告 id（UI 偏好，非业务数据） */
+const ANN_DEFAULT = { id: 'local-welcome', title: '欢迎', body: '欢迎使用 Harbo 生活象限', at: null };
+let annShownThisSession = false;                  /* 同一次会话只自动弹一次（手动刷新不再弹） */
+let annPendingSeen = [];                          /* 本次自动弹窗关闭后要标记已读的公告 id */
+
+function annSeenKey(){ return ANN_SEEN_PREFIX + encodeURIComponent((state.user && state.user.name) || 'guest'); }
+function annSeenSet(){
+  try{ const r = JSON.parse(localStorage.getItem(annSeenKey()) || '[]'); return Array.isArray(r) ? r : []; }catch(e){ return []; }
+}
+function annMarkSeen(ids){
+  try{
+    const s = annSeenSet();
+    (ids || []).forEach(function(id){ if(id && s.indexOf(id) < 0) s.push(id); });
+    localStorage.setItem(annSeenKey(), JSON.stringify(s.slice(-80)));   /* 只留最近 80 条，避免无限增长 */
+  }catch(e){}
+}
+/* 公告列表：以云端为准；云端为空时回退内置默认公告（保证「默认欢迎」始终可见） */
+function annAll(){
+  return (state.announcements && state.announcements.length) ? state.announcements.slice() : [ANN_DEFAULT];
+}
+function annFmtTime(at){
+  if(!at) return '';
+  const d = new Date(at); if(isNaN(d.getTime())) return '';
+  const p = function(n){ return n < 10 ? '0' + n : '' + n; };
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+/* 正文一律转义后按纯文本渲染（支持换行，不解析 HTML/Markdown → 防 XSS） */
+function annItemsHTML(list){
+  return list.map(function(a){
+    return '<div class="ann-item">' +
+      (a.title ? '<div class="ann-t">' + lgEsc(a.title) + '</div>' : '') +
+      (a.at ? '<div class="ann-time">' + annFmtTime(a.at) + '</div>' : '') +
+      '<div class="ann-text">' + lgEsc(a.body) + '</div>' +
+    '</div>';
+  }).join('');
+}
+function annFootHTML(){ return '<div class="ann-foot">生活象限 v' + APP_VERSION + ' · 轻量免费 PWA · 数据自主可控</div>'; }
+/* 打开公告弹层（limit = 显示条数，默认最近三条） */
+function openAnnSheet(limit){
+  const box = $('annModalBody'); if(!box) return;
+  const list = annAll().slice(0, limit || 3);
+  $('annModalTitle').textContent = '📢 公告';
+  box.innerHTML = (list.length ? annItemsHTML(list) : '<div class="ann-empty">暂无公告</div>') + annFootHTML();
+  $('annModal').classList.add('show');
+}
+function closeAnnModal(){
+  if(annPendingSeen.length){ annMarkSeen(annPendingSeen); annPendingSeen = []; }
+  const m = $('annModal'); if(m) m.classList.remove('show');
+}
+/* 启动自动弹：有未读公告才弹；关闭后按「公告 id」记已读，新公告会再次弹出 */
+function maybeShowAnnouncement(){
+  if(annShownThisSession) return;
+  const seen = annSeenSet();
+  const unread = annAll().filter(function(a){ return a.id && seen.indexOf(a.id) < 0; });
+  if(!unread.length) return;
+  annShownThisSession = true;
+  annPendingSeen = unread.map(function(a){ return a.id; });
+  const box = $('annModalBody'); if(!box) return;
+  $('annModalTitle').textContent = '📢 公告';
+  box.innerHTML = annItemsHTML(unread.slice(0, 3)) + annFootHTML();
+  $('annModal').classList.add('show');
+}
+/* ---- 管理员：发布 / 历史 / 删除（非 admin 连入口都不渲染） ---- */
+function annIsAdmin(){ return !!(state.user && state.user.role === 'admin'); }
+function annRenderHistory(){
+  const box = $('annHisList'); if(!box) return;
+  const list = state.announcements || [];
+  const t = $('annHisTitle'); if(t) t.textContent = '历史公告' + (list.length ? '（' + list.length + '）' : '');
+  if(!list.length){ box.innerHTML = '<div class="ann-empty">还没有发布过公告</div>'; return; }
+  box.innerHTML = list.map(function(a){
+    return '<div class="ann-his"><div class="ann-his-main">' +
+      '<div class="ann-his-t">' + lgEsc((a.title ? a.title + ' · ' : '') + (annFmtTime(a.at) || '')) + '</div>' +
+      '<div class="ann-his-b">' + lgEsc(a.body) + '</div></div>' +
+      '<button class="ann-del press" data-anndel="' + a.id + '" title="删除">✕</button></div>';
+  }).join('');
+  box.querySelectorAll('[data-anndel]').forEach(function(b){
+    b.onclick = function(ev){ ev.stopPropagation(); annDelete(b.getAttribute('data-anndel')); };
+  });
+}
+function annPublish(){
+  if(!state.user){ toast('请先登录'); return; }
+  if(!annIsAdmin()){ toast('仅管理员可发布公告'); return; }
+  const title = ($('annTitle').value || '').trim();
+  const body = ($('annBody').value || '').trim();
+  if(!body){ toast('请输入公告正文'); return; }
+  const rec = { id: wbUuid(), title: title, body: body, version: APP_VERSION,
+                at: new Date().toISOString(), _sbSaved: false };
+  state.announcements = state.announcements || [];
+  state.announcements.unshift(rec);
+  sbSaveObj('announcements', rec, { title: rec.title, body: rec.body, version: rec.version, published_at: rec.at });
+  $('annTitle').value = ''; $('annBody').value = '';
+  annRenderHistory();
+  toast('公告已发布 ✓');
+}
+function annDelete(id){
+  if(!annIsAdmin()){ toast('仅管理员可删除公告'); return; }
+  const rec = (state.announcements || []).find(function(a){ return a.id === id; });
+  if(!rec) return;
+  if(!confirm('删除这条公告？删除后所有用户都不再看到。')) return;
+  state.announcements = (state.announcements || []).filter(function(a){ return a.id !== id; });
+  try{ sbRemoveObj('announcements', rec); }catch(e){}
+  annRenderHistory();
+  toast('公告已删除');
+}
+
+/* v5.6.0：点「关于生活象限」→ 弹出最近三条公告（版本信息在弹层底部） */
 function showAbout(){
-  toast('生活象限 v' + APP_VERSION + ' · 轻量 · 免费 · 数据自主可控');
+  openAnnSheet(3);
 }
 
 async function doLogout(){
@@ -7057,21 +7240,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.5.2"></script>
-<script src="./js/data/supabase.js?v=5.5.2"></script>
+<script src="./js/config.js?v=5.6.2"></script>
+<script src="./js/data/supabase.js?v=5.6.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.5.2"></script>
-<script src="./js/data/query.js?v=5.5.2"></script>
-<script src="./js/auth/session.js?v=5.5.2"></script>
-<script src="./js/data/groups.js?v=5.5.2"></script>
-<script src="./js/data/clothgroups.js?v=5.5.2"></script>
-<script src="./js/data/clothes.js?v=5.5.2"></script>
-<script src="./js/data/modules.js?v=5.5.2"></script>
-<script src="./js/data/index.js?v=5.5.2"></script>
-<script src="./js/storage/paths.js?v=5.5.2"></script>
-<script src="./js/storage/images.js?v=5.5.2"></script>
-<script src="./js/storage/index.js?v=5.5.2"></script>
-<script src="./js/auth/index.js?v=5.5.2"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.5.2"></script>
+<script src="./js/data/errors.js?v=5.6.2"></script>
+<script src="./js/data/query.js?v=5.6.2"></script>
+<script src="./js/auth/session.js?v=5.6.2"></script>
+<script src="./js/data/groups.js?v=5.6.2"></script>
+<script src="./js/data/clothgroups.js?v=5.6.2"></script>
+<script src="./js/data/clothes.js?v=5.6.2"></script>
+<script src="./js/data/modules.js?v=5.6.2"></script>
+<script src="./js/data/index.js?v=5.6.2"></script>
+<script src="./js/storage/paths.js?v=5.6.2"></script>
+<script src="./js/storage/images.js?v=5.6.2"></script>
+<script src="./js/storage/index.js?v=5.6.2"></script>
+<script src="./js/auth/index.js?v=5.6.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.6.2"></script>
 </body>
 </html>

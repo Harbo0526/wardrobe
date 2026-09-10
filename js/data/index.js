@@ -89,6 +89,17 @@
     requiredCreate: ['record_date', 'amount']
   });
 
+  /* 公告（v5.6.0）：user_id=发布者（仅 profiles.role='admin' 的账号可写，RLS 兜底）；
+   * title 可空、body 必填、version 记发布时的 APP_VERSION；读：所有登录用户可读全部 */
+  const announcements = F({
+    table: 'announcements',
+    createFields: ['title', 'body', 'version', 'published_at'],
+    updateFields: ['title', 'body', 'version', 'published_at'],
+    orderWhitelist: ['published_at', 'created_at'],
+    defaultOrder: 'published_at',
+    requiredCreate: ['body']
+  });
+
   window.WBData = {
     clothes: window.WBClothes,
     groups: window.WBGroupsApi,
@@ -100,7 +111,8 @@
     ledgerBudgets: ledgerBudgets,
     sleep: sleep,
     memos: memos,
-    fuel: fuel
+    fuel: fuel,
+    announcements: announcements
   };
 
   /* 便捷调用：WBData.call(asyncFn) → { data, error } 统一返回结构 */
