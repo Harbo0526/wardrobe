@@ -6,8 +6,8 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v4.4.0';
-// v2.8.3 调酒备份页云端同步卡片新增上传/下拉时间戳（月/日/时/分），并升级 PWA 缓存名
+const CACHE_NAME = 'wardrobe-v5.0.2-phase17';
+// Phase 14：js/ 模块（DAL/Auth/Storage/bridge）纳入预缓存；Supabase API 跨域请求不缓存（fetch 拦截器对跨域直接放行）
 const APP_SHELL = [
   './',
   './index.html',
@@ -16,7 +16,22 @@ const APP_SHELL = [
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
-  './apple-touch-icon.png'
+  './apple-touch-icon.png',
+  './js/config.js',
+  './js/data/supabase.js',
+  './js/data/errors.js',
+  './js/data/query.js',
+  './js/data/groups.js',
+  './js/data/clothgroups.js',
+  './js/data/clothes.js',
+  './js/data/modules.js',
+  './js/data/index.js',
+  './js/auth/session.js',
+  './js/auth/index.js',
+  './js/storage/paths.js',
+  './js/storage/images.js',
+  './js/storage/index.js',
+  './js/bridge/legacy-sync.js'
   /* 注：励志卡图片（8 张意境插画 + 基础橘猫）自 v4.3.3 起以 base64 内联在 index.html 内，
      不再作为独立文件预缓存——GitHub Pages 部署只保留根目录文件，子目录 avatars/ 不会被部署（手机 404）。 */
 ];

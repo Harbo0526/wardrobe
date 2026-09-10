@@ -1,0 +1,235 @@
+/* Wardrobe 前端切换桥接层（Phase 14）
+ * 职责：
+ *  1) 登录后用 DAL 加载全部模块 → 适配进旧 UI 的内存 state（字段名转换）
+ *  2) 旧 UI 保存/删除点的单条 DAL 同步（create 用客户端 UUID，id 与 DB 一致）
+ *  3) 图片经 private Storage DAL 上传/异步补齐
+ * 旧 Gitee 同步函数（pushUserData 等）在本层不被调用，仅作为回滚代码保留。
+ */
+(function () {
+  const { CODES, wbError } = window.WBErrors;
+
+  window.wbUuid = function () {
+    if (crypto && crypto.randomUUID) return crypto.randomUUID();
+    return ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx').replace(/[xy]/g, function (c) {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  };
+
+  function toastErr(e, fallback) {
+    try { const n = window.WBErrors.normalize(e); toast(n.message || fallback); }
+    catch (_) { toast(fallback); }
+  }
+
+  /* 新对象（id=客户端 UUID）→ create；已同步对象（_sbSaved）→ update。
+   * payload 为 DB 字段名（不含 id）；失败 toast 不阻塞内存 UI。 */
+  window.sbSaveObj = function (module, localObj, payload) {
+    if (!localObj || !localObj.id) return Promise.resolve();
+    const api = window.WBData[module];
+    const p = Object.assign({}, payload); delete p.id; delete p.user_id;
+    const isNew = !localObj._sbSaved;
+    const pr = isNew ? api.create(Object.assign({ id: localObj.id }, p)) : api.update(localObj.id, p);
+    return pr.then(function (r) {
+      if (r.error) throw r.error;
+      localObj._sbSaved = true;
+    }).catch(function (e) { toastErr(e, '云端保存失败'); });
+  };
+
+  window.sbRemoveObj = function (module, localObj) {
+    if (!localObj || !localObj.id) return Promise.resolve();
+    return window.WBData[module].remove(localObj.id).then(function (r) {
+      if (r.error) throw r.error;
+      if (localObj) localObj._sbSaved = false;
+    }).catch(function (e) { toastErr(e, '云端删除失败'); });
+  };
+
+  window.dataUrlToBlob = function (dataUrl) {
+    const arr = dataUrl.split(',');
+    const mime = (arr[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    const u8 = new Uint8Array(bstr.length);
+    for (let i = 0; i < bstr.length; i++) u8[i] = bstr.charCodeAt(i);
+    return new Blob([u8], { type: mime });
+  };
+
+  /* ============ 登录后全量加载（新用户 = 空账户） ============ */
+  window.sbLoadAll = async function () {
+    const D = window.WBData;
+    // 会话隔离：记录开始时的代际 + user ID；加载完成（含网络往返）后若不仍匹配则丢弃结果，
+    // 避免「登出 → 切号」后旧用户的业务数据回写新用户 UI。
+    const gen = WBSession.getSessionGeneration();
+    const uid = (state.user && state.user.id) || null;
+    toast('正在加载云端数据…');
+    let res;
+    try {
+      res = await Promise.all([
+        D.groups.list({ limit: 500 }),
+        D.clothes.list({ limit: 500, withGroups: true }),
+        D.materials.list({ limit: 500 }),
+        D.recipes.list({ limit: 500 }),
+        D.recipeItems.list({ limit: 500 }),
+        D.ledger.list({ limit: 500 }),
+        D.ledgerBudgets.list({ limit: 500 }),
+        D.sleep.list({ limit: 500 }),
+        D.memos.list({ limit: 500 })
+      ]);
+    } catch (e) {
+      toastErr(e, '云端加载失败，已显示空数据');
+      res = [[], [], [], [], [], [], [], [], []];
+    }
+    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8];
+
+    /* 分组（id 即 UUID，旧 UI 的内联调用点已加引号适配） */
+    state.groups = gl.map(function (x) {
+      return { id: x.id, name: x.name, emoji: x.emoji || '👕', _sbSaved: true };
+    });
+
+    /* 衣物：旧字段适配；图片异步经 Storage 补齐（objectURL 仅本次会话） */
+    state.clothes = cl.map(function (x) {
+      const gids = x._groupIds || [];
+      return {
+        id: x.id, name: x.name, group: gids[0] || null, groups: gids,
+        note: x.note || '', img: null, imgRemote: x.image_path || null,
+        _image_path: x.image_path || null, emoji: x.emoji || '👕', tint: x.tint || '#EAF5EC',
+        _sbSaved: true
+      };
+    });
+
+    /* 调酒：材料/配方/配方材料关系（字段名转换 cat→category、vol→volume_ml、totalVol→total_volume_ml） */
+    state.cocktail = {
+      seeded: true,
+      materials: mats.map(function (x) {
+        return { id: x.id, name: x.name, cat: x.category || '', abv: Number(x.abv) || 0, price: Number(x.price) || 0, vol: Number(x.volume_ml) || 0, _sbSaved: true };
+      }),
+      recipes: recs.map(function (x) {
+        return { id: x.id, name: x.name, items: [], totalVol: Number(x.total_volume_ml) || 0, totalCost: Number(x.total_cost) || 0, abv: Number(x.abv) || 0, ts: x.created_at ? Date.parse(x.created_at) : Date.now(), note: x.note || '', imgRemote: x.image_path || null, img: null, _image_path: x.image_path || null, _sbSaved: true };
+      })
+    };
+    const matOk = {};
+    state.cocktail.materials.forEach(function (m) { matOk[m.id] = true; });
+    ritems.forEach(function (it) {
+      const rec = state.cocktail.recipes.find(function (r) { return r.id === it.recipe_id; });
+      if (rec && matOk[it.material_id]) rec.items.push({ matId: it.material_id, vol: Number(it.quantity) || 0 });
+    });
+
+    /* 记账（type 内存/DB 同为 inc|exp；cat→category） */
+    state.ledger = { records: [], seeded: true, budgets: {}, deleted: [], _budgetIds: {} };
+    led.forEach(function (x) {
+      state.ledger.records.push({ id: x.id, date: x.record_date, type: x.type, amount: Number(x.amount) || 0, cat: x.category || '', note: x.note || '', createdAt: x.created_at, _sbSaved: true });
+    });
+    bud.forEach(function (x) {
+      const key = x.year + '-' + String(x.month).padStart(2, '0');
+      state.ledger.budgets[key] = Number(x.amount) || 0;
+      state.ledger._budgetIds[key] = x.id;
+    });
+
+    /* 睡眠（双轨字段：record_date/start_time/end_time/end_date/duration_minutes；sleep_at/wake_at 暂 NULL） */
+    state.sleep = {
+      records: slp.map(function (x) {
+        return { id: x.id, date: x.record_date, start: (x.start_time || '').slice(0, 5), end: (x.end_time || '').slice(0, 5), endDate: x.end_date || undefined, minutes: x.duration_minutes || 0, note: x.note || '', createdAt: x.created_at, _sbSaved: true };
+      }), deleted: []
+    };
+
+    /* 备忘（at 语义保存在 legacy_id；_id 供删除/编辑定位） */
+    state.memos = {
+      memos: mem.map(function (x) {
+        return { t: x.content || '', at: Number(x.legacy_id) || Date.parse(x.created_at) || Date.now(), _id: x.id, _sbSaved: true };
+      }).filter(function (m) { return !isNaN(m.at); }).sort(function (a, b) { return b.at - a.at; }),
+      deleted: []
+    };
+
+    /* 会话隔离：加载耗时较长，完成时若已切换用户则丢弃整批结果（不写 state / 不渲染 / 不补图） */
+    if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
+
+    /* 渲染 */
+    try {
+      renderHome();
+      renderGroupManage();
+      renderGroupChips();
+      renderMemos();
+      if (typeof ckRenderAll === 'function') ckRenderAll();
+    } catch (e) { /* 渲染容错，不阻塞 */ }
+
+    hideLegacyCloudUI();
+    /* 异步补图（衣物 + 配方；objectURL 仅本次会话有效） */
+    sbPullImages();
+    toast('云端数据已加载 ✓');
+  };
+
+  /* 停用旧 Gitee 同步入口（保留 DOM 供回滚，主流程不可见/不可点） */
+  window.hideLegacyCloudUI = function () {
+    ['ckSync', 'ckPull', 'lgHeaderSync', 'spHeaderSync', 'lgPullCloudBtn', 'lgPushCloudBtn', 'clHeaderSync', 'clPullBtn', 'clPushBtn'].forEach(function (id) {
+      const b = document.getElementById(id);
+      if (b) { b.hidden = true; b.onclick = null; }
+    });
+    const tb = document.querySelector('.token-block'); if (tb) tb.hidden = true;
+  };
+
+  /* 私有图片异步补齐（有 image_path 且本地无 img）。
+   * 会话隔离：回写前校验代际 + user ID，旧用户的图片下载结果（可能在切号后到达）一律丢弃并释放 objectURL，
+   * 禁止旧用户私有图片闪现到新用户 UI。 */
+  window.sbPullImages = function () {
+    const gen = WBSession.getSessionGeneration();
+    const uid = (state.user && state.user.id) || null;
+    state.clothes.forEach(function (c) {
+      if (!c._image_path || c.img || c._imgLoading) return;
+      c._imgLoading = true;
+      window.WBImages.downloadClothImage(c.id).then(function (r) {
+        if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) {
+          try { URL.revokeObjectURL(r.objectUrl); } catch (e) {}
+          return; /* 过期结果：丢弃 */
+        }
+        c.img = r.objectUrl;
+        c._objectUrl = r.objectUrl;
+        rerenderAfterImage();
+      }).catch(function () { c._imgLoading = false; });
+    });
+    (state.cocktail && state.cocktail.recipes ? state.cocktail.recipes : []).forEach(function (r) {
+      if (!r._image_path || r.img || r._imgLoading) return;
+      r._imgLoading = true;
+      window.WBImages.downloadCocktailImage(r.id).then(function (res) {
+        if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) {
+          try { URL.revokeObjectURL(res.objectUrl); } catch (e) {}
+          return; /* 过期结果：丢弃 */
+        }
+        r.img = res.objectUrl;
+        r._objectUrl = res.objectUrl;
+        rerenderAfterImage();
+      }).catch(function () { r._imgLoading = false; });
+    });
+  };
+
+  function rerenderAfterImage() {
+    try {
+      const active = document.querySelector('.screen.active');
+      const id = active ? active.id : '';
+      if (id === 'screen-home') renderHome();
+      else if (id === 'screen-cloth') { renderGroupChips(); }
+      else if (id === 'screen-cocktail' && typeof ckRenderRecs === 'function') ckRenderRecs();
+    } catch (e) { /* 容错 */ }
+  }
+
+  /* 保存衣物图片：dataURL → Storage（upsert 覆盖 = 更换图片语义） */
+  window.sbUploadClothImageFor = function (cloth) {
+    if (!cloth || !cloth.img || cloth.img.indexOf('data:') !== 0) return Promise.resolve();
+    return window.WBImages.uploadClothImage(cloth.id, window.dataUrlToBlob(cloth.img))
+      .then(function (r) {
+        cloth._image_path = r.path;
+        cloth.imgRemote = r.path;
+        return window.WBData.clothes.update(cloth.id, { image_path: r.path });
+      })
+      .then(function (r) { if (r.error) throw r.error; cloth._sbSaved = true; })
+      .catch(function (e) { toastErr(e, '图片上传失败'); });
+  };
+  window.sbUploadCocktailImageFor = function (recipe) {
+    if (!recipe || !recipe.img || recipe.img.indexOf('data:') !== 0) return Promise.resolve();
+    return window.WBImages.uploadCocktailImage(recipe.id, window.dataUrlToBlob(recipe.img))
+      .then(function (r) {
+        recipe._image_path = r.path;
+        recipe.imgRemote = r.path;
+        return window.WBData.recipes.update(recipe.id, { image_path: r.path });
+      })
+      .then(function (r) { if (r.error) throw r.error; recipe._sbSaved = true; })
+      .catch(function (e) { toastErr(e, '图片上传失败'); });
+  };
+})();

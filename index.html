@@ -1198,8 +1198,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <button id="tab-register" onclick="switchAuthMode('register')">注册</button>
       </div>
 
-      <!-- 首次登录必填 Gitee 令牌（打破「未登录无法配置令牌」死锁） -->
-      <div class="token-block">
+      <!-- Phase 14：Gitee 令牌 UI 已停用（旧 Gitee 数据作为只读备份保留，见 legacy-data-disposition.md） -->
+      <div class="token-block" hidden>
         <div class="field">
           <label>远程仓库 令牌</label>
           <input class="input" id="auth-token" type="password" placeholder="首次使用必填，填一次存本机" autocomplete="off">
@@ -1209,21 +1209,21 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
       <form id="form-login" onsubmit="return doLogin(event)">
         <div class="field">
-          <label>用户名</label>
-          <input class="input" id="login-name" placeholder="输入用户名" autocomplete="username">
+          <label>邮箱</label>
+          <input class="input" id="login-email" type="email" placeholder="输入邮箱" autocomplete="username">
         </div>
         <div class="field">
           <label>密码</label>
           <input class="input" id="login-pass" type="password" placeholder="输入密码" autocomplete="current-password">
         </div>
         <button class="btn btn-primary press" type="submit">登 录</button>
-        <div class="auth-tip">令牌请联系Harbo获取</div>
+        <div class="auth-tip">还没有账号？切换到「注册」创建</div>
       </form>
 
       <form id="form-register" hidden onsubmit="return doRegister(event)">
         <div class="field">
-          <label>用户名</label>
-          <input class="input" id="reg-name" placeholder="设置用户名（至少 2 个字符）" autocomplete="username">
+          <label>邮箱</label>
+          <input class="input" id="reg-email" type="email" placeholder="设置邮箱" autocomplete="username">
         </div>
         <div class="field">
           <label>密码</label>
@@ -1493,8 +1493,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="card sync-card">
       <div class="card-title">数据同步</div>
 
-      <!-- Gitee 令牌：填一次存本机（localStorage），掩码回显 -->
-      <div class="row">
+      <!-- Gitee 令牌：Phase 14 起停用（数据源已切换 Supabase；保留 DOM 供回滚） -->
+      <div class="row" hidden>
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
           <rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1.6"/>
         </svg>
@@ -1503,11 +1503,11 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <div class="row-sub">填一次存本机，用于云端同步</div>
         </div>
       </div>
-      <div class="token-row">
+      <div class="token-row" hidden>
         <input class="input" type="password" id="gitee-token" placeholder="填一次存本机" autocomplete="off">
         <button class="btn-sm btn-primary press" onclick="saveGiteeToken()">保存</button>
       </div>
-      <div class="sync-note">数据存入远程仓库，换设备填入同一令牌即可同步</div>
+      <div class="sync-note" hidden>数据存入远程仓库，换设备填入同一令牌即可同步</div>
 
       <!-- 云端同步 -->
       <div class="row">
@@ -2253,16 +2253,17 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="sheet" onclick="event.stopPropagation()">
       <div class="sheet-handle"></div>
       <div class="sheet-head">
-        <h3>忘记密码 / 重置</h3>
+        <h3>忘记密码</h3>
         <button class="sheet-close press" onclick="closeSheet('sheet-forgot')">✕</button>
       </div>
       <div class="field">
-        <label>用户名</label>
-        <input class="input" id="fg-name" placeholder="输入要查询的用户名">
+        <label>注册邮箱</label>
+        <input class="input" id="fg-email" type="email" placeholder="输入注册时使用的邮箱" autocomplete="username">
       </div>
-      <button class="btn btn-secondary press" onclick="queryUser()">查询用户</button>
+      <button class="btn btn-primary press" id="fg-send-btn" onclick="return requestPasswordReset(event)">发送重置邮件</button>
       <div id="fg-result" style="display:none;margin-top:16px;"></div>
-      <form id="fg-reset-form" hidden onsubmit="return resetPassword(event)">
+      <!-- 旧 Gitee 明文重置表单：已停用，仅保留为回滚代码（legacyResetPasswordGitee），主流程不再调用 -->
+      <form id="fg-reset-form" hidden onsubmit="return legacyResetPasswordGitee(event)">
         <div class="field" style="margin-top:16px;">
           <label>设置新密码</label>
           <input class="input" id="fg-new" type="password" placeholder="至少 6 位">
@@ -2271,9 +2272,29 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <label>确认新密码</label>
           <input class="input" id="fg-new2" type="password" placeholder="再次输入新密码">
         </div>
-        <div class="pw-tip">密码经加盐哈希存储不可反查；演示环境仅支持重置当前设备已注册账号</div>
-        <button class="btn btn-primary press" type="submit">重置密码</button>
+        <button class="btn btn-primary press" type="submit">重置密码（旧路径·已停用）</button>
       </form>
+    </div>
+  </div>
+
+  <!-- ============ Sheet：Recovery 设置新密码（Supabase Auth） ============ -->
+  <div class="overlay" id="sheet-newpw" onclick="closeSheetOnBg(event,'sheet-newpw')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>设置新密码</h3>
+        <button class="sheet-close press" onclick="cancelRecovery()">✕</button>
+      </div>
+      <div class="field">
+        <label>新密码</label>
+        <input class="input" id="np-pass" type="password" placeholder="至少 6 位" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>确认新密码</label>
+        <input class="input" id="np-pass2" type="password" placeholder="再次输入新密码" autocomplete="new-password">
+      </div>
+      <div class="pw-tip">密码由云端认证服务加密保存；不会写入本机缓存或任何仓库文件。</div>
+      <button class="btn btn-primary press" id="np-submit" onclick="submitNewPassword()">确认并设置</button>
     </div>
   </div>
 
@@ -2375,7 +2396,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '4.4.0';
+const APP_VERSION = '5.0.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2540,7 +2561,7 @@ function ckCatIcon(c){
   if(c === '辅料') return '<path d="M12 3c4 4 6 7 6 10a6 6 0 0 1-12 0c0-3 2-6 6-10z"/>';
   return '<rect x="4" y="4" width="16" height="16" rx="3"/>';
 }
-function ckSave(){ saveState(); }
+function ckSave(){ /* Phase 14：调酒内存变更经 sbSaveObj 实时同步 Supabase；此函数保留为兼容空操作 */ }
 function openCkModal(id){ $(id).classList.add('show'); }
 function closeCkModal(id){ $(id).classList.remove('show'); }
 
@@ -2551,18 +2572,20 @@ function ckSwitch(key){
 }
 document.querySelectorAll('#ckSide .ck-scard').forEach(b => { b.onclick = () => ckSwitch(b.dataset.ck); });
 
-/* 首次进入注入示例材料（按账号各自 seed） */
+/* 首次进入注入示例材料（Phase 14：仅当 Supabase 材料库为空时注入一次，并同步 DAL） */
 function ckSeed(){
   const r = ckRoot();
-  if(r.seeded) return;
+  if(r.materials.length > 0) return;                 // 幂等：云端已有材料（含历史会话注入）则不再注入
   [ {name:'白朗姆酒', cat:'基酒', abv:40, price:68, vol:700},
     {name:'蓝橙力娇酒', cat:'基酒', abv:20, price:55, vol:500},
     {name:'桃汁', cat:'辅料', abv:0, price:12, vol:1000},
     {name:'鲜柠檬汁', cat:'辅料', abv:0, price:8, vol:200},
     {name:'糖浆', cat:'辅料', abv:0, price:15, vol:250}
-  ].forEach(m => r.materials.push(Object.assign({ id: ckUid() }, m)));
-  r.seeded = true;
-  ckSave();
+  ].forEach(function(m){
+    const mat = Object.assign({ id: wbUuid(), _sbSaved: false }, m);
+    r.materials.push(mat);
+    sbSaveObj('materials', mat, {name: mat.name, category: mat.cat, abv: mat.abv, price: mat.price, volume_ml: mat.vol});
+  });
 }
 
 /* ---------- 材料库 ---------- */
@@ -2586,9 +2609,11 @@ function ckRenderMats(){
 function ckDelMat(id){
   if(!confirm('确定删除该材料？')) return;
   const r = ckRoot();
+  const del = r.materials.find(m => m.id === id);
   r.materials = r.materials.filter(m => m.id !== id);
   ckMix = ckMix.filter(x => x.matId !== id);
-  ckSave(); ckRenderMats(); ckRenderMix();
+  if(del) sbRemoveObj('materials', del);
+  ckRenderMats(); ckRenderMix();
 }
 // 材料操作菜单（三个点 → 编辑 / 删除）
 let ckMenuId = null;
@@ -2620,11 +2645,13 @@ $('ckMatSave').onclick = function(){
   const r = ckRoot();
   if(ckEditId){
     const m = ckMatById(ckEditId);
-    if(m){ m.name = name; m.cat = cat; m.abv = abv; m.price = price; m.vol = vol; }
+    if(m){ m.name = name; m.cat = cat; m.abv = abv; m.price = price; m.vol = vol; sbSaveObj('materials', m, {name: name, category: cat, abv: abv, price: price, volume_ml: vol}); }
   }else{
-    r.materials.push({ id: ckUid(), name: name, cat: cat, abv: abv, price: price, vol: vol });
+    const m = { id: wbUuid(), name: name, cat: cat, abv: abv, price: price, vol: vol, _sbSaved: false };
+    r.materials.push(m);
+    sbSaveObj('materials', m, {name: name, category: cat, abv: abv, price: price, volume_ml: vol});
   }
-  ckSave(); closeCkModal('ckMatModal'); ckRenderMats(); ckRenderMix(); toast('已保存');
+  closeCkModal('ckMatModal'); ckRenderMats(); ckRenderMix(); toast('已保存');
 };
 /* 「清空示例数据」按钮已于 V4.4.0 移除；ckSeed 的首次示例注入保留（可逐条手动删除）。 */
 
@@ -2809,13 +2836,12 @@ function ckDeleteRecipe(id){
   r.recipes = r.recipes.filter(x => x.id !== id);
   if(ckEditingId === id) ckEditingId = null;
   if(ckRecViewId === id){ ckRecViewId = null; closeCkModal('ckRecViewModal'); }
-  ckSave(); ckRenderRecs(); ckRenderQuick();
-  toast('配方已删除');
-  if(rec.imgRemote){
-    deleteCloudImage(rec.imgRemote).catch(err=>{
-      toast('云端图片删除失败：' + (err && err.message ? err.message : '未知错误'));
-    });
+  sbRemoveObj('recipes', rec);                       // Phase 14：软删除配方
+  if(typeof WBData.recipeItems.removeByRecipe === 'function'){
+    WBData.recipeItems.removeByRecipe(id).catch(function(){ /* 关系清理失败不阻塞 */ });
   }
+  ckRenderRecs(); ckRenderQuick();
+  toast('配方已删除');
 }
 
 /* 点击配方卡 → 放大详情：大图 + 材料明细 + 成本/酒精度 + 可编辑备注 */
@@ -2839,7 +2865,8 @@ $('ckRecViewNoteSave').onclick = function(){
   const rec = ckRecViewId && ckRoot().recipes.find(x=>x.id===ckRecViewId);
   if(!rec) return;
   rec.note = $('ckRecViewNote').value.trim();
-  ckSave(); ckRenderRecs();
+  sbSaveObj('recipes', rec, {note: rec.note});      // Phase 14：备注经 DAL 保存
+  ckRenderRecs();
   closeCkModal('ckRecViewModal');
   toast('备注已保存');
 };
@@ -2865,10 +2892,11 @@ $('ckRecImgInput').addEventListener('change', async function(e){
     toast('图片处理中…');
     const d = await compressImage(f);
     rec.img = d;
-    rec.imgRemote = '';                      // 置空 → 下次同步以同路径 PUT 覆盖上传
-    ckSave(); ckRenderRecs(); ckRenderQuick();
+    rec.imgRemote = '';
+    sbUploadCocktailImageFor(rec);           // Phase 14：dataURL → private Storage（upsert 覆盖）
+    ckRenderRecs(); ckRenderQuick();
     if(ckRecViewId === targetId) showRecipe(targetId);   // 详情弹窗开着则刷新大图
-    toast('图片已添加，同步后上传云端');
+    toast('图片已更新并上传云端');
   }catch(err){
     toast('图片处理失败：' + (err && err.message ? err.message : '未知错误'));
   }
@@ -2898,12 +2926,42 @@ $('ckRecCancel').onclick = () => closeCkModal('ckRecModal');
 $('ckRecSave').onclick = function(){
   const name = $('ckRecName').value.trim() || ('配方' + (ckRoot().recipes.length + 1));
   const c = ckCompute();
-  ckRoot().recipes.push({
-    id: ckUid(), name: name,
+  /* 二次编辑：写回原配方（保留 id/图片/备注） */
+  if(ckEditingId){
+    const old = ckRoot().recipes.find(x=>x.id===ckEditingId);
+    if(old){
+      old.name = name;
+      old.items = ckMix.map(x => ({ matId: x.matId, vol: x.vol }));
+      old.totalVol = Math.round(c.served); old.totalCost = c.totalCost; old.abv = c.abv;
+      sbSaveObj('recipes', old, {name: name, total_volume_ml: old.totalVol, total_cost: old.totalCost, abv: old.abv});
+      if(typeof WBData.recipeItems.removeByRecipe === 'function'){
+        WBData.recipeItems.removeByRecipe(old.id).then(function(){
+          old.items.forEach(function(it, i){
+            WBData.recipeItems.create({recipe_id: old.id, material_id: it.matId, quantity: it.vol, unit: 'ml', sort_order: i})
+              .then(function(r){ if(r.error) throw r.error; }).catch(function(){});
+          });
+        }).catch(function(){});
+      }
+      ckEditingId = null;
+      closeCkModal('ckRecModal'); ckRenderRecs(); ckRenderQuick();
+      toast('配方已更新');
+      return;
+    }
+    ckEditingId = null;
+  }
+  /* 新建配方 */
+  const rec = {
+    id: wbUuid(), name: name,
     items: ckMix.map(x => ({ matId: x.matId, vol: x.vol })),
-    totalVol: Math.round(c.served), totalCost: c.totalCost, abv: c.abv, ts: Date.now()
+    totalVol: Math.round(c.served), totalCost: c.totalCost, abv: c.abv, ts: Date.now(), _sbSaved: false
+  };
+  ckRoot().recipes.push(rec);
+  sbSaveObj('recipes', rec, {name: name, total_volume_ml: Math.round(c.served), total_cost: c.totalCost, abv: c.abv});
+  rec.items.forEach(function(it, i){
+    WBData.recipeItems.create({recipe_id: rec.id, material_id: it.matId, quantity: it.vol, unit: 'ml', sort_order: i})
+      .then(function(r){ if(r.error) throw r.error; }).catch(function(){ /* 单条失败不阻塞 UI */ });
   });
-  ckSave(); closeCkModal('ckRecModal'); ckRenderRecs(); toast('配方已保存');
+  closeCkModal('ckRecModal'); ckRenderRecs(); toast('配方已保存');
 };
 function ckLoadRecipe(id){
   const rec = ckRoot().recipes.find(x => x.id === id);
@@ -3069,85 +3127,118 @@ async function hashPassword(pass, salt){
   }
   return djb2Hex(data);
 }
+/* Phase 14：登录改用 Supabase Auth（email + password）。
+ * 旧 Gitee 登录逻辑整体保留为 legacyDoLoginGitee（仅回滚用途，主流程不再调用）。 */
 async function doLogin(e){
+  e.preventDefault();
+  const email = $('login-email').value.trim();
+  const pass = $('login-pass').value;
+  if(!email){ toast('请输入邮箱'); return false; }
+  if(!pass){ toast('请输入密码'); return false; }
+  try{
+    await WBAuth.signIn({ email: email, password: pass });
+  }catch(err){
+    const n = WBErrors.normalize(err);
+    toast(n.code === 'AUTH_INVALID_CREDENTIALS' ? '邮箱或密码不正确' : (n.message || '登录失败，请稍后重试'));
+    return false;
+  }
+  const u = await WBAuth.getCurrentUser();
+  state.user = { name: (u.email || '').split('@')[0], id: u.id, email: u.email, role: 'user' };
+  enterApp();                       // 内部经 sbLoadAll 从 Supabase 加载数据
+  toast('欢迎回来，' + state.user.name + ' ✓');
+  return false;
+}
+/* 旧 Gitee 登录（仅回滚保留；主流程不调用） */
+async function legacyDoLoginGitee(e){
   e.preventDefault();
   const name = $('login-name').value.trim();
   const pass = $('login-pass').value;
-  if(!name){ toast('请输入用户名'); return false; }
-  if(!pass){ toast('请输入密码'); return false; }
   autoSaveAuthToken();
   if(!getGiteeToken()){ toast('请先在上方填写 远程仓库 令牌'); return false; }
-
   try{
-    // 从云端集中用户表校验（数据按用户名隔离）：V2.1.0 起明文 password 优先，兼容历史 hash/salt
     const users = await readUsersTable();
     const u = users[name];
-    if(!u){
-      toast('账号不存在，请联系管理员开通');
-      return false;
-    }
+    if(!u){ toast('账号不存在，请联系管理员开通'); return false; }
     let ok = false;
     if(typeof u.password === 'string'){ ok = (u.password === pass); }
     else if(u.hash && u.salt){ ok = ((await hashPassword(pass, u.salt)) === u.hash); }
-    if(!ok){
-      toast('用户名或密码不正确');
-      return false;
-    }
+    if(!ok){ toast('用户名或密码不正确'); return false; }
     state.user = { name: name, role: u.role || 'user', createdAt: u.createdAt || new Date().toISOString() };
-    rememberLastUser(name);   // 记录最近登录用户，刷新后自动恢复会话
+    rememberLastUser(name);
   }catch(err){
     toast('登录失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
   }
-
-  // 切换账号：只加载该用户名专属的本地工作区（避免上一账号数据残留串号）
   loadUserWorkspace(state.user.name);
-  enterApp();
-  autoPullOnLaunch();   // 登录后自动从云端拉取衣物与头像
+  enterApp();                    // Phase 17：数据加载仅走 Supabase（内部 sbLoadAll）；不再调用 Gitee autoPullOnLaunch
   toast('欢迎回来，' + state.user.name + ' ✓');
   return false;
 }
 
+/* Phase 14：注册改用 Supabase Auth signUp。
+ * email confirmation 开启时首注册 session 为 null → 提示查收确认邮件（不误报失败）。 */
 async function doRegister(e){
+  e.preventDefault();
+  const email = $('reg-email').value.trim();
+  const p1 = $('reg-pass').value;
+  const p2 = $('reg-pass2').value;
+  if(!email || email.indexOf('@') < 0){ toast('请输入有效邮箱'); return false; }
+  if(p1.length < 6){ toast('密码至少 6 位'); return false; }
+  if(p1 !== p2){ toast('两次密码不一致'); return false; }
+  try{
+    const r = await WBAuth.signUp({ email: email, password: p1 });
+    if(r.needsConfirmation){
+      toast('注册成功！请查收邮箱并点击确认链接，然后即可登录');
+      switchAuthMode('login');
+      return false;
+    }
+    const u = await WBAuth.getCurrentUser();
+    state.user = { name: email.split('@')[0], id: u ? u.id : (r.user && r.user.id), email: email, role: 'user' };
+  }catch(err){
+    const n = WBErrors.normalize(err);
+    if(n.code === 'AUTH_EMAIL_EXISTS'){ toast('该邮箱已被注册，请直接登录'); }
+    else if(n.code === 'AUTH_WEAK_PASSWORD'){ toast('密码强度不足，请至少 6 位'); }
+    else if(n.code === 'AUTH_RATE_LIMITED'){ toast('操作过于频繁，请稍后再试'); }
+    else { toast(n.message || '注册失败，请稍后重试'); }
+    return false;
+  }
+  enterApp();                       // 新用户 = 空账户（sbLoadAll 返回空列表）
+  toast('注册成功，欢迎加入 ✓');
+  return false;
+}
+/* 旧 Gitee 注册（仅回滚保留；主流程不调用） */
+async function legacyDoRegisterGitee(e){
   e.preventDefault();
   const name = $('reg-name').value.trim();
   const p1 = $('reg-pass').value;
   const p2 = $('reg-pass2').value;
-  if(name.length < 2){ toast('用户名至少 2 个字符'); return false; }
   if(p1.length < 6){ toast('密码至少 6 位'); return false; }
   if(p1 !== p2){ toast('两次密码不一致'); return false; }
   autoSaveAuthToken();
   if(!getGiteeToken()){ toast('请先在上方填写 远程仓库 令牌'); return false; }
-
   try{
-    // 读云端用户表：用户名已存在则拒绝；否则追加并写回（明文 password）
     const users = await readUsersTable();
     if(users[name]){ toast('该用户名已被注册'); return false; }
     users[name] = { password: p1, role: 'user', createdAt: new Date().toISOString() };
     await writeUsersTable(users);
     state.user = { name: name, role: 'user', createdAt: users[name].createdAt };
-    rememberLastUser(name);   // 记录最近登录用户，刷新后自动恢复会话
+    rememberLastUser(name);
   }catch(err){
     toast('注册失败：' + (err && err.message ? err.message : '未知错误'));
     return false;
   }
-
-  // 新账号：全新「空衣橱」工作区（不继承任何他人数据）
   loadUserWorkspace(state.user.name);
-  enterApp();
-  autoPullOnLaunch();   // 注册后自动从云端拉取（新账号为空，但保持与登录一致）
+  enterApp();                    // Phase 17：同上，仅 Supabase；不调用 Gitee autoPullOnLaunch
   toast('注册成功，欢迎加入 ✓');
   return false;
 }
 
-/* 进入登录态主界面 */
+/* 进入登录态主界面（Phase 14：数据源 = Supabase DAL；旧 Gitee pull 已停用） */
 function enterApp(){
   renderHome();
   showScreen('screen-home');
-  // 登录/启动后 1 秒静默拉取云端：成功自动刷新视图并提示，失败不打扰（避免网络慢卡 UI）
-  setTimeout(function(){
-    pullUserData().catch(function(){ /* 静默失败 */ });
-  }, 1000);
+  sbLoadAll();   // DAL 并行加载 groups/clothes/materials/recipes/ledger/sleep/memos → state → 渲染
+  loadMyAvatar().catch(function(){});   // 登录后异步加载头像（失败静默，占位）
 }
 
 /* ---------- 5. 衣橱主页 ---------- */
@@ -3231,11 +3322,13 @@ function renderHomeQuote(){
   const moodUrl = (QUOTE_MOOD_DATAURL && QUOTE_MOOD_DATAURL[homeQuoteCurrent.mood]) || QUOTE_FALLBACK_IMG;
   if(cat && moodUrl) cat.style.backgroundImage = "url('" + moodUrl + "')";
 }
-/* 云端语录库：Gitee data/quotes.json（不随版本发版即可扩充）；仅当当前显示的还是内建语录时切换一次 */
+/* 语录库：v5.0.x 起一律使用内置语录池。
+   [Phase 17] 旧实现会从 Gitee data/quotes.json 拉取，属 Gitee 业务依赖，已停用；
+   不引入新依赖、不改 schema；如需云端语录库，后续应改为 Supabase 表读取。 */
 async function loadQuoteLibrary(){
   if(homeQuoteLibTried) return;
   homeQuoteLibTried = true;
-  if(!getGiteeToken() || !state.user) return;   // 未登录/无令牌 → 使用内置语录
+  return;   // Phase 17：不再访问 Gitee，保留内置语录
   try{
     const remote = await giteeReadJSON('data/quotes.json');
     if(remote && Array.isArray(remote.quotes) && remote.quotes.length){
@@ -3283,18 +3376,17 @@ function homeScatter(){
     }
   }
 }
-/* 备忘：按账号隔离存本机 localStorage（key: memo_<用户名>） */
-function memoKey(){ return 'memo_' + (state.user && state.user.name ? state.user.name : 'guest'); }
-/* 本地存储结构 v4.2.3：{ memos:[{t,at}], deleted:[at...] 墓碑 }；兼容 4.2.1 之前的纯数组旧格式 */
+/* 备忘（Phase 16 修复）：唯一数据源 = 内存 state.memos（云端经 sbLoadAll 下拉 / sbSaveObj 上行同步）。
+   V4.x 的 localStorage 路径已废弃——业务数据不落盘（红线），且导致跨设备同步后 UI 不显示云端备忘。 */
+function memoKey(){ return 'memo_' + (state.user && state.user.name ? state.user.name : 'guest'); } /* 仅保留旧 key 名兼容检查，不再读写 */
 function loadMemoStore(){
-  try{
-    const v = JSON.parse(localStorage.getItem(memoKey())||'null');
-    if(Array.isArray(v)) return { memos: v, deleted: [] };
-    if(v && Array.isArray(v.memos)) return { memos: v.memos, deleted: Array.isArray(v.deleted)?v.deleted:[] };
-  }catch(e){}
-  return { memos: [], deleted: [] };
+  if(!state.memos || typeof state.memos !== 'object' || !Array.isArray(state.memos.memos)){
+    state.memos = { memos: [], deleted: [] };
+  }
+  if(!Array.isArray(state.memos.deleted)) state.memos.deleted = [];
+  return state.memos;
 }
-function saveMemoStore(st){ try{ localStorage.setItem(memoKey(), JSON.stringify({ memos: st.memos, deleted: st.deleted })); }catch(e){} }
+function saveMemoStore(st){ state.memos = { memos: st.memos, deleted: st.deleted }; }
 function loadMemos(){ return loadMemoStore().memos; }
 function renderMemos(){
   const list = $('home-memo-list'); if(!list) return;
@@ -3311,21 +3403,25 @@ function renderMemos(){
     return '<div class="memo-item" data-at="' + m.at + '"><span class="mt">' + spEsc(m.t) + '</span><span class="mtime">' + t + '</span><button class="mdel press" data-at="' + m.at + '">✕</button></div>';
   }).join('');
   list.querySelectorAll('.memo-item').forEach(c => c.onclick = () => memoOpenEdit(c.dataset.at));
-  list.querySelectorAll('.mdel').forEach(b => b.onclick = (e) => { e.stopPropagation(); delMemo(Number(b.dataset.at)); });
+  list.querySelectorAll('.mdel').forEach(b => b.onclick = (e) => { e.stopPropagation(); delMemo(b.dataset.at); });
 }
 function addMemo(){
   const inp = $('home-memo-input'); if(!inp) return;
   const v = inp.value.trim(); if(!v){ toast('先写点什么吧'); return; }
-  const st = loadMemoStore(); st.memos.push({ t:v, at:Date.now() }); saveMemoStore(st);
+  const at = Date.now();
+  const mid = wbUuid();                              // Phase 14：前端 UUID = Supabase 主键
+  const m = { t:v, at:at, _id: mid, _sbSaved: false };
+  const st = loadMemoStore(); st.memos.push(m); saveMemoStore(st);
+  sbSaveObj('memos', {_id: mid, id: mid}, {content: v, legacy_id: String(at)});
   inp.value = ''; renderMemos(); toast('已记下 ✓');
-  memoAutoSync();
 }
 function delMemo(at){
   const st = loadMemoStore();
+  const target = st.memos.find(m => Number(m.at) === Number(at));
   st.memos = st.memos.filter(m => m.at !== at);
-  if(!st.deleted.some(x => Number(x) === Number(at))) st.deleted.push(Number(at));   // 墓碑：合并时过滤，防止已删记录从其他设备复活
+  if(!st.deleted.some(x => Number(x) === Number(at))) st.deleted.push(Number(at));
+  if(target && target._id) sbRemoveObj('memos', {_id: target._id, id: target._id});   // Phase 14：DAL 软删除
   saveMemoStore(st); renderMemos(); toast('已删除');
-  memoAutoSync();
 }
 /* ---------- 备忘云端同步（v4.2.3：合并式同步，多设备不互相覆盖） ----------
    数据文件 data/<用户>/memo.json = { updatedAt, memos:[{t,at}], deleted:[at...] }。
@@ -3380,9 +3476,11 @@ function memoSaveEdit(){
   if(!v){ toast('内容不能为空'); return; }
   const st = loadMemoStore();
   const m = st.memos.find(x => Number(x.at) === Number(memoEditAt));
-  if(m){ m.t = v; saveMemoStore(st); }
+  if(m){
+    m.t = v; saveMemoStore(st);
+    if(m._id) sbSaveObj('memos', {_id: m._id, id: m._id, _sbSaved: m._sbSaved}, {content: v});   // Phase 14
+  }
   memoCloseEdit(); renderMemos(); toast('已修改 ✓');
-  memoAutoSync();
 }
 function memoDeleteEdit(){
   if(memoEditAt == null) return;
@@ -3417,7 +3515,7 @@ function renderClothOverview(){
 function renderClothList(){
   $('cl-groups').innerHTML = state.groups.map(g=>{
     const cnt = countInGroup(g.id);
-    return '<button class="group-card press" onclick="openGroup(' + g.id + ')">' +
+    return '<button class="group-card press" onclick="openGroup(\'' + g.id + '\')">' +
       '<span class="gc-emoji">' + g.emoji + '</span>' +
       '<span class="gc-info">' +
         '<span class="gc-name">' + g.name + '</span>' +
@@ -3459,7 +3557,7 @@ function renderGrid(items, containerId, emptyHtml){
   }).join('');
   // 长按删除 + 短按轻提示 + 右下角「三个点」菜单：渲染后统一绑定（主页/分组共用，一处生效）
   el.querySelectorAll('.cloth-card').forEach(card=>{
-    attachClothLongPress(card, Number(card.dataset.id));
+    attachClothLongPress(card, card.dataset.id);      // Phase 14：id 为 UUID 字符串
   });
   el.querySelectorAll('.cloth-more').forEach(more=>{
     // 阻止触摸/按下事件冒泡到卡片，避免触发卡片长按/短按；注意这里不能 preventDefault，
@@ -3472,7 +3570,7 @@ function renderGrid(items, containerId, emptyHtml){
     // 独立点击 → 打开衣物操作菜单（阻止冒泡以免触发卡片短按）
     more.addEventListener('click', function(e){
       e.stopPropagation();
-      openClothMenu(Number(more.dataset.more));
+      openClothMenu(more.dataset.more);               // Phase 14：UUID 字符串
     });
   });
 }
@@ -3571,27 +3669,17 @@ function openDelSheet(id){
   openSheet('sheet-del');
 }
 
-/* 确认删除：过滤 → 持久化（失败回滚）→ 关 Sheet → 按当前页刷新 */
+/* 确认删除（Phase 14：DAL 软删除；Gitee 图片联动已停用） */
 function confirmDeleteCloth(id){
   const c = state.clothes.find(x=>x.id===id);
   if(!c) return false;
   const name = c.name;
   const prevClothes = state.clothes;
   state.clothes = state.clothes.filter(x=>x.id!==id);
-  if(!saveState()){
-    state.clothes = prevClothes;          // 回滚内存，避免不一致
-    toast('删除失败，请重试');
-    return false;
-  }
+  sbRemoveObj('clothes', c);
   closeSheet('sheet-del');
   delPendingId = null;
   toast('已删除「' + name + '」');
-  // 联动删除云端图片文件（失败不阻塞主流程，仅提示）
-  if(c && c.imgRemote){
-    deleteCloudImage(c.imgRemote).catch(err=>{
-      toast('云端图片删除失败：' + (err && err.message ? err.message : '未知错误'));
-    });
-  }
   // 按当前页面刷新
   const cur = SCREENS.find(s=>$(s).classList.contains('active')) || 'screen-home';
   if(cur==='screen-group'){ openGroup(currentGroupId); }
@@ -3971,17 +4059,11 @@ function submitUpload(e){
 
   const note = $('up-note').value.trim();
 
-  // 编辑模式：更新既有衣物（保留 id / imgRemote，便于云端图片联动）
+  // 编辑模式：更新既有衣物（Phase 14：经 DAL 更新 + 图片 upsert 到 Storage）
   if(editingId){
     const idx = state.clothes.findIndex(x=>x.id===editingId);
     if(idx < 0){ toast('未找到要编辑的衣物'); return false; }
     const prev = state.clothes[idx];
-    // 图片变化：旧图独立存储时，联动删除云端旧图（不阻塞，仅提示）
-    if(prev.imgRemote && pendingImage && pendingImage !== prev.img){
-      deleteCloudImage(prev.imgRemote).catch(err=>{
-        toast('云端旧图删除失败：' + (err && err.message ? err.message : '未知错误'));
-      });
-    }
     const primaryG = upSelectedGroups[0];
     const updated = {
       id: prev.id,
@@ -3989,17 +4071,17 @@ function submitUpload(e){
       group: primaryG,
       groups: upSelectedGroups.slice(),
       note: note,
-      img: pendingImage || null,                    // 无图保留原占位走法
-      imgRemote: prev.imgRemote,                    // 沿用云端路径引用
+      img: pendingImage || prev.img,                // 新图或保留原显示
+      imgRemote: prev.imgRemote || prev._image_path || null,
       emoji: groupEmoji(primaryG),
-      tint: TINT_MAP[groupEmoji(primaryG)] || '#EAF5EC'
+      tint: TINT_MAP[groupEmoji(primaryG)] || '#EAF5EC',
+      _sbSaved: prev._sbSaved,
+      _image_path: prev._image_path || null
     };
     state.clothes.splice(idx, 1, updated);
-    if(!saveState()){
-      state.clothes.splice(idx, 1, prev);           // 回滚内存
-      toast('保存失败，请重试');
-      return false;
-    }
+    sbSaveObj('clothes', updated, {name: name, note: note, emoji: updated.emoji, tint: updated.tint, _groupIds: upSelectedGroups.slice()});
+    WBData.clothGroups.replaceForCloth(updated.id, upSelectedGroups.slice()).catch(function(){});
+    sbUploadClothImageFor(updated);                 // dataURL 图 → Storage upsert；无新图不动作
     pendingImage = null;
     editingId = null;
     $('albumInput').value = '';
@@ -4010,26 +4092,22 @@ function submitUpload(e){
     return false;
   }
 
-  // 新增模式
+  // 新增模式（Phase 14：前端 UUID = Supabase 主键；图片经 private Storage）
   const cloth = {
-    id: Date.now(),
+    id: wbUuid(),
     name: name,
     group: upSelectedGroups[0],
     groups: upSelectedGroups.slice(),
     note: note,
     img: pendingImage || null,                    // 无图允许提交，走占位
     emoji: groupEmoji(upSelectedGroups[0]),
-    tint: TINT_MAP[groupEmoji(upSelectedGroups[0])] || '#EAF5EC'
+    tint: TINT_MAP[groupEmoji(upSelectedGroups[0])] || '#EAF5EC',
+    _sbSaved: false
   };
 
-  const prevLen = state.clothes.length;
   state.clothes.unshift(cloth);
-
-  // 持久化：配额溢出时 saveState 已回滚旧值并 toast；这里同步回滚内存
-  if(!saveState()){
-    state.clothes.splice(0, state.clothes.length - prevLen);
-    return false;
-  }
+  sbSaveObj('clothes', cloth, {name: name, note: note, emoji: cloth.emoji, tint: cloth.tint, _groupIds: upSelectedGroups.slice()});
+  sbUploadClothImageFor(cloth);
 
   // 上传成功：清空待存图、重置文件输入与预览区
   pendingImage = null;
@@ -4074,9 +4152,9 @@ function renderGroupManage(){
         : '<span class="gm-name">' + g.name + '</span>') +
       '<span class="gm-count">' + cnt + '件</span>' +
       (renamingId===g.id
-        ? '<button class="gm-act press" style="color:var(--success);" onclick="saveRename(' + g.id + ')">保存</button>'
-        : '<button class="gm-act press" onclick="startRename(' + g.id + ')">重命名</button>') +
-      '<button class="gm-act del press" id="del-' + g.id + '" onclick="confirmDelete(' + g.id + ')">删除</button>' +
+        ? '<button class="gm-act press" style="color:var(--success);" onclick="saveRename(\'' + g.id + '\')">保存</button>'
+        : '<button class="gm-act press" onclick="startRename(\'' + g.id + '\')">重命名</button>') +
+      '<button class="gm-act del press" id="del-' + g.id + '" onclick="confirmDelete(\'' + g.id + '\')">删除</button>' +
     '</div>';
   }).join('');
 }
@@ -4090,9 +4168,10 @@ function pickGmEmoji(e, el){
 function addGroup(){
   const name = $('gm-name').value.trim();
   if(!name){ toast('请输入分组名称'); return; }
-  const id = Date.now();
-  state.groups.push({id, name, emoji:gmEmoji});
-  saveState();
+  const id = wbUuid();                                   // Phase 14：前端 UUID = Supabase 主键
+  const gNew = {id, name, emoji:gmEmoji};
+  state.groups.push(gNew);
+  sbSaveObj('groups', gNew, {name: name, emoji: gmEmoji, sort_order: state.groups.length});
   renderGroupManage();
   renderHome();
   toast('已添加分组「' + name + '」✓');
@@ -4109,8 +4188,7 @@ function saveRename(gid){
   const name = inp ? inp.value.trim() : '';
   if(!name){ toast('名称不能为空'); return; }
   const g = state.groups.find(x=>x.id===gid);
-  if(g) g.name = name;
-  saveState();
+  if(g){ g.name = name; sbSaveObj('groups', g, {name: name}); }
   renderGroupManage();
   renderHome();
   toast('已重命名 ✓');
@@ -4126,6 +4204,7 @@ function confirmDelete(gid){
     return;
   }
   // 分组内衣物移出该分组：从 groups 数组移除，回退到其余分组（或首个分组 / 未分组）
+  const affected = state.clothes.filter(c => clothGroups(c).indexOf(gid) >= 0);
   const fallback = state.groups.find(g=>g.id!==gid);
   state.clothes.forEach(c=>{
     const gs = clothGroups(c).filter(x=>x!==gid);
@@ -4133,7 +4212,10 @@ function confirmDelete(gid){
     c.group = gs.length ? gs[0] : (fallback ? fallback.id : 0);
   });
   state.groups = state.groups.filter(g=>g.id!==gid);
-  saveState();
+  sbRemoveObj('groups', {id: gid});                                  // Phase 14：分组软删除
+  affected.forEach(c => {                                            // 同步受影响衣物的新分组关系
+    if(c._sbSaved) WBData.clothGroups.replaceForCloth(c.id, clothGroups(c)).catch(function(){});
+  });
   if(currentGroupId===gid) currentGroupId = state.groups.length ? state.groups[0].id : 0;
   renderGroupManage();
   renderHome();
@@ -4167,8 +4249,71 @@ async function changePassword(e){
   return false;
 }
 
-/* ---------- 9.5 忘记密码 / 重置（演示） ---------- */
+/* ---------- 9.5 忘记密码 / 重置 ----------
+ * 新流程（Supabase Auth）：requestPasswordReset() 发送重置邮件 → 用户点击邮件链接回站 →
+ * Supabase SDK 消费 token 并触发 PASSWORD_RECOVERY → 打开「设置新密码」面板 →
+ * submitNewPassword() 调用 WBAuth.updatePassword() 完成更新。
+ * 全程不查询旧用户表、不写 Gitee、不保存密码或 token 到本机。
+ * 旧 Gitee 明文路径（queryUser / legacyResetPasswordGitee）已停用，仅保留为回滚代码。 */
 let fgUserName = null;
+
+/* 发送 Supabase 重置邮件（不读旧用户表、不写 Gitee、不落盘密码） */
+async function requestPasswordReset(e){
+  if(e && e.preventDefault) e.preventDefault();
+  const email = ($('fg-email').value || '').trim();
+  if(!email || email.indexOf('@') < 0){ toast('请输入注册邮箱'); return false; }
+  const btn = $('fg-send-btn'); const old = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '发送中…'; }
+  try{
+    await WBAuth.resetPasswordForEmail(email, {});
+    const el = $('fg-result');
+    el.style.display = 'block';
+    el.innerHTML = '<div class="card" style="padding:12px;background:var(--group-bg);">' +
+      '<div class="row-title">重置邮件已发送 ✓</div>' +
+      '<div class="row-sub">请到邮箱点击其中的链接，回到本页面后即可设置新密码。</div></div>';
+    toast('重置邮件已发送，请查收邮箱');
+  }catch(err){
+    const n = WBErrors.normalize(err);
+    toast('发送失败：' + (n.message || '请稍后重试'));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = old; }
+  }
+  return false;
+}
+
+/* Recovery：SDK 触发 PASSWORD_RECOVERY 后打开设置新密码面板 */
+function openNewPasswordSheet(){
+  closeSheet('sheet-forgot');
+  openSheet('sheet-newpw');
+}
+function cancelRecovery(){
+  closeSheet('sheet-newpw');
+  const p1 = $('np-pass'), p2 = $('np-pass2');
+  if(p1) p1.value = ''; if(p2) p2.value = '';
+  /* 丢弃 recovery 会话，避免残留半登录态 */
+  (async function(){ try{ await WBAuth.signOut(); }catch(e){} })();
+}
+async function submitNewPassword(){
+  const p1 = $('np-pass').value, p2 = $('np-pass2').value;
+  if(!p1 || p1.length < 6){ toast('新密码至少 6 位'); return; }
+  if(p1 !== p2){ toast('两次新密码不一致'); return; }
+  const btn = $('np-submit'); const old = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '提交中…'; }
+  try{
+    await WBAuth.updatePassword(p1);
+    $('np-pass').value = $('np-pass2').value = '';
+    closeSheet('sheet-newpw');
+    try{ await WBAuth.signOut(); }catch(e){}
+    toast('密码已更新 ✓ 请用新密码登录');
+  }catch(err){
+    const n = WBErrors.normalize(err);
+    toast('更新失败：' + (n.message || '请重试或重新发送重置邮件'));
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = old; }
+  }
+}
+
+/* 旧逻辑（已停用，仅回滚用）：按用户名查询旧 Gitee 用户表 */
 function queryUser(){
   const name = $('fg-name').value.trim();
   if(!name){ toast('请输入用户名'); return; }
@@ -4192,7 +4337,9 @@ function queryUser(){
     $('fg-reset-form').hidden = true;
   }
 }
-function resetPassword(e){
+/* 旧 Gitee 明文重置（已停用 / 仅回滚）：把明文 password 写回 data/_users.json。
+ * 与 Supabase Auth 主流程无关，新 UI 不再调用；保留供回退到 v4.4.0 时使用。 */
+function legacyResetPasswordGitee(e){
   e.preventDefault();
   if(!fgUserName){ toast('请先查询用户'); return false; }
   const n1 = $('fg-new').value;
@@ -4241,8 +4388,14 @@ function renderMine(){
   if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
 }
 
-/* ---------- 10.5 头像（本机按账号存储；外框 CSS 圆形裁剪） ---------- */
-function currentAvatar(){ return (state.user && state.user.avatar) ? state.user.avatar : null; }
+/* ---------- 10.5 头像（Supabase private avatars bucket + profiles.avatar_path 持久） ----------
+ * 头像图片只存 avatars/{user_id}/avatar.jpg（private + Storage RLS，authenticated download）；
+ * 数据库仅保存路径（avatar_path），不存 Base64；当前头像 URL 仅放内存 _avatarObj，
+ * 不写 localStorage、不访问 Gitee；登出/刷新自动释放 objectURL。
+ * 旧 Gitee 头像逻辑（pushProfile/pullProfile）仅保留为回滚代码，本函数不再调用。 */
+const _avatarObj = { url: null, path: null };   // 仅内存；登出时释放
+function currentAvatar(){ return _avatarObj.url || null; }
+function releaseAvatarUrl(){ if(_avatarObj.url){ try{ URL.revokeObjectURL(_avatarObj.url); }catch(e){} } _avatarObj.url = null; _avatarObj.path = null; }
 function applyAvatar(elId){
   const el = $(elId);
   if(!el) return;
@@ -4250,6 +4403,7 @@ function applyAvatar(elId){
   if(av){ el.innerHTML = '<img src="' + av + '" alt="头像">'; }
   else{ el.textContent = (state.user ? state.user.name : '绿').charAt(0); }
 }
+function renderAvatarAll(){ applyAvatar('mine-avatar'); applyAvatar('home-avatar'); }
 /* 点击「我的页」头像 → 放大预览 + 可选更换 */
 function openAvatarEditor(){
   const av = currentAvatar();
@@ -4258,6 +4412,32 @@ function openAvatarEditor(){
   const rm = $('avatar-remove');
   if(rm) rm.style.display = av ? '' : 'none';
   openSheet('sheet-avatar');
+}
+/* 登录后加载头像：profiles.avatar_path → authenticated download → 内存显示（失败静默，占位不阻断）。
+ * 会话隔离：开始前记录 gen + uid；DB 查询后、下载完成后均二次校验，不匹配则丢弃结果，
+ * 杜绝「登出 → 切号」后旧用户的头像下载回写新用户 UI（会话串扰）。 */
+async function loadMyAvatar(){
+  const gen = WBSession.getSessionGeneration();
+  const uid = (state.user && state.user.id) || null;
+  const u = await WBAuth.getCurrentUser();
+  if(!u || gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
+  try{
+    const p = await getSupabaseClient().from('profiles').select('avatar_path').eq('id', u.id).maybeSingle();
+    if(gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid){ return; }
+    if(!(p.data && p.data.avatar_path)){ releaseAvatarUrl(); renderAvatarAll(); return; }
+    const r = await WBImages.downloadAvatar();   // avatars/{uid}/avatar.jpg
+    if(gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid){ try{ URL.revokeObjectURL(r.objectUrl); }catch(e){} return; }
+    releaseAvatarUrl();
+    _avatarObj.url = r.objectUrl; _avatarObj.path = r.path;
+    renderAvatarAll();
+  }catch(e){ /* 无对象/网络失败 → 保持占位，不阻断主流程 */ }
+}
+/* 更新 profiles.avatar_path（仅路径；不含图片正文） */
+async function updateProfileAvatar(pathOrNull){
+  const u = await WBAuth.getCurrentUser();
+  if(!u) return;
+  const r = await getSupabaseClient().from('profiles').update({ avatar_path: pathOrNull }).eq('id', u.id);
+  if(r.error) throw r.error;
 }
 /* 头像图片处理：按人物中心裁成正方形 → 缩至 320×320（圆形由 CSS 裁，存储为方图） */
 function avatarFromFile(file){
@@ -4301,26 +4481,40 @@ function handleAvatarFile(file){
   if(!file.type || file.type.indexOf('image/') !== 0){ toast('请选择图片文件'); return; }
   if(!state.user){ toast('请先登录'); return; }
   avatarFromFile(file).then(function(dataURL){
-    state.user.avatar = dataURL;
-    saveState();
-    applyAvatar('mine-avatar');
-    applyAvatar('home-avatar');
-    openAvatarEditor();
-    toast('头像已更新 ✓');
-    pushProfile().catch(function(){ toast('头像已保存到本机，但上传云端失败（请检查网络/令牌）'); });
+    (async function(){
+      try{
+        const blob = window.dataUrlToBlob(dataURL);   // 压缩后 dataURL → Blob（纯内存）
+        const up = await WBImages.uploadAvatar(blob); // avatars/{uid}/avatar.jpg（upsert 覆盖）
+        await updateProfileAvatar(up.path);           // DB 仅存路径
+        releaseAvatarUrl();
+        _avatarObj.url = dataURL; _avatarObj.path = up.path;  // 内存显示；登出即释放，不落盘
+        renderAvatarAll();
+        openAvatarEditor();
+        toast('头像已更新 ✓');
+      }catch(err){
+        const n = WBErrors.normalize(err);
+        toast('头像上传失败：' + (n.message || '请重试'));
+      }
+    })();
   }).catch(function(err){
     toast('头像处理失败：' + (err && err.message ? err.message : '请重试'));
   });
 }
 function removeAvatar(){
   if(!state.user) return;
-  delete state.user.avatar;
-  saveState();
-  applyAvatar('mine-avatar');
-  applyAvatar('home-avatar');
-  openAvatarEditor();
-  toast('已移除头像');
-  pushProfile().catch(function(){});
+  (async function(){
+    try{
+      await WBImages.removeAvatar();      // Storage 删除
+      await updateProfileAvatar(null);    // 清 DB 路径
+      releaseAvatarUrl();
+      renderAvatarAll();
+      openAvatarEditor();
+      toast('已移除头像');
+    }catch(err){
+      const n = WBErrors.normalize(err);
+      toast('移除头像失败：' + (n.message || '请重试'));
+    }
+  })();
 }
 $('avatarAlbumInput').addEventListener('change', function(e){
   const f = e.target.files && e.target.files[0];
@@ -4364,6 +4558,8 @@ function renderGiteeTokenInput(){
   inp.placeholder = maskToken(getGiteeToken());
   inp.value = '';
 }
+/* [ROLLBACK-ONLY · Phase 17 起停用] 旧 Gitee 令牌保存入口。
+   UI 已于 Phase 14 隐藏；即使被调用写入令牌，giteeFetch 也已硬阻断，不会产生任何 Gitee 请求。 */
 function saveGiteeToken(){
   const inp = $('gitee-token');
   const token = inp.value.trim();
@@ -4386,7 +4582,12 @@ function parseTs(v){
 /* ---------- Gitee API 通用封装 ----------
    注意：令牌必须放 URL query（?access_token=），放 Authorization 头会被 CORS 预检拦截；
    Gitee 预检仅放行 content-type 头。写入文件：POST=创建，PUT=更新（带 sha）。 */
+/* [ROLLBACK-ONLY · Phase 17 起硬阻断] 旧 Gitee API 唯一出口。
+   v5.0.x 起业务数据/图片/头像全部走 Supabase，本函数是"任何 Gitee 业务请求"的唯一必经点，
+   故在此单点硬阻断：即使本地残留旧令牌、即使旧同步代码被误调用，也绝不发出 gitee.com 请求。
+   回滚到 v4.4.0-gitee-backup 时可移除本守卫恢复旧链路。 */
 async function giteeFetch(path, method, body){
+  if(window.__WB_DISABLE_GITEE__ !== false) throw new Error('Gitee 业务依赖已停用（v5.0.x 数据源为 Supabase）');
   const token = getGiteeToken();
   if(!token) throw new Error('未配置 Gitee 令牌');
   const url = GITEE_API + '/repos/' + GITEE_OWNER + '/' + GITEE_REPO + '/contents/' + path
@@ -4943,10 +5144,14 @@ async function pullUserData(){
   return remote;
 }
 
-/* ---------- 双向同步：推送 + 拉取（含 3 秒冷却防连点） ---------- */
+/* ---------- 双向同步：推送 + 拉取（含 3 秒冷却防连点） ----------
+   Phase 14：Gitee 整包同步已停用——新系统数据经 DAL 实时写入 Supabase。
+   本函数保留为回滚代码，主流程不再调用。 */
 let syncCooldownUntil = 0;
 
 async function doSync(){
+  toast('数据已实时保存在云端数据库，无需手动同步');
+  return;
   const btn = $('sync-btn');
   if(Date.now() < syncCooldownUntil){ toast('同步太频繁，3 秒后再试'); return; }
 
@@ -4988,11 +5193,14 @@ function showAbout(){
   toast('电子衣橱 v' + APP_VERSION + ' · 轻量 · 免费 · 数据自主可控');
 }
 
-function doLogout(){
-  // 先把当前账号的数据存回它自己的 key，再重置游客空态（不残留任何衣物/分组给下一个账号）
-  if(state.user){ saveState(); }
-  resetToGuest();
-  $('form-login').querySelector('input').value = '';
+async function doLogout(){
+  // 会话隔离：先释放所有用户级 objectURL（衣物 + 配方图片 + 头像），再 await 退出，最后清空内存状态
+  if(state.clothes) state.clothes.forEach(c => { if(c._objectUrl) { try{ URL.revokeObjectURL(c._objectUrl); }catch(e){} } });
+  if(state.cocktail && state.cocktail.recipes) state.cocktail.recipes.forEach(r => { if(r._objectUrl) { try{ URL.revokeObjectURL(r._objectUrl); }catch(e){} } });
+  releaseAvatarUrl();
+  try { await WBAuth.signOut(); } catch(e){ /* 静默：本地 session 已由 SDK 清理并 bumpSessionGen */ }
+  resetToGuest();   // 清空 state.user / state.clothes / state.cocktail / 业务列表等全部用户级内存
+  const le = $('login-email'); if(le) le.value = '';
   $('login-pass').value = '';
   switchAuthMode('login');
   showScreen('screen-auth');
@@ -5017,8 +5225,10 @@ function restoreSession(){
   return null;
 }
 
-/* 启动自动从云端拉取（纯云端策略核心）：打开程序即 pull 远端仓库内容，以远端为准覆盖本地内存；
-   无网络 / 未配置令牌时给出明确提示并保留空态。 */
+/* [ROLLBACK-ONLY · Phase 17 起停用] 旧 Gitee 启动拉取（v4.x 纯云端策略核心）。
+   v5.0.x 起数据加载统一由 enterApp() → sbLoadAll() 走 Supabase，本函数已无任何主流程调用点：
+   登录 / 注册 / 启动恢复 / 刷新 / 切换用户 均不再调用它，也不产生任何网络请求。
+   仅保留供 v4.4.0-gitee-backup 回滚参考；请勿在新代码中调用。 */
 async function autoPullOnLaunch(){
   if(!state.user || !state.user.name) return;
   const token = getGiteeToken();
@@ -5205,8 +5415,21 @@ function lgSetBudget(){
   const v = parseFloat($('lgBudgetInput').value);
   if(!(v >= 0)){ toast('请输入有效预算金额'); return; }
   lgEnsureBudgets();
-  state.ledger.budgets[lgCurMonthKey()] = Math.round(v*100)/100;
-  lgRenderOverview(); lgAutoSync(); toast('预算已设定 ✓');
+  const key = lgCurMonthKey();
+  const amount = Math.round(v*100)/100;
+  state.ledger.budgets[key] = amount;
+  /* Phase 14：预算持久化到 ledger_budgets（year/month/category NULL 唯一） */
+  const ym = key.split('-');
+  const bid = state.ledger._budgetIds ? state.ledger._budgetIds[key] : null;
+  if(bid){
+    WBData.ledgerBudgets.update(bid, {amount: amount})
+      .then(r => { if(r.error) throw r.error; }).catch(e => toast(WBErrors.normalize(e).message || '预算云端保存失败'));
+  }else{
+    WBData.ledgerBudgets.create({year: parseInt(ym[0],10), month: parseInt(ym[1],10), amount: amount})
+      .then(r => { if(r.error) throw r.error; state.ledger._budgetIds = state.ledger._budgetIds || {}; state.ledger._budgetIds[key] = r.data.id; })
+      .catch(e => toast(WBErrors.normalize(e).message || '预算云端保存失败'));
+  }
+  lgRenderOverview(); toast('预算已设定 ✓');
 }
 function lgFmtStamp(d){
   const p = n => (n < 10 ? '0' + n : '' + n);
@@ -5313,15 +5536,14 @@ function lgRenderCalDay(){
   if(t) t.textContent = '当日明细 · ' + lgState.selDate + (recs.length ? '（' + recs.length + ' 笔）' : '');
 }
 function lgDeleteRec(id){
+  const rec = (state.ledger.records||[]).find(r => r.id === id);
   state.ledger.records = (state.ledger.records||[]).filter(r => r.id !== id);
-  state.ledger.deleted = state.ledger.deleted || [];
-  if(!state.ledger.deleted.some(x => String(x) === String(id))) state.ledger.deleted.push(id);   // 墓碑：合并时过滤，防已删记录从其他设备复活
+  if(rec) sbRemoveObj('ledger', rec);                // Phase 14：DAL 软删除
   lgRenderRecent();
   lgRenderCalDay();
   lgRenderDayChart(lgState.selDate);
   lgRenderCalendar(); lgRenderStats(); lgRenderOverview();
   toast('已删除');
-  lgAutoSync();
 }
 function lgSave(){
   if(!state.user){ toast('请先登录'); return; }
@@ -5330,21 +5552,22 @@ function lgSave(){
   const amount = parseFloat($('lgAmount').value);
   if(!(amount > 0)){ toast('请输入有效金额'); return; }
   const rec = {
-    id: 'L' + Date.now() + Math.floor(Math.random()*1000),
+    id: wbUuid(),                                    // Phase 14：前端 UUID = Supabase 主键
     date: date,
     type: type,
     amount: Math.round(amount*100)/100,
     cat: $('lgCat').value.trim(),
     note: $('lgNote').value.trim(),
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    _sbSaved: false
   };
   state.ledger.records.push(rec);
+  sbSaveObj('ledger', rec, {record_date: rec.date, type: rec.type, amount: rec.amount, category: rec.cat, note: rec.note});
   $('lgAmount').value = ''; $('lgCat').value = ''; $('lgNote').value = '';
   lgState.selDate = date;
   lgRenderRecent(date);
   lgRenderCalendar(); lgRenderStats(); lgRenderOverview();
   toast('已保存 ✓');
-  lgAutoSync();
 }
 function lgAutoSync(){
   const token = getGiteeToken();
@@ -5712,12 +5935,11 @@ function spRenderOverview(){
   $('spOvBed').textContent = spAvgTime(bed);
 }
 function spDeleteRec(id){
+  const rec = (state.sleep.records||[]).find(r => r.id === id);
   state.sleep.records = (state.sleep.records||[]).filter(r => r.id !== id);
-  state.sleep.deleted = state.sleep.deleted || [];
-  if(!state.sleep.deleted.some(x => String(x) === String(id))) state.sleep.deleted.push(id);   // 墓碑：合并时过滤，防已删记录从其他设备复活
+  if(rec) sbRemoveObj('sleep', rec);                 // Phase 14：DAL 软删除
   spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
   toast('已删除');
-  spAutoSync();
 }
 function spSave(){
   if(!state.user){ toast('请先登录'); return; }
@@ -5732,17 +5954,18 @@ function spSave(){
     if(minutes <= 0){ toast('睡眠时长需大于 0，请检查起床时间'); return; }
   }
   const rec = {
-    id: 'S' + Date.now() + Math.floor(Math.random()*1000),
+    id: wbUuid(),                                    // Phase 14：前端 UUID = Supabase 主键
     date: date, start: start, endDate: endDate, end: end, minutes: minutes,
-    note: $('spNote').value.trim(), createdAt: new Date().toISOString()
+    note: $('spNote').value.trim(), createdAt: new Date().toISOString(), _sbSaved: false
   };
   state.sleep.records.push(rec);
+  /* 双轨时间：本阶段保存原始日期/时间字段；sleep_at/wake_at 留 NULL（时区策略未定） */
+  sbSaveObj('sleep', rec, {record_date: rec.date, start_time: rec.start, end_time: end || null, end_date: endDate || null, duration_minutes: rec.minutes, note: rec.note});
   $('spNote').value = '';
   $('spEnd').value = ''; $('spEndDate').value = '';
   spState.selDate = date;
   spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
   toast(end ? '已保存 ✓' : '已保存（待起床）✓');
-  spAutoSync();
 }
 function spAutoSync(){
   const token = getGiteeToken();
@@ -6000,8 +6223,9 @@ function spSaveEdit(){
   if(end){ minutes = spDuration2(date, start, endDate || date, end); if(minutes <= 0){ toast('睡眠时长需大于 0'); return; } }
   rec.date = date; rec.start = start; rec.endDate = endDate; rec.end = end; rec.minutes = minutes;
   rec.note = $('spEdNote').value.trim();
+  sbSaveObj('sleep', rec, {record_date: rec.date, start_time: rec.start, end_time: rec.end || null, end_date: rec.endDate || null, duration_minutes: rec.minutes, note: rec.note});
   spRenderToday(); spRenderCalendar(); spRenderStats(); spRenderOverview();
-  toast('已修改 ✓'); spCloseRec(); spAutoSync();
+  toast('已修改 ✓'); spCloseRec();
 }
 function spDeleteFromModal(){
   const id = spState.editId; if(!id) return;
@@ -6029,25 +6253,47 @@ function renderSleep(){
 }
 
 (async function init(){
-  // 一次性迁移旧单键数据（保留无害；多账号隔离改造遗留，本地已不再依赖这些 key 存衣物）
-  migrateLegacyLocalData();
-  // 恢复登录态（仅 {user} 配置，不含衣物）
-  const sess = restoreSession();
-  if(sess && sess.name){ state.user = sess; }
-  // 兼容旧版本本地会话：去掉历史 hash/salt/pass 字段，仅保留身份（密码以云端 _users.json 明文为准）
-  if(state.user && state.user.name && (state.user.hash || state.user.salt || state.user.pass || state.user.password !== undefined)){
-    state.user = { name: state.user.name, role: state.user.role || 'user', createdAt: state.user.createdAt || new Date().toISOString() };
-    saveState();
-  }
-  // 已登录 → 进入主页并自动从云端下拉数据；否则登录页
-  if(state.user && state.user.name){
-    loadUserWorkspace(state.user.name);   // 内存重置为空衣橱
-    enterApp();
-    autoPullOnLaunch();                    // 启动自动 pull 云端（以远端为准）
-  }else{
-    showScreen('screen-auth');
-  }
+  // Phase 14：启动恢复改用 Supabase Auth session（旧 localStorage 会话不再作为身份来源）。
+  // 注意：Supabase SDK / DAL 脚本在本文件尾部的外部 <script> 中加载，
+  // 因此初始化必须等 window load（此时所有脚本已就绪）。
+  window.addEventListener('load', async function(){
+    /* Recovery：Supabase SDK 消费邮件链接中的 token 后触发 PASSWORD_RECOVERY → 显示设置新密码面板 */
+    try{
+      WBAuth.onAuthStateChange(function(ev){
+        if(ev === 'PASSWORD_RECOVERY'){ openNewPasswordSheet(); }
+      });
+    }catch(e){ /* 监听失败不影响主流程 */ }
+    try{
+      const u = await WBAuth.getCurrentUser();
+      if(u){
+        state.user = { name: (u.email || '').split('@')[0], id: u.id, email: u.email, role: 'user' };
+        enterApp();                          // 内部经 sbLoadAll 从 Supabase 加载全部模块数据
+      }else{
+        showScreen('screen-auth');
+      }
+    }catch(e){
+      showScreen('screen-auth');
+    }
+  });
 })();
 </script>
+<!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./js/config.js?v=5.0.0-fix2"></script>
+<script src="./js/data/supabase.js?v=5.0.0-fix2"></script>
+<!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
+<script src="./js/data/errors.js?v=5.0.0-fix2"></script>
+<script src="./js/data/query.js?v=5.0.0-fix2"></script>
+<script src="./js/auth/session.js?v=5.0.0-fix2"></script>
+<script src="./js/data/groups.js?v=5.0.0-fix2"></script>
+<script src="./js/data/clothgroups.js?v=5.0.0-fix2"></script>
+<script src="./js/data/clothes.js?v=5.0.0-fix2"></script>
+<script src="./js/data/modules.js?v=5.0.0-fix2"></script>
+<script src="./js/data/index.js?v=5.0.0-fix2"></script>
+<script src="./js/storage/paths.js?v=5.0.0-fix2"></script>
+<script src="./js/storage/images.js?v=5.0.0-fix2"></script>
+<script src="./js/storage/index.js?v=5.0.0-fix2"></script>
+<script src="./js/auth/index.js?v=5.0.0-fix2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.0.0-fix2"></script>
 </body>
 </html>

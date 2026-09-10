@@ -1,0 +1,7 @@
+/* Wardrobe Supabase 前端配置（Phase 1）
+ * 本文件只允许保存公开凭证：Project URL + anon/publishable key。
+ * 严禁将 SUPABASE_SERVICE_ROLE_KEY 写入本文件或任何前端代码。
+ * 注意：GitHub Pages 发布时须将 js/ 目录一并上传（记录到 Phase 14 部署清单）。
+ */
+const SUPABASE_URL = 'https://frhcnjztlxevafmuapql.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_oH8-xK9R5LbWHoAfoyWigQ_6vfrjJnT';
