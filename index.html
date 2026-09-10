@@ -2011,7 +2011,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           </div>
           <div class="card">
             <div class="field" style="margin-top:10px;">
-              <label>日期（归属开始那晚）</label>
+              <label>入睡日期</label>
               <input class="input" type="date" id="spDate">
             </div>
             <div class="field" style="margin-top:10px;">
@@ -2019,16 +2019,16 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
               <input class="input" type="time" id="spStart">
             </div>
             <div class="field" style="margin-top:10px;">
-              <label>起床时间（≤入睡自动跨午夜）</label>
+              <label>起床日期</label>
+              <input class="input" type="date" id="spEndDate">
+            </div>
+            <div class="field" style="margin-top:10px;">
+              <label>起床时间</label>
               <input class="input" type="time" id="spEnd">
-              <div class="field" style="margin-top:10px;">
-                <label>起床日期（跨日请选次日；留空＝入睡当晚）</label>
-                <input class="input" type="date" id="spEndDate">
-              </div>
             </div>
             <div class="field" style="margin-top:10px;">
               <label>备注</label>
-              <input class="input" id="spNote" placeholder="如：午睡 / 晚觉">
+              <input class="input" id="spNote" placeholder="如：午睡 / 晚觉 / 状态">
             </div>
             <button class="btn btn-primary" id="spSave" style="margin-top:14px;">保存记录</button>
           </div>
@@ -2388,7 +2388,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.1.14';
+const APP_VERSION = '5.1.15';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
