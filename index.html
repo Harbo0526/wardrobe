@@ -1005,10 +1005,14 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-ledger .lg-type-btn.active{background:var(--lg-primary);color:#fff;}
 #screen-ledger .lg-type-btn[data-type="inc"].active{background:var(--lg-inc);}
 #screen-ledger .lg-type-btn[data-type="exp"].active{background:var(--lg-exp);}
-#lgp-entry.active{display:flex;flex-direction:column;height:100%;}
-#lgp-entry.active > .card:first-child{flex:0 0 auto;}
-#lgp-entry.active > .card:last-child{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
-#screen-ledger #lgDayList{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:2px;}
+/* v5.5.1：录入页底部卡片不再被遮挡。
+   旧写法 `#lgp-entry.active{display:flex;...;height:100%}` 把面板盒钉死在可视高度上，
+   而 `#screen-ledger .lg-panel.active{display:block}` 的特异性更高、实际生效的是 block，
+   于是面板成了一个「固定高度 + 内容溢出」的盒子：底部「记账明细」卡片最后一截被压在滚动区边缘。
+   现改为面板高度随内容自然增高、统一交给 .lg-main 滚动，并给最后一张卡片留出底部安全区间隙。 */
+#screen-ledger #lgp-entry.active{display:block;height:auto;}
+#screen-ledger #lgp-entry.active > .card:last-child{margin-bottom:calc(6px + var(--safe-b));}
+#screen-ledger #lgDayList{overflow:visible;padding-right:2px;}
 
 /* 日历 */
 #screen-ledger .lg-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -1231,6 +1235,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .fu-query-row .input{flex:1;min-width:0;}
 .fu-query-sep{flex:0 0 auto;font-size:12px;color:var(--ink-faint);}
 .fu-query-result{margin-top:10px;}
+/* v5.4.7：日志查询结果里的日期字号调小 + 不换行不自适应压缩，保证窄屏/大字号下也能完整显示 */
+#fuQueryResult .fu-item .fu-date{flex:0 0 auto;min-width:74px;font-size:11px;letter-spacing:-.2px;white-space:nowrap;}
 .fu-sum{display:flex;gap:8px;flex-wrap:wrap;}
 .fu-sum .box{flex:1 1 46%;background:rgba(255,255,255,.72);border-radius:12px;padding:8px 10px;}
 .fu-sum .box .k{font-size:11px;color:var(--ink-faint);}
@@ -1239,6 +1245,15 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-ledger .lg-cell.fu-has{background:rgba(255,214,231,.8);box-shadow:0 2px 6px rgba(255,143,179,.22);}
 #screen-ledger .lg-cell.fu-today{outline:1.6px solid var(--lg-primary);}
 .fu-cal-amt{font-size:9.5px;font-weight:700;color:var(--lg-deep);margin-top:1px;line-height:1.1;}
+
+/* ============ v5.5.0：概览「最近消费」卡片（约 5 行高度，超出可上下滚动） ============ */
+.lg-recent-list{max-height:200px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:2px;}
+.lg-recent-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,214,231,.6);}
+.lg-recent-item:last-child{border-bottom:none;}
+.lg-recent-item .rc-date{flex:0 0 auto;min-width:74px;font-size:11px;color:var(--lg-ink);opacity:.85;white-space:nowrap;}
+.lg-recent-item .rc-main{flex:1;min-width:0;}
+.lg-recent-item .rc-amt{font-size:14.5px;font-weight:700;color:var(--lg-exp);}
+.lg-recent-item .rc-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ============ v5.4.1：首页卡片 = 海底悬浮气泡（位置固定，仅自身光泽流动） ============
    气泡质感：淡蓝白半透明底(60%) + 背景模糊 + 白色内高光 + 水色内阴影 + 柔和外投影；
@@ -1993,6 +2008,11 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             <div class="lg-progress"><div class="lg-progress-bar" id="lgBudBar"></div></div>
             <div class="lg-budget-tip" id="lgBudTip"></div>
           </div>
+          <!-- v5.5.0：最近消费（最新 5 条支出，卡片内可上下滚动） -->
+          <div class="card" style="margin-top:10px;">
+            <div class="ck-sec"><h3 id="lgRecentTitle">🛒 最近消费</h3></div>
+            <div id="lgRecentList" class="lg-recent-list"></div>
+          </div>
         </div>
 
         <!-- 录入 -->
@@ -2028,7 +2048,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             <button class="btn btn-primary" id="lgSave" style="margin-top:14px;">保存记录</button>
           </div>
           <div class="card" style="margin-top:10px;">
-            <div class="ck-sec"><h3 id="lgTodayTitle">📋 明细记账明细</h3></div>
+            <div class="ck-sec"><h3 id="lgTodayTitle">📋 记账明细</h3></div>
             <div id="lgDayList"></div>
           </div>
         </div>
@@ -2161,6 +2181,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
               <label>加油体积（升）</label>
               <input class="input" type="number" inputmode="decimal" step="0.01" min="0" id="fuVol" placeholder="如 39.2">
             </div>
+            <div style="font-size:11.5px;color:#8a7f88;margin-top:8px;line-height:1.5;">💡 填「金额＋单价」自动算体积；填「金额＋体积」自动算单价</div>
             <div class="field" style="margin-top:10px;">
               <label>备注</label>
               <input class="input" id="fuNote" placeholder="如：中石化 92#">
@@ -2646,7 +2667,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.4.6';
+const APP_VERSION = '5.5.1';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -5900,6 +5921,8 @@ function lgRenderOverview(){
   const saveEl = $('lgOvSave');
   saveEl.textContent = (save >= 0 ? '' : '-') + Math.abs(save).toFixed(2) + '%';
   saveEl.style.color = inc > 0 ? (net >= 0 ? 'var(--lg-inc)' : 'var(--lg-red)') : 'var(--lg-ink)';
+  /* v5.5.0：最近消费卡片随概览一起刷新（放在预算的提前 return 之前，否则未设预算时会被跳过） */
+  lgRenderRecentSpend();
   // 预算
   lgEnsureBudgets();
   const budget = state.ledger.budgets[mk] || 0;
@@ -5914,6 +5937,32 @@ function lgRenderOverview(){
   else if(pct >= 80){ bar.style.background = 'var(--lg-primary)'; tip.style.color = 'var(--lg-deep)'; tip.textContent = '预警：已用 ' + pct.toFixed(0) + '%，仅剩 ' + lgFmtMoney(budget - exp); }
   else { bar.style.background = 'var(--lg-inc)'; tip.style.color = 'var(--lg-inc)'; tip.textContent = '已用 ' + pct.toFixed(0) + '%，还可花 ' + lgFmtMoney(budget - exp); }
 }
+/* v5.5.0：概览「最近消费」——只取支出（type=exp），按日期倒序（同日按创建时间倒序）取最新 5 条，
+   每条显示 日期 / 金额 / 分类·备注；容器限高约 5 行，超出可上下滚动。 */
+function lgRenderRecentSpend(){
+  const box = $('lgRecentList'); if(!box) return;
+  const all = (state.ledger.records || []).filter(r => r.type === 'exp');
+  const list = all.slice().sort(function(a, b){
+    const d = String(b.date || '').localeCompare(String(a.date || ''));
+    if(d) return d;
+    return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+  }).slice(0, 5);
+  const title = $('lgRecentTitle');
+  if(title) title.textContent = '🛒 最近消费' + (all.length ? '（最新 ' + list.length + ' 笔 · 共 ' + all.length + ' 笔支出）' : '');
+  if(!list.length){
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🛒</span><div class="empty-text">还没有消费记录</div></div>';
+    return;
+  }
+  box.innerHTML = list.map(function(r){
+    const sub = [(r.cat || '支出'), (r.note || '')].filter(Boolean).join(' · ');
+    return '<div class="lg-recent-item">' +
+      '<div class="rc-date">' + lgEsc(r.date || '') + '</div>' +
+      '<div class="rc-main"><div class="rc-amt">−' + lgFmtMoney(r.amount) + '</div>' +
+      '<div class="rc-sub">' + lgEsc(sub) + '</div></div>' +
+    '</div>';
+  }).join('');
+}
+
 function lgSetBudget(){
   if(!state.user){ toast('请先登录'); return; }
   const v = parseFloat($('lgBudgetInput').value);
@@ -6021,7 +6070,7 @@ function lgRenderRecent(){
   // 不同日期分别保留，按时间倒序取最近 10 条；仅此区域可独立上下滚动
   const all = (state.ledger.records||[]).slice().sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
   const recs = all.slice(0, 10);
-  $('lgTodayTitle').textContent = '明细记账明细' + (all.length ? '（最近 ' + recs.length + ' / 共 ' + all.length + ' 笔）' : '');
+  $('lgTodayTitle').textContent = '记账明细' + (all.length ? '（最近 ' + recs.length + ' / 共 ' + all.length + ' 笔）' : '');
   if(!recs.length){ list.innerHTML = '<div class="empty"><span class="empty-emoji">🐱</span><div class="empty-text">还没有任何记账记录</div></div>'; return; }
   list.innerHTML = recs.map(lgOneRecHTML).join('');
   list.querySelectorAll('.del').forEach(b => b.onclick = () => lgDeleteRec(b.dataset.id));
@@ -6045,6 +6094,50 @@ function lgDeleteRec(id){
   lgRenderCalendar(); lgRenderStats(); lgRenderOverview();
   toast('已删除');
 }
+/* ===== v5.5.0：油费 ↔ 普通记账 联动 =====
+   油费保存时同步写入一条「支出」记账记录（分类 ⛽ 油费），使概览/日历/统计/明细一并计入；
+   该记账记录的 legacy_id 记为 'fuel:<油费记录id>'，删除油费记录时据此联动删除这笔。
+   注意：只做「油费 → 记账」单向联动——在记账里单独删除这笔不会删掉油费原始记录，避免误删加油数据。 */
+function lgRefreshLedgerViews(){
+  try{
+    lgRenderOverview();                                  /* 内含 4 张卡 + 最近消费 */
+    lgRenderRecent();
+    lgRenderCalendar();
+    lgRenderStats();
+    lgRenderCalDay();
+  }catch(e){ /* 渲染容错，不阻塞保存流程 */ }
+}
+function lgAddFuelExpense(fuelRec){
+  if(!state.ledger || !Array.isArray(state.ledger.records)) return;
+  const amt = Math.round((Number(fuelRec.amount) || 0) * 100) / 100;
+  if(!(amt > 0)) return;
+  const rec = {
+    id: wbUuid(),
+    date: fuelRec.date,
+    type: 'exp',
+    amount: amt,
+    cat: '⛽ 油费',
+    note: (fuelRec.note || '').trim(),
+    fuelId: fuelRec.id,                                 /* 内存标记：来源油费记录 id */
+    createdAt: new Date().toISOString(),
+    _sbSaved: false
+  };
+  state.ledger.records.push(rec);
+  sbSaveObj('ledger', rec, {
+    record_date: rec.date, type: rec.type, amount: rec.amount,
+    category: rec.cat, note: rec.note, legacy_id: 'fuel:' + rec.fuelId
+  });
+  lgRefreshLedgerViews();
+}
+function lgRemoveFuelExpense(fuelId){
+  if(!state.ledger || !Array.isArray(state.ledger.records)) return;
+  const hits = state.ledger.records.filter(function(r){ return r.fuelId === fuelId; });
+  if(!hits.length) return;
+  state.ledger.records = state.ledger.records.filter(function(r){ return r.fuelId !== fuelId; });
+  hits.forEach(function(r){ try{ sbRemoveObj('ledger', r); }catch(e){} });
+  lgRefreshLedgerViews();
+}
+
 function lgSave(){
   if(!state.user){ toast('请先登录'); return; }
   const type = lgState.type;
@@ -6150,6 +6243,28 @@ function fuRenderList(){
   });
 }
 
+/* v5.4.7：金额 / 单价 / 体积 自动换算。
+   规则：金额是必需项（没金额不换算）；填了单价 → 算体积；填了体积 → 算单价；
+   改金额时优先按已填单价重算体积，否则按已填体积重算单价。
+   说明：程序化写 value 不会触发 input 事件，故三者不会互相递归触发。 */
+function fuAutoCalc(src){
+  const amtEl = $('fuAmount'), priceEl = $('fuPrice'), volEl = $('fuVol');
+  if(!amtEl || !priceEl || !volEl) return;
+  const amt = parseFloat(amtEl.value);
+  if(!(amt > 0)) return;                       // 无金额则无从换算
+  const price = parseFloat(priceEl.value);
+  const vol = parseFloat(volEl.value);
+  const r2 = function(n){ return String(Math.round(n * 100) / 100); };
+  if(src === 'price'){
+    if(price > 0) volEl.value = r2(amt / price);          // 单价 → 体积 = 金额 ÷ 单价
+  } else if(src === 'vol'){
+    if(vol > 0) priceEl.value = r2(amt / vol);            // 体积 → 单价 = 金额 ÷ 体积
+  } else {
+    if(price > 0) volEl.value = r2(amt / price);
+    else if(vol > 0) priceEl.value = r2(amt / vol);
+  }
+}
+
 /* 保存加油记录 */
 function fuSave(){
   if(!state.user){ toast('请先登录'); return; }
@@ -6168,9 +6283,10 @@ function fuSave(){
                 note: note, createdAt: new Date().toISOString(), _sbSaved: false };
   state.fuel.records.push(rec);
   sbSaveObj('fuel', rec, { record_date: rec.date, amount: rec.amount, unit_price: rec.price, volume: rec.vol, note: rec.note });
+  lgAddFuelExpense(rec);   /* v5.5.0：同步生成一条记账「支出」，概览/日历/统计/明细一并计入 */
   $('fuAmount').value = ''; $('fuPrice').value = ''; $('fuVol').value = ''; $('fuNote').value = '';
   fuRenderOverview(); fuRenderList(); fuRenderCalendar();
-  toast('已保存加油记录 ✓');
+  toast('已保存加油记录 ✓（已同步到记账）');
 }
 
 /* 删除记录 */
@@ -6182,8 +6298,9 @@ function fuDelete(id){
   const rec = recs[i];
   recs.splice(i, 1);
   try{ sbRemoveObj('fuel', rec); }catch(e){}
+  lgRemoveFuelExpense(id);   /* v5.5.0：联动删除由这笔油费生成的记账支出 */
   fuRenderOverview(); fuRenderList(); fuRenderCalendar();
-  toast('已删除');
+  toast('已删除（已同步到记账）');
 }
 
 /* 日历统计：显示每天加了多少油费 */
@@ -6250,6 +6367,10 @@ function fuRenderAll(){
   fuRenderOverview(); fuRenderList(); fuRenderCalendar();
   $('fuQueryResult').innerHTML = '';
   $('fuSave').onclick = fuSave;
+  /* v5.4.7：金额 / 单价 / 体积 三者即时自动换算 */
+  $('fuAmount').oninput = function(){ fuAutoCalc('amount'); };
+  $('fuPrice').oninput = function(){ fuAutoCalc('price'); };
+  $('fuVol').oninput = function(){ fuAutoCalc('vol'); };
   $('fuCalPrev').onclick = function(){ const ym = fuState.calYM; ym.m--; if(ym.m < 1){ ym.m = 12; ym.y--; } fuRenderCalendar(); };
   $('fuCalNext').onclick = function(){ const ym = fuState.calYM; ym.m++; if(ym.m > 12){ ym.m = 1; ym.y++; } fuRenderCalendar(); };
   $('fuQueryBtn').onclick = fuRunQuery;
@@ -6911,21 +7032,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.4.6"></script>
-<script src="./js/data/supabase.js?v=5.4.6"></script>
+<script src="./js/config.js?v=5.5.1"></script>
+<script src="./js/data/supabase.js?v=5.5.1"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.4.6"></script>
-<script src="./js/data/query.js?v=5.4.6"></script>
-<script src="./js/auth/session.js?v=5.4.6"></script>
-<script src="./js/data/groups.js?v=5.4.6"></script>
-<script src="./js/data/clothgroups.js?v=5.4.6"></script>
-<script src="./js/data/clothes.js?v=5.4.6"></script>
-<script src="./js/data/modules.js?v=5.4.6"></script>
-<script src="./js/data/index.js?v=5.4.6"></script>
-<script src="./js/storage/paths.js?v=5.4.6"></script>
-<script src="./js/storage/images.js?v=5.4.6"></script>
-<script src="./js/storage/index.js?v=5.4.6"></script>
-<script src="./js/auth/index.js?v=5.4.6"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.4.6"></script>
+<script src="./js/data/errors.js?v=5.5.1"></script>
+<script src="./js/data/query.js?v=5.5.1"></script>
+<script src="./js/auth/session.js?v=5.5.1"></script>
+<script src="./js/data/groups.js?v=5.5.1"></script>
+<script src="./js/data/clothgroups.js?v=5.5.1"></script>
+<script src="./js/data/clothes.js?v=5.5.1"></script>
+<script src="./js/data/modules.js?v=5.5.1"></script>
+<script src="./js/data/index.js?v=5.5.1"></script>
+<script src="./js/storage/paths.js?v=5.5.1"></script>
+<script src="./js/storage/images.js?v=5.5.1"></script>
+<script src="./js/storage/index.js?v=5.5.1"></script>
+<script src="./js/auth/index.js?v=5.5.1"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.5.1"></script>
 </body>
 </html>

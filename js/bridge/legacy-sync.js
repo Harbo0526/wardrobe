@@ -156,7 +156,14 @@
     /* 记账（type 内存/DB 同为 inc|exp；cat→category） */
     state.ledger = { records: [], seeded: true, budgets: {}, deleted: [], _budgetIds: {} };
     led.forEach(function (x) {
-      state.ledger.records.push({ id: x.id, date: x.record_date, type: x.type, amount: Number(x.amount) || 0, cat: x.category || '', note: x.note || '', createdAt: x.created_at, _sbSaved: true });
+      const legacy = x.legacy_id || '';
+      state.ledger.records.push({
+        id: x.id, date: x.record_date, type: x.type, amount: Number(x.amount) || 0,
+        cat: x.category || '', note: x.note || '', createdAt: x.created_at, _sbSaved: true,
+        /* v5.5.0：由油费同步生成的记账记录在 legacy_id 里带 'fuel:<油费id>'，
+           读回时还原为 fuelId，删除油费记录时据此联动删除该笔支出。 */
+        fuelId: legacy.indexOf('fuel:') === 0 ? legacy.slice(5) : undefined
+      });
     });
     bud.forEach(function (x) {
       const key = x.year + '-' + String(x.month).padStart(2, '0');
