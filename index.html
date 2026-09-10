@@ -2388,7 +2388,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.1.11';
+const APP_VERSION = '5.1.13';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3030,13 +3030,52 @@ function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 /* ---------- 3. 屏幕导航 ---------- */
 const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep'];
 
+let wbScreen = '';   // 当前屏 id（供安卓物理返回键判断）
+
 function showScreen(id){
+  wbScreen = id;
   SCREENS.forEach(s=>$(s).classList.remove('active'));
   $(id).classList.add('active');
   // 回到顶部
   const el = $(id);
   requestAnimationFrame(()=>{ el.scrollTop = 0; });
 }
+
+/* ---------- 安卓系统返回键 → 程序内返回（v5.1.13） ----------
+   浏览器默认：无历史条目时按返回会直接退出 App。这里压一个「哨兵」历史条目来拦截：
+   - 有弹窗(.overlay.show) → 先关弹窗（最符合直觉）；
+   - 非根屏(首页/登录页) → 执行程序内返回 doAppBack() 并补回哨兵（持续拦截，不退出）；
+   - 根屏 → 不再补哨兵 → 这次返回才真正退出 App。 */
+function doAppBack(){
+  switch(wbScreen){
+    case 'screen-upload': goBackFromUpload(); break;
+    case 'screen-group':  gotoCloth();        break;
+    case 'screen-cloth':  goHome();           break;
+    case 'screen-ledger':
+    case 'screen-cocktail':
+    case 'screen-mine':
+    case 'screen-sleep':
+    default:              goHome();           break;
+  }
+}
+function wbPushTrap(){ try{ history.pushState({ wb: 1 }, ''); }catch(e){} }
+function wbCloseTopOverlay(){
+  const list = document.querySelectorAll('.overlay.show');
+  if(!list.length) return false;
+  list[list.length - 1].classList.remove('show');   // 只关最上层
+  return true;
+}
+function wbIsRootScreen(){
+  return wbScreen === 'screen-home' || wbScreen === 'screen-auth' || !wbScreen;
+}
+window.addEventListener('popstate', function(){
+  if(wbCloseTopOverlay()){ wbPushTrap(); return; }   // ① 先关弹窗
+  if(wbIsRootScreen()) return;                       // ② 根屏：放行（允许退出）
+  doAppBack();                                       // ③ 子屏：程序内返回
+  wbPushTrap();                                      //    补回哨兵，继续拦截
+});
+// 初始压入哨兵（刷新后 history.state 仍在，不会重复叠加）
+if(!history.state || !history.state.wb){ wbPushTrap(); }
 
 /* 底部导航栏已移除（v4.1.0）：navTo 保留函数供既有调用点使用，仅做屏间跳转 */
 function navTo(idx){
@@ -5242,11 +5281,25 @@ async function doLogout(){
   toast('已退出登录');
 }
 
-/* ---------- PWA：注册 Service Worker（离线缓存） ----------
-   仅 HTTPS / localhost 生效；file:// 直接打开会自动跳过（不影响页面本身使用） */
+/* ---------- PWA：注册 Service Worker（离线缓存 + 打开即最新） ----------
+   仅 HTTPS / localhost 生效；file:// 直接打开会自动跳过（不影响页面本身使用）。
+   v5.1.12 更新策略：updateViaCache:'none' 让 sw.js 不走 HTTP 缓存（避开 GitHub Pages
+   max-age=600 造成的约 10 分钟更新延迟）；页面加载后主动 update() 校验；一旦检测到
+   新版本并由新 SW 接管（controllerchange），自动刷新一次 → 用户「打开即最新」。 */
 if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
+  var hadController = !!navigator.serviceWorker.controller;   // 首次安装 SW 的用户不触发自动刷新
+  var swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(!hadController || swRefreshing) return;   // 仅「已装过 SW 的老用户」在新版接管时刷新一次
+    swRefreshing = true;
+    location.reload();
+  });
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){ /* 静默失败，不影响功能 */ });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(function(reg){
+        reg.update().catch(function(){});          // 打开即主动校验是否有新版（绕过 HTTP 缓存）
+      })
+      .catch(function(){ /* 静默失败，不影响功能 */ });
   });
 }
 
