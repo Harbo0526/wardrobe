@@ -5205,6 +5205,11 @@ async function doLogout(){
   releaseAvatarUrl();
   try { await WBAuth.signOut(); } catch(e){ /* 静默：本地 session 已由 SDK 清理并 bumpSessionGen */ }
   resetToGuest();   // 清空 state.user / state.clothes / state.cocktail / 业务列表等全部用户级内存
+  /* Phase 18：objectURL 已 revoke，但 DOM 中旧 <img src=blob:...> 仍会渲染已加载的图像（下个用户登录的
+     加载窗口内可能闪现上一用户头像/衣物图）。登出即显式清掉这些 DOM，杜绝旧用户内容残留。 */
+  try{ renderAvatarAll(); }catch(e){}                                   // 头像 → 占位字符
+  try{ const gg = $('group-grid'); if(gg) gg.innerHTML = ''; }catch(e){} // 衣物网格
+  try{ const rec = $('ckRecList'); if(rec) rec.innerHTML = ''; }catch(e){} // 配方列表
   const le = $('login-email'); if(le) le.value = '';
   $('login-pass').value = '';
   switchAuthMode('login');
