@@ -82,6 +82,29 @@
     return new Blob([u8], { type: mime });
   };
 
+  /* v5.6.7：新用户空分组 → 播种 5 个初始化分组（上衣/下装/球鞋/外套/连衣裙）。
+     用 localStorage 按账号标记只播种一次；用户删除后不再自动重建。 */
+  var DEFAULT_GROUPS = [
+    { name: '上衣', emoji: '👕' },
+    { name: '下装', emoji: '👖' },
+    { name: '球鞋', emoji: '👟' },
+    { name: '外套', emoji: '🧥' },
+    { name: '连衣裙', emoji: '👗' }
+  ];
+  function seedDefaultGroups() {
+    if (state.groups.length) return;   /* 已有分组则跳过 */
+    var flagKey = 'wardrobe.v1.seededGroups.' + (state.user ? state.user.id : 'guest');
+    try { if (localStorage.getItem(flagKey)) return; } catch (e) {}
+    try {
+      DEFAULT_GROUPS.forEach(function (d, i) {
+        var g = { id: wbUuid(), name: d.name, emoji: d.emoji, _sbSaved: false };
+        state.groups.push(g);
+        sbSaveObj('groups', g, { name: d.name, emoji: d.emoji, sort_order: i });
+      });
+      localStorage.setItem(flagKey, '1');
+    } catch (e) { /* 容错 */ }
+  }
+
   /* ============ 登录后全量加载（新用户 = 空账户） ============ */
   window.sbLoadAll = async function () {
     const D = window.WBData;
@@ -207,6 +230,9 @@
 
     /* 会话隔离：加载耗时较长，完成时若已切换用户则丢弃整批结果（不写 state / 不渲染 / 不补图） */
     if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
+
+    /* v5.6.7：新用户空分组 → 播种 5 个初始化分组（只一次） */
+    try { seedDefaultGroups(); } catch (e) { /* 容错 */ }
 
     /* 渲染 */
     try {

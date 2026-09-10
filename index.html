@@ -1131,6 +1131,16 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-sleep .lg-sum.save .v{color:var(--lg-deep);}
 #screen-sleep .lg-sum .k{font-size:11px;color:var(--lg-ink);opacity:.7;margin-top:3px;}
 #screen-sleep .lg-chart{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;background:rgba(255,255,255,.80);border-radius:16px;padding:12px;box-shadow:0 4px 14px rgba(255,143,179,.08);}
+/* v5.6.4：统计图放大弹窗 */
+.lg-chart-head{display:flex;align-items:center;justify-content:space-between;margin:12px 2px 8px;}
+.lg-chart-head span{font-size:13px;font-weight:600;color:var(--ink-sub);}
+.lg-zoom-btn{width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.85);color:var(--lg-deep);font-size:15px;box-shadow:0 2px 8px rgba(255,143,179,.12);}
+.lg-zoom-modal{width:94%;max-width:620px;background:var(--card);border-radius:var(--r-card);box-shadow:var(--shadow-modal);overflow:hidden;display:flex;flex-direction:column;max-height:82vh;}
+.lg-zoom-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);}
+.lg-zoom-head h3{font-size:16px;font-weight:700;color:var(--lg-ink);margin:0;}
+.lg-zoom-close{width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,.05);color:#666;font-size:15px;flex:0 0 auto;}
+.lg-zoom-body{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;}
+.lg-zoom-body svg{display:block;height:auto;}
 #screen-sleep .lg-daybars{display:flex;align-items:flex-end;gap:4px;height:84px;overflow-x:auto;padding:4px 0;}
 #screen-sleep .lg-daybar{flex:0 0 auto;width:16px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;cursor:pointer;}
 #screen-sleep .lg-daybar .bi{display:flex;align-items:flex-end;gap:1px;width:100%;height:64px;justify-content:center;}
@@ -2048,7 +2058,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           </div>
           <!-- v5.5.0：最近消费（最新 5 条支出，卡片内可上下滚动） -->
           <div class="card" style="margin-top:10px;">
-            <div class="ck-sec"><h3 id="lgRecentTitle">🛒 最近消费</h3></div>
+            <div class="ck-sec"><h3 id="lgRecentTitle">📊 最近收支</h3></div>
             <div id="lgRecentList" class="lg-recent-list"></div>
           </div>
         </div>
@@ -2140,11 +2150,26 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
               <div class="lg-sum net"><div class="v" id="lgStatNet">¥0</div><div class="k">结余</div></div>
               <div class="lg-sum save"><div class="v" id="lgStatSave">0%</div><div class="k">储蓄率</div></div>
             </div>
+            <div class="lg-chart-head">
+              <span>每月每日收支柱状图</span>
+              <button class="press lg-zoom-btn" id="lgStatZoom" title="放大图表">🔍</button>
+            </div>
             <div id="lgStatChart" class="lg-chart"></div>
           </div>
           <div class="card" style="margin-top:10px;">
             <div class="ck-sec"><h3>📅 每日收支</h3></div>
             <div id="lgStatDays" class="lg-daybars"></div>
+          </div>
+        </div>
+
+        <!-- 统计图放大弹窗（v5.6.4） -->
+        <div class="overlay ck-center" id="lgStatZoomModal" onclick="closeCkModal('lgStatZoomModal')">
+          <div class="lg-zoom-modal" onclick="event.stopPropagation()">
+            <div class="lg-zoom-head">
+              <h3 id="lgStatZoomTitle">收支柱状图</h3>
+              <button class="lg-zoom-close press" onclick="closeCkModal('lgStatZoomModal')">✕</button>
+            </div>
+            <div class="lg-zoom-body" id="lgStatZoomBox"></div>
           </div>
         </div>
 
@@ -2716,7 +2741,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.6.2';
+const APP_VERSION = '5.6.7';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -6120,27 +6145,28 @@ function lgRenderOverview(){
   else if(pct >= 80){ bar.style.background = 'var(--lg-primary)'; tip.style.color = 'var(--lg-deep)'; tip.textContent = '预警：已用 ' + pct.toFixed(0) + '%，仅剩 ' + lgFmtMoney(budget - exp); }
   else { bar.style.background = 'var(--lg-inc)'; tip.style.color = 'var(--lg-inc)'; tip.textContent = '已用 ' + pct.toFixed(0) + '%，还可花 ' + lgFmtMoney(budget - exp); }
 }
-/* v5.5.0：概览「最近消费」——只取支出（type=exp），按日期倒序（同日按创建时间倒序）取最新 5 条，
-   每条显示 日期 / 金额 / 分类·备注；容器限高约 5 行，超出可上下滚动。 */
+/* v5.6.5：概览「最近收支」——同时取支出（exp）与收入（inc），按日期倒序（同日按创建时间倒序）取最新 5 条，
+   每条显示 日期 / 金额（收入 + 绿、支出 − 红）/ 分类·备注；容器限高约 5 行，超出可上下滚动。 */
 function lgRenderRecentSpend(){
   const box = $('lgRecentList'); if(!box) return;
-  const all = (state.ledger.records || []).filter(r => r.type === 'exp');
+  const all = (state.ledger.records || []).filter(r => r.type === 'exp' || r.type === 'inc');
   const list = all.slice().sort(function(a, b){
     const d = String(b.date || '').localeCompare(String(a.date || ''));
     if(d) return d;
     return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
   }).slice(0, 5);
   const title = $('lgRecentTitle');
-  if(title) title.textContent = '🛒 最近消费' + (all.length ? '（最新 ' + list.length + ' 笔 · 共 ' + all.length + ' 笔支出）' : '');
+  if(title) title.textContent = '📊 最近收支' + (all.length ? '（最新 ' + list.length + ' 笔 · 共 ' + all.length + ' 笔）' : '');
   if(!list.length){
-    box.innerHTML = '<div class="empty"><span class="empty-emoji">🛒</span><div class="empty-text">还没有消费记录</div></div>';
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">📊</span><div class="empty-text">还没有收支记录</div></div>';
     return;
   }
   box.innerHTML = list.map(function(r){
-    const sub = [(r.cat || '支出'), (r.note || '')].filter(Boolean).join(' · ');
+    const isInc = r.type === 'inc';
+    const sub = [(r.cat || (isInc ? '收入' : '支出')), (r.note || '')].filter(Boolean).join(' · ');
     return '<div class="lg-recent-item">' +
       '<div class="rc-date">' + lgEsc(r.date || '') + '</div>' +
-      '<div class="rc-main"><div class="rc-amt">−' + lgFmtMoney(r.amount) + '</div>' +
+      '<div class="rc-main"><div class="rc-amt" style="color:' + (isInc ? 'var(--lg-inc)' : 'var(--lg-exp)') + '">' + (isInc ? '+' : '−') + lgFmtMoney(r.amount) + '</div>' +
       '<div class="rc-sub">' + lgEsc(sub) + '</div></div>' +
     '</div>';
   }).join('');
@@ -6215,6 +6241,7 @@ function lgSwitch(panel){
   else if(panel === 'calendar') lgRenderCalendar();
   else if(panel === 'overview') lgRenderOverview();
   else if(panel === 'fuel') fuRenderAll();          /* v5.3.0：油费面板 */
+  else if(panel === 'entry') lgRenderRecent();      /* v5.6.3：录入/明细面板切换也刷新明细列表（修复"只有保存后才显示"） */
 }
 
 /* ---------- 录入 ---------- */
@@ -6634,10 +6661,12 @@ function lgRenderStats(){
     incArr.push(Math.round((incByDay[ds] || 0) * 100) / 100);
   }
   const legend = '<div class="lg-legend"><span><i style="background:#FF4D6D"></i>支出</span><span><i style="background:#69D19D"></i>收入</span></div>';
-  $('lgStatChart').innerHTML = legend + lgGroupBarSVG(labels, expArr, incArr, '#FF4D6D', '#69D19D');
+  const statSvg = lgGroupBarSVG(labels, expArr, incArr, '#FF4D6D', '#69D19D');
+  $('lgStatChart').innerHTML = legend + statSvg;
+  lgState.statChartHtml = legend + statSvg;   /* v5.6.4：缓存图表 HTML 供放大弹窗使用 */
   // 每日收支小条：收入绿、支出红
   const box = $('lgStatDays');
-  const days = Object.keys(incByDay).concat(Object.keys(expByDay));
+  const days = Array.from(new Set(Object.keys(incByDay).concat(Object.keys(expByDay))));   /* v5.6.4：去重，避免同一天收+支出现两根柱子 */
   if(!days.length){ box.innerHTML = '<div class="empty"><span class="empty-emoji">📭</span><div class="empty-text">本月暂无记录</div></div>'; return; }
   const maxv = Math.max(1, ...days.map(d => expByDay[d] || 0), ...days.map(d => incByDay[d] || 0));
   box.innerHTML = days.sort().map(d => {
@@ -6647,6 +6676,21 @@ function lgRenderStats(){
       '<div class="bi"><i class="exp" style="height:' + he + 'px"></i><i class="inc" style="height:' + hi + 'px"></i></div>' +
       '<small>' + parseInt(d.slice(8), 10) + '</small></div>';
   }).join('');
+}
+
+/* v5.6.4：统计图放大弹窗（点击 🔍 放大、横向滑动查看整月） */
+function lgZoomStatChart(){
+  if(!lgState.statChartHtml){ toast('暂无图表数据'); return; }
+  const ym = lgState.statYM || { y: new Date().getFullYear(), m: new Date().getMonth() + 1 };
+  $('lgStatZoomTitle').textContent = ym.y + '年' + ym.m + '月 · 收支柱状图';
+  const box = $('lgStatZoomBox');
+  box.innerHTML = lgState.statChartHtml;
+  const svg = box.querySelector('svg');
+  if(svg && svg.viewBox && svg.viewBox.baseVal){
+    svg.style.width = svg.viewBox.baseVal.width + 'px';   /* 按自然宽度渲染，超出容器横向滚动 */
+    svg.style.height = 'auto';
+  }
+  $('lgStatZoomModal').classList.add('show');
 }
 
 /* ---------- 查询（柱状图 + 折线图） ---------- */
@@ -6780,6 +6824,7 @@ function lgBind(){
   $('lgCalNext').onclick = () => { lgState.calYM.m++; if(lgState.calYM.m > 12){ lgState.calYM.m = 1; lgState.calYM.y++; } lgRenderCalendar(); };
   $('lgStatPrev').onclick = () => { lgState.statYM.m--; if(lgState.statYM.m < 1){ lgState.statYM.m = 12; lgState.statYM.y--; } lgRenderStats(); };
   $('lgStatNext').onclick = () => { lgState.statYM.m++; if(lgState.statYM.m > 12){ lgState.statYM.m = 1; lgState.statYM.y++; } lgRenderStats(); };
+  $('lgStatZoom').onclick = lgZoomStatChart;   /* v5.6.4：统计图放大 */
   $('lgQueryBtn').onclick = lgRunQuery;
   $('lgBudgetSet').onclick = lgSetBudget;
   $('lgHeaderSync').onclick = () => {
@@ -7240,21 +7285,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.6.2"></script>
-<script src="./js/data/supabase.js?v=5.6.2"></script>
+<script src="./js/config.js?v=5.6.7"></script>
+<script src="./js/data/supabase.js?v=5.6.7"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.6.2"></script>
-<script src="./js/data/query.js?v=5.6.2"></script>
-<script src="./js/auth/session.js?v=5.6.2"></script>
-<script src="./js/data/groups.js?v=5.6.2"></script>
-<script src="./js/data/clothgroups.js?v=5.6.2"></script>
-<script src="./js/data/clothes.js?v=5.6.2"></script>
-<script src="./js/data/modules.js?v=5.6.2"></script>
-<script src="./js/data/index.js?v=5.6.2"></script>
-<script src="./js/storage/paths.js?v=5.6.2"></script>
-<script src="./js/storage/images.js?v=5.6.2"></script>
-<script src="./js/storage/index.js?v=5.6.2"></script>
-<script src="./js/auth/index.js?v=5.6.2"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.6.2"></script>
+<script src="./js/data/errors.js?v=5.6.7"></script>
+<script src="./js/data/query.js?v=5.6.7"></script>
+<script src="./js/auth/session.js?v=5.6.7"></script>
+<script src="./js/data/groups.js?v=5.6.7"></script>
+<script src="./js/data/clothgroups.js?v=5.6.7"></script>
+<script src="./js/data/clothes.js?v=5.6.7"></script>
+<script src="./js/data/modules.js?v=5.6.7"></script>
+<script src="./js/data/index.js?v=5.6.7"></script>
+<script src="./js/storage/paths.js?v=5.6.7"></script>
+<script src="./js/storage/images.js?v=5.6.7"></script>
+<script src="./js/storage/index.js?v=5.6.7"></script>
+<script src="./js/auth/index.js?v=5.6.7"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.6.7"></script>
 </body>
 </html>
