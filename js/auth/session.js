@@ -87,12 +87,14 @@
   }
 
   /* 重置邮件回跳白名单：仅允许本应用自身站点（当前 origin + 已知开发/生产地址）。
-   * 不接受用户输入、不接受任意外部 URL。 */
+   * 不接受用户输入、不接受任意外部 URL。Phase 18：补充生产 project-site 两种形态。 */
   const REDIRECT_ALLOW = [
     location.origin + '/',
     'http://localhost:8080/',
     'http://127.0.0.1:8080/',
-    'https://harbo0526.github.io/wardrobe/'
+    'https://harbo0526.github.io/wardrobe/',
+    'https://harbo0526.github.io/wardrobe',
+    'https://harbo0526.github.io/index.html'
   ];
   function isAllowedRedirect(url) {
     const s = String(url || '');
@@ -100,12 +102,16 @@
     return REDIRECT_ALLOW.some(function (allow) { return s.indexOf(allow) === 0; });
   }
 
-  /* 发送密码重置邮件（Supabase Auth）。默认回跳当前站点首页，避免落到未部署的域。 */
+  /* 发送密码重置邮件（Supabase Auth）。默认回跳当前站点首页；
+   * Phase 18：生产 GitHub Pages project site 默认回跳 /wardrobe（Redirect URLs 已含），避免依赖可能被改坏的 Site URL。 */
   async function resetPasswordForEmail(email, options) {
     if (!email || email.indexOf('@') < 0) {
       throw wbError(CODES.VALIDATION, '重置密码：请输入有效邮箱', { status: 400 });
     }
-    const wanted = (options && options.redirectTo) ? String(options.redirectTo) : (location.origin + '/index.html');
+    const defaultRedirect = (location.hostname === 'harbo0526.github.io')
+      ? (location.origin + '/wardrobe')
+      : (location.origin + '/index.html');
+    const wanted = (options && options.redirectTo) ? String(options.redirectTo) : defaultRedirect;
     if (!isAllowedRedirect(wanted)) {
       throw wbError(CODES.VALIDATION, '重置密码：redirectTo 不在允许的站点白名单内', { status: 400 });
     }

@@ -3186,7 +3186,12 @@ async function doRegister(e){
   if(p1.length < 6){ toast('密码至少 6 位'); return false; }
   if(p1 !== p2){ toast('两次密码不一致'); return false; }
   try{
-    const r = await WBAuth.signUp({ email: email, password: p1 });
+    /* Phase 18：显式 emailRedirectTo，覆盖 Supabase Site URL 兜底（Dashboard Site URL 曾被改坏为尾随 "]"）。
+       生产 GitHub Pages project site 回跳 /wardrobe（Redirect URLs 已含该条，Phase 17 实测可接受）；本地回跳 /index.html。 */
+    var regRedirect = (location.hostname === 'harbo0526.github.io')
+      ? (location.origin + '/wardrobe')
+      : (location.origin + '/index.html');
+    const r = await WBAuth.signUp({ email: email, password: p1, options: { emailRedirectTo: regRedirect } });
     if(r.needsConfirmation){
       toast('注册成功！请查收邮箱并点击确认链接，然后即可登录');
       switchAuthMode('login');
@@ -6279,21 +6284,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.0.0-fix2"></script>
-<script src="./js/data/supabase.js?v=5.0.0-fix2"></script>
+<script src="./js/config.js?v=5.0.2"></script>
+<script src="./js/data/supabase.js?v=5.0.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.0.0-fix2"></script>
-<script src="./js/data/query.js?v=5.0.0-fix2"></script>
-<script src="./js/auth/session.js?v=5.0.0-fix2"></script>
-<script src="./js/data/groups.js?v=5.0.0-fix2"></script>
-<script src="./js/data/clothgroups.js?v=5.0.0-fix2"></script>
-<script src="./js/data/clothes.js?v=5.0.0-fix2"></script>
-<script src="./js/data/modules.js?v=5.0.0-fix2"></script>
-<script src="./js/data/index.js?v=5.0.0-fix2"></script>
-<script src="./js/storage/paths.js?v=5.0.0-fix2"></script>
-<script src="./js/storage/images.js?v=5.0.0-fix2"></script>
-<script src="./js/storage/index.js?v=5.0.0-fix2"></script>
-<script src="./js/auth/index.js?v=5.0.0-fix2"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.0.0-fix2"></script>
+<script src="./js/data/errors.js?v=5.0.2"></script>
+<script src="./js/data/query.js?v=5.0.2"></script>
+<script src="./js/auth/session.js?v=5.0.2"></script>
+<script src="./js/data/groups.js?v=5.0.2"></script>
+<script src="./js/data/clothgroups.js?v=5.0.2"></script>
+<script src="./js/data/clothes.js?v=5.0.2"></script>
+<script src="./js/data/modules.js?v=5.0.2"></script>
+<script src="./js/data/index.js?v=5.0.2"></script>
+<script src="./js/storage/paths.js?v=5.0.2"></script>
+<script src="./js/storage/images.js?v=5.0.2"></script>
+<script src="./js/storage/index.js?v=5.0.2"></script>
+<script src="./js/auth/index.js?v=5.0.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.0.2"></script>
 </body>
 </html>
