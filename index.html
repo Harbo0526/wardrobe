@@ -134,8 +134,10 @@ input,textarea{font-family:inherit;border:none;outline:none;color:var(--ink);}
 
 /* ============ 4. 通用组件 ============ */
 /* 按压动效：所有可点元素（需求#9） */
-.press{transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease, opacity .15s;}
+.press{outline:none;-webkit-tap-highlight-color:transparent;transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease, opacity .15s;}
 .press:active{transform:translateY(2px) scale(.98);}
+.press:focus{outline:none;}
+.press:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:inherit;}
 
 /* 主按钮 */
 .btn{
@@ -455,7 +457,16 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 /* 衣橱页 V2.2.0 两栏布局：左分组导航竖列 + 右侧衣物两列向下展开 */
 #screen-group{overflow:hidden;}              /* 本屏不整页滚动，改由左右栏内部滚动 */
 /* 分组页搜索条（V2.7.0：按名称匹配分组，结果在弹窗中展示） */
-.group-search{flex:0 0 auto;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);}
+.group-search{position:relative;flex:0 0 auto;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--line);}
+/* 分组搜索结果：搜索框下方固定的圆角矩形面板（V5.1.7） */
+.gs-panel{position:absolute;left:16px;right:16px;top:calc(100% - 2px);z-index:40;background:#fff;
+  border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(46,74,58,.16);
+  max-height:300px;overflow-y:auto;padding:6px;}
+.gs-panel[hidden]{display:none;}
+.gs-panel .row{border-bottom:none;min-height:52px;padding:10px 12px;border-radius:12px;}
+.gs-panel .row + .row{margin-top:2px;}
+.gs-panel .row:active{background:var(--primary-soft);}
+.gs-panel .empty{padding:18px 0;}
 .group-search .gs-box{display:flex;align-items:center;gap:7px;height:38px;padding:0 12px;
   border-radius:var(--r-input);background:var(--bg);border:1.5px solid var(--line);
   transition:border-color .15s ease, box-shadow .15s ease;}
@@ -466,7 +477,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .group-search input::placeholder{color:var(--ink-faint);}
 .gs-ico{width:16px;height:16px;color:var(--ink-faint);flex:0 0 auto;cursor:pointer;}
 /* 上传页搜索分组（多选卡片，V2.7.2） */
-.up-gs{height:auto;flex-wrap:wrap;align-items:center;padding:8px 12px;gap:6px;}
+.up-gs{height:auto;flex-wrap:wrap;align-items:center;padding:8px 0;gap:6px;border:none;}
 .up-group-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%;order:3;}
 .up-gs-field{position:relative;display:flex;align-items:center;flex:1 1 auto;min-width:80px;order:2;}
 .up-gs-field .up-gs-ico{position:absolute;left:8px;top:50%;transform:translateY(-50%);cursor:pointer;z-index:1;}
@@ -1214,7 +1225,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         </div>
         <div class="field">
           <label>密码</label>
-          <input class="input" id="login-pass" type="password" placeholder="输入密码" autocomplete="current-password">
+          <div class="pw-wrap" style="position:relative;">
+            <input class="input" id="login-pass" type="password" placeholder="输入密码" autocomplete="current-password" style="padding-right:42px;">
+            <button type="button" class="pw-toggle" onclick="togglePw('login-pass', this)" aria-label="显示密码" title="显示/隐藏密码" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:4px;line-height:1;">👁</button>
+          </div>
         </div>
         <button class="btn btn-primary press" type="submit">登 录</button>
         <div class="auth-tip">还没有账号？切换到「注册」创建</div>
@@ -1227,11 +1241,17 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         </div>
         <div class="field">
           <label>密码</label>
-          <input class="input" id="reg-pass" type="password" placeholder="设置密码（至少 6 位）" autocomplete="new-password">
+          <div class="pw-wrap" style="position:relative;">
+            <input class="input" id="reg-pass" type="password" placeholder="设置密码（至少 6 位）" autocomplete="new-password" style="padding-right:42px;">
+            <button type="button" class="pw-toggle" onclick="togglePw('reg-pass', this)" aria-label="显示密码" title="显示/隐藏密码" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:4px;line-height:1;">👁</button>
+          </div>
         </div>
         <div class="field">
           <label>确认密码</label>
-          <input class="input" id="reg-pass2" type="password" placeholder="再次输入密码" autocomplete="new-password">
+          <div class="pw-wrap" style="position:relative;">
+            <input class="input" id="reg-pass2" type="password" placeholder="再次输入密码" autocomplete="new-password" style="padding-right:42px;">
+            <button type="button" class="pw-toggle" onclick="togglePw('reg-pass2', this)" aria-label="显示密码" title="显示/隐藏密码" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:4px;line-height:1;">👁</button>
+          </div>
         </div>
         <div class="field">
           <label>昵称（可选）</label>
@@ -1326,7 +1346,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="lg-head">
       <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
       <h2>👕 Harbo衣橱</h2>
-      <button class="lg-sync press" title="上传云端+下拉云端" onclick="syncSpin(this, clRefresh)">⟳</button>
+      <button class="lg-sync press" title="刷新云端数据" onclick="syncSpin(this, clRefresh)">⟳</button>
     </div>
     <div class="lg-shell">
       <aside class="lg-side" id="clSide">
@@ -1379,8 +1399,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           </div>
           <div class="card">
             <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
-            <p class="ck-hint">衣物与分组数据存于远程仓库，换设备填入同一 Gitee 令牌即可同步取回。</p>
-            <button class="btn btn-accent press" style="margin-top:10px;" onclick="clRefresh()">⇅ 立即同步（上传 + 拉回）</button>
+            <p class="ck-hint">衣物与分组数据已自动保存在云端数据库（Supabase），本机修改实时上传；点下方按钮可手动重新拉取云端最新数据（换设备时用以取回）。</p>
+            <button class="btn btn-accent press" style="margin-top:10px;" onclick="clRefresh()">⇅ 手动刷新云端数据</button>
           </div>
         </div>
 
@@ -1397,18 +1417,19 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <span class="title" id="group-title">上衣</span>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clRefresh)">⟳</button>
+        <button class="hrefresh press" title="刷新云端数据" onclick="syncSpin(this, clRefresh)">⟳</button>
         <button class="head-btn press" onclick="openUploadWithGroup()" title="上传衣物">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
     </div>
-    <!-- 分组搜索：输入关键词匹配分组名称，结果以弹窗展示 -->
+    <!-- 分组搜索：输入关键词匹配分组名称，结果以内联固定圆角面板展示（V5.1.7 不再弹窗） -->
     <div class="group-search">
       <div class="gs-box">
         <svg class="gs-ico" onclick="openGroupSearch()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input id="groupSearch" type="text" placeholder="搜索分组…（输入后回车或点放大镜）" autocomplete="off" onkeydown="if(event.key==='Enter'){openGroupSearch();}">
+        <input id="groupSearch" type="text" placeholder="搜索分组…（输入即匹配，点放大镜看全部）" autocomplete="off" onkeydown="if(event.key==='Enter'){openGroupSearch();}" oninput="onGroupSearchInput()">
       </div>
+      <div class="gs-panel" id="group-search-panel" hidden></div>
     </div>
     <!-- 衣橱两栏布局：左分组导航竖列 + 右侧衣物两列向下展开 -->
     <div class="wardrobe-body">
@@ -1483,7 +1504,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 
   <!-- ============ 屏 5：我的 / 设置 ============ -->
   <section class="screen" id="screen-mine">
-    <div class="screen-head"><button class="back press" onclick="goHome()" title="返回首页">‹</button><span class="title">我的</span><button class="hrefresh press" title="上传云端+下拉云端" onclick="syncSpin(this, clRefresh)">⟳</button></div>
+    <div class="screen-head"><button class="back press" onclick="goHome()" title="返回首页">‹</button><span class="title">我的</span><button class="hrefresh press" title="刷新云端数据" onclick="syncSpin(this, clRefresh)">⟳</button></div>
 
     <div class="card profile-card">
       <div class="profile-avatar" id="mine-avatar" onclick="openAvatarEditor()" title="点击设置头像">绿</div>
@@ -1537,7 +1558,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="ck-head">
       <button class="back press" onclick="goHome()" title="返回首页">‹</button>
       <h2>🍹 调酒</h2>
-      <button class="ck-sync press" title="上传云端+下拉云端" onclick="syncSpin(this, doSync)">⟳</button>
+      <button class="ck-sync press" title="刷新云端数据" onclick="syncSpin(this, doSync)">⟳</button>
     </div>
 
     <div class="ck-body">
@@ -1628,10 +1649,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
         <div class="ck-panel" id="ckp-bak">
           <div class="card">
             <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
-            <p class="ck-hint">调酒数据独立存放在远程仓库的 <b>cocktail.json</b>（与衣物数据分开、按账号隔离）。<b>换设备后点「从云端拉取」即可取回</b>，该操作只影响调酒，不涉及任何衣物数据。</p>
-            <button class="btn btn-secondary" id="ckPull" style="margin-top:10px;">⬇ 从云端拉取</button>
-            <button class="btn btn-accent" id="ckSync" style="margin-top:8px;">⬆ 同步到云端</button>
-            <div id="ckSyncStamps" class="ck-hint" style="margin-top:10px;color:var(--accent);font-weight:600;"></div>
+            <p class="ck-hint">调酒数据已自动保存在云端数据库（与衣物数据独立、按账号隔离）。本机修改实时上传，换设备点「手动刷新云端」即可取回最新配方与材料。</p>
+            <button class="btn btn-secondary" id="ckPull" style="margin-top:10px;">⇅ 手动刷新云端</button>
+            <button class="btn btn-accent" id="ckSync" style="margin-top:8px;">⇅ 手动刷新云端</button>
           </div>
 
           <div class="card" style="margin-top:10px;">
@@ -1654,18 +1674,6 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       </main>
     </div>
   </section>
-
-  <!-- ============ Sheet：分组搜索结果（点选后关闭弹窗并打开该分组） ============ -->
-  <div class="overlay" id="sheet-group-search" onclick="closeSheetOnBg(event,'sheet-group-search')">
-    <div class="sheet" onclick="event.stopPropagation()">
-      <div class="sheet-handle"></div>
-      <div class="sheet-head">
-        <h3>匹配分组</h3>
-        <button class="sheet-close press" onclick="closeSheet('sheet-group-search')">✕</button>
-      </div>
-      <div id="group-search-list"></div>
-    </div>
-  </div>
 
   <!-- ============ 上传页：搜索选择分组 ============ -->
   <div class="overlay" id="sheet-upgroup-search" onclick="closeSheetOnBg(event,'sheet-upgroup-search')">
@@ -1761,7 +1769,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="lg-head">
       <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
       <h2>🎀 Harbo记账</h2>
-      <button class="lg-sync press" id="lgHeaderSync" title="上传云端+下拉云端">⟳</button>
+      <button class="lg-sync press" id="lgHeaderSync" title="刷新云端数据">⟳</button>
     </div>
     <div class="lg-shell">
       <!-- 左侧 80px 垂直导航 -->
@@ -1944,10 +1952,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           </div>
           <div class="card">
             <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
-            <p class="ck-hint">记账数据独立存于云端 <b>ledger.json</b>（按账号隔离，与衣物/调酒分开）。换设备点「从云端下拉」即可取回，仅影响记账数据。</p>
-            <button class="btn btn-secondary" id="lgPull" style="margin-top:10px;">⬇ 从云端下拉</button>
-            <button class="btn btn-accent" id="lgSync" style="margin-top:8px;">⬆ 上传云端</button>
-            <div id="lgSyncStamps" class="ck-hint" style="margin-top:10px;color:var(--lg-deep);font-weight:600;"></div>
+            <p class="ck-hint">记账数据已自动保存在云端数据库（按账号隔离，与衣物/调酒分开）。本机修改实时上传，换设备点「手动刷新云端」即可取回。</p>
+            <button class="btn btn-accent" id="lgSync" style="margin-top:10px;">⇅ 手动刷新云端</button>
           </div>
         </div>
 
@@ -1960,7 +1966,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <div class="lg-head">
       <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
       <h2>🌙 Harbo睡眠</h2>
-      <button class="lg-sync press" id="spHeaderSync" title="上传云端+下拉云端" onclick="spGuardSync() && syncSpin(this, spSyncCloud)">⟳</button>
+      <button class="lg-sync press" id="spHeaderSync" title="刷新云端数据" onclick="spGuardSync() && syncSpin(this, spSyncCloud)">⟳</button>
     </div>
     <div class="lg-shell">
       <aside class="lg-side" id="spSide">
@@ -2097,10 +2103,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           </div>
           <div class="card">
             <div class="ck-sec"><h3>☁️ 云端同步</h3></div>
-            <p class="ck-hint">睡眠数据独立存于云端 <b>sleep.json</b>（按账号隔离，与衣物/记账/调酒分开）。换设备点「从云端下拉」即可取回，仅影响睡眠数据。</p>
-            <button class="btn btn-secondary" id="spPull" style="margin-top:10px;" onclick="spGuardSync() && spPullCloud()">⬇ 从云端下拉</button>
-            <button class="btn btn-accent" id="spSync" style="margin-top:8px;" onclick="spGuardSync() && spPushCloud()">⬆ 上传云端</button>
-            <div id="spSyncStamps" class="ck-hint" style="margin-top:10px;color:var(--lg-deep);font-weight:600;"></div>
+            <p class="ck-hint">睡眠数据已自动保存在云端数据库（按账号隔离，与衣物/记账/调酒分开）。本机修改实时上传，换设备点「手动刷新云端」即可取回。</p>
+            <button class="btn btn-accent" id="spSync" style="margin-top:10px;" onclick="spGuardSync() && spSyncCloud()">⇅ 手动刷新云端</button>
           </div>
         </div>
 
@@ -2230,7 +2234,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <label>确认新密码</label>
           <input class="input" id="pw-new2" type="password" placeholder="再次输入新密码">
         </div>
-        <div class="pw-tip">修改后请记得同步到远程仓库，以免丢失</div>
+        <div class="pw-tip">修改已自动保存到云端，无需手动同步</div>
         <button class="btn btn-primary press" type="submit">确认修改</button>
       </form>
     </div>
@@ -2384,7 +2388,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.1.2';
+const APP_VERSION = '5.1.11';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -2965,20 +2969,13 @@ $('ckSync').onclick = function(){ doSync(); };
    用途：换设备后取回远程仓库的 cocktail.json，以远端为准覆盖本机材料库与配方。 */
 async function ckPullFromCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(3); return; }
-  if(!confirm('将用云端 cocktail.json 覆盖本机的材料库与配方（不影响任何衣物数据），确定继续？')) return;
-  const btn = $('ckPull');
-  btn.disabled = true; btn.textContent = '拉取中…'; btn.style.opacity = .7;
+  // v5.1.3：统一为 Supabase 手动下拉刷新（数据实时上传，无需 Gitee；按钮文案已改为「手动刷新云端」）
   try{
-    const ok = await pullCocktailData(true);      // true = 以远端为准覆盖本机
-    if(!ok){ toast('云端还没有调酒数据（cocktail.json 不存在）'); return; }
-    ckSave(); ckSwitch('mix'); ckRenderAll();
-    ckSetStamp('pull');
-    toast('已从云端拉取调酒数据 ✓');
+    await sbLoadAll();
+    ckSwitch('mix'); ckRenderAll();
+    toast('已从云端刷新调酒数据 ✓');
   }catch(err){
-    toast('拉取失败：' + (err && err.message ? err.message : '未知错误'));
-  }finally{
-    btn.disabled = false; btn.textContent = '⬇ 从云端拉取'; btn.style.opacity = 1;
+    toast('刷新失败：' + (err && err.message ? err.message : '未知错误'));
   }
 }
 $('ckPull').onclick = ckPullFromCloud;
@@ -3012,36 +3009,9 @@ $('ckWipe').onclick = function(){
   ckMix = []; ckSave(); ckRenderAll(); toast('已清空');
 };
 
-/* ---------- 调酒云端同步时间戳（月/日/时/分） ----------
-   本地持久化，让用户在备份面板直观看到「上次上传 / 上次下拉」的具体时间，
-   上传 = 点「同步到云端」成功那一刻；下拉 = 点「从云端拉取」成功那一刻。 */
-function ckFmtStamp(d){
-  d = d || new Date();
-  const p = n => (n < 10 ? '0' + n : '' + n);
-  return p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-}
-function ckSetStamp(kind){
-  try{
-    localStorage.setItem(kind === 'push' ? 'ck_push_at' : 'ck_pull_at', new Date().toISOString());
-  }catch(e){}
-  ckRenderStamps();
-}
-function ckRenderStamps(){
-  const el = $('ckSyncStamps');
-  if(!el) return;
-  let push = '', pull = '';
-  try{
-    const p = localStorage.getItem('ck_push_at');
-    const l = localStorage.getItem('ck_pull_at');
-    if(p) push = '上次上传 ' + ckFmtStamp(new Date(p));
-    if(l) pull = '上次下拉 ' + ckFmtStamp(new Date(l));
-  }catch(e){}
-  el.textContent = (push || '尚未上传') + '　·　' + (pull || '尚未下拉');
-}
-
 /* ---------- 统一渲染入口（进入 tab 时调用） ---------- */
 function ckRenderAll(){ ckRenderMats(); ckRenderMix(); ckRenderRecs(); }
-function renderCocktail(){ ckSeed(); ckSwitch('mix'); ckRenderAll(); ckRenderStamps(); }
+function renderCocktail(){ ckSeed(); ckSwitch('mix'); ckRenderAll(); }
 
 function groupName(id){
   // 已移除「全部」概念：id 0 仅作无分组空态兜底，孤儿衣物按「未分组」显示
@@ -3085,7 +3055,7 @@ function switchAuthMode(mode){
   $('tab-register').classList.toggle('active', mode==='register');
   $('form-login').hidden = mode!=='login';
   $('form-register').hidden = mode!=='register';
-  $('auth-title').textContent = mode==='login' ? '嗨，欢迎回来' : '加入你的私人衣橱';
+  $('auth-title').textContent = mode==='login' ? '嗨，欢迎回来' : '加入你的生活象限';
 }
 
 /* ---------- 密码校验（V2.1.0：明文优先，哈希仅兼容旧表） ----------
@@ -3117,6 +3087,14 @@ async function hashPassword(pass, salt){
 }
 /* Phase 14：登录改用 Supabase Auth（email + password）。
  * 旧 Gitee 登录逻辑整体保留为 legacyDoLoginGitee（仅回滚用途，主流程不再调用）。 */
+function togglePw(inputId, btn){
+  const el = $(inputId);
+  if(!el) return;
+  const show = el.type === 'password';
+  el.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+  btn.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
+}
 async function doLogin(e){
   e.preventDefault();
   const email = $('login-email').value.trim();
@@ -3732,7 +3710,7 @@ function renderGroupChips(){
   }
   let h = '';
   state.groups.forEach(g=>{
-    h += '<button class="rail-item' + (currentGroupId===g.id ? ' active' : '') + ' press" onclick="openGroup(' + g.id + ')">' +
+    h += '<button class="rail-item' + (String(currentGroupId)===String(g.id) ? ' active' : '') + ' press" onclick="openGroup(\'' + g.id + '\')">' +
       '<span class="rail-emoji">' + g.emoji + '</span>' +
       '<span class="rail-name">' + g.name + '</span>' +
     '</button>';
@@ -3743,17 +3721,18 @@ function renderGroupChips(){
 /* ---------- 分组搜索（V2.7.0）----------
    输入关键词 → 实时匹配分组名称 → 弹窗列出结果 → 点选后关闭弹窗并打开该分组。
    列表用 DOM API + textContent 构建，分组名含特殊字符也不会破坏结构或造成注入。 */
-function renderGroupSearch(kw){
-  const box = $('group-search-list');
+function renderGroupSearch(kw, showAll){
+  const box = $('group-search-panel');
+  if(!box) return;
   const q = (kw || '').trim().toLowerCase();
   box.innerHTML = '';
-  if(!q){
-    box.innerHTML = '<div class="empty"><span class="empty-emoji">🔍</span><div class="empty-text">输入关键词搜索分组</div></div>';
-    return;
-  }
-  const matched = state.groups.filter(g => (g.name || '').toLowerCase().indexOf(q) >= 0);
+  if(!q && !showAll){ box.hidden = true; return; }
+  const matched = q
+    ? state.groups.filter(g => (g.name || '').toLowerCase().indexOf(q) >= 0)
+    : state.groups.slice();
   if(!matched.length){
-    box.innerHTML = '<div class="empty"><span class="empty-emoji">🍃</span><div class="empty-text">没有匹配的分组</div></div>';
+    box.innerHTML = '<div class="empty"><span class="empty-emoji">🍃</span><div class="empty-text">' + (q ? '没有匹配的分组' : '还没有分组，先去创建吧') + '</div></div>';
+    box.hidden = false;
     return;
   }
   matched.forEach(g => {
@@ -3769,16 +3748,25 @@ function renderGroupSearch(kw){
     const chev = document.createElement('span'); chev.className = 'row-chev'; chev.textContent = '›';
     row.appendChild(emoji); row.appendChild(main); row.appendChild(chev);
     row.onclick = function(){
-      closeSheet('sheet-group-search');
+      closeGroupSearchPanel();
       $('groupSearch').value = '';
       openGroup(g.id);
     };
     box.appendChild(row);
   });
+  box.hidden = false;
 }
 function openGroupSearch(){
-  renderGroupSearch($('groupSearch').value);
-  openSheet('sheet-group-search');
+  // 点放大镜：空输入时列出全部分组，便于直接切换
+  renderGroupSearch($('groupSearch').value, true);
+}
+function onGroupSearchInput(){
+  // 输入即匹配；清空则收起面板
+  renderGroupSearch($('groupSearch').value, false);
+}
+function closeGroupSearchPanel(){
+  const p = $('group-search-panel');
+  if(p){ p.hidden = true; p.innerHTML = ''; }
 }
 
 
@@ -3825,18 +3813,18 @@ function openUpGroupSearch(){
 function openGroup(gid){
   currentGroupId = gid;
   renderGroupChips();
-  if(gid===0){
+  if(gid===0 || gid==='0'){
     // 空态兜底：无任何分组时进入「我的衣橱」空态（不再展示「全部衣物」）
     $('group-title').textContent = '我的衣橱';
     $('group-badge').textContent = '🧺';
   }else{
-    const g = state.groups.find(x=>x.id===gid);
+    const g = state.groups.find(x=>String(x.id)===String(gid));
     if(!g){ toast('分组不存在'); return; }
     $('group-title').textContent = g.name;
     $('group-badge').textContent = g.emoji;
   }
-  uploadPresetGroup = gid===0 ? null : gid;
-  if(gid===0){
+  uploadPresetGroup = (gid===0 || gid==='0') ? null : gid;
+  if(gid===0 || gid==='0'){
     renderGrid([], 'group-grid', '<div class="empty" style="grid-column:1/-1;"><span class="empty-emoji">🧺</span><span class="empty-text">衣橱空空，去创建分组并上传吧</span><button class="btn btn-primary press" onclick="openSheet(\'sheet-group\')">去创建分组</button></div>');
   }else{
     renderGrid(state.clothes.filter(c=>belongsTo(c,gid)), 'group-grid');
@@ -3887,7 +3875,7 @@ function openUpload(presetGroup, editCloth){
   let chips = '';
   state.groups.forEach(g=>{
     const act = upSelectedGroups.includes(g.id) ? ' active' : '';
-    chips += '<button type="button" class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(' + g.id + ')"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
+    chips += '<button type="button" class="chip press' + act + '" data-gid="' + g.id + '" onclick="selectUpGroup(\'' + g.id + '\')"><span class="chip-emoji">' + g.emoji + '</span>' + g.name + '</button>';
   });
   $('up-chips').innerHTML = chips || '<span style="color:var(--ink-faint);font-size:13px;">请先在「分组管理」创建分组</span>';
   renderUpGroupChosen();
@@ -5186,7 +5174,14 @@ async function pullUserData(){
 let syncCooldownUntil = 0;
 
 async function doSync(){
-  toast('数据已实时保存在云端数据库，无需手动同步');
+  // v5.1.3：Gitee 双向同步已停用，统一为 Supabase 手动刷新（数据实时上传，本按钮仅下拉最新）
+  if(!state.user){ toast('请先登录'); return; }
+  try{
+    await sbLoadAll();
+    toast('已刷新云端数据 ✓');
+  }catch(e){
+    toast('刷新失败：' + (WBErrors.normalize(e).message || '请重试'));
+  }
   return;
   const btn = $('sync-btn');
   if(Date.now() < syncCooldownUntil){ toast('同步太频繁，3 秒后再试'); return; }
@@ -5207,7 +5202,6 @@ async function doSync(){
   try{
     await pullUserData();   // v4.2.5：推送前先把云端合并进本地（clothes/groups/materials/recipes 按 id 取并集）→ 云端恒为所有设备并集，互不覆盖
     await pushUserData();   // 上传合并后的全量
-    ckSetStamp('push');     // 记录调酒上传时间戳
     // v4.2.4：头像补入双向同步——此前 ⟳ 只拉不推，设置头像时若上传失败将永无重试机会，
     // 下次 ⟳ 还会用云端旧值覆盖本地导致头像丢失。本地有头像则先上传（本地为 null 时不推，避免误清云端）。
     if(state.user && state.user.avatar){ await pushProfile(); }
@@ -5401,22 +5395,6 @@ function lgDayTotals(date){
   return { exp: Math.round(exp*100)/100, inc: Math.round(inc*100)/100 };
 }
 
-/* ---------- 时间戳（上传/下拉 记录到 localStorage） ---------- */
-function lgSetStamp(kind){
-  try{ localStorage.setItem(kind === 'push' ? 'lg_push_at' : 'lg_pull_at', new Date().toISOString()); }catch(e){}
-  lgRenderStamps();
-}
-function lgRenderStamps(){
-  const el = $('lgSyncStamps'); if(!el) return;
-  let push = '', pull = '';
-  try{
-    const p = localStorage.getItem('lg_push_at');
-    const l = localStorage.getItem('lg_pull_at');
-    if(p) push = '上次上传 ' + lgFmtStamp(new Date(p));
-    if(l) pull = '上次下拉 ' + lgFmtStamp(new Date(l));
-  }catch(e){}
-  el.textContent = (push || '尚未上传') + '　·　' + (pull || '尚未下拉');
-}
 /* ---------- 概览 + 预算 ---------- */
 function lgCurMonthKey(){ const d = new Date(); return d.getFullYear() + '-' + lgPad(d.getMonth()+1); }
 function lgEnsureBudgets(){ if(!state.ledger.budgets || typeof state.ledger.budgets !== 'object') state.ledger.budgets = {}; }
@@ -5472,11 +5450,6 @@ function lgSetBudget(){
   }
   lgRenderOverview(); toast('预算已设定 ✓');
 }
-function lgFmtStamp(d){
-  const p = n => (n < 10 ? '0' + n : '' + n);
-  return p(d.getMonth()+1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-}
-
 /* ---------- 导航切换 ---------- */
 function lgRenderBanner(panel){
   const el = (typeof panel === 'string') ? $('lgp-' + panel) : panel;
@@ -5523,7 +5496,6 @@ function lgSwitch(panel){
   if(panel === 'stats') lgRenderStats();
   else if(panel === 'calendar') lgRenderCalendar();
   else if(panel === 'overview') lgRenderOverview();
-  else if(panel === 'bak') lgRenderStamps();
 }
 
 /* ---------- 录入 ---------- */
@@ -5619,37 +5591,22 @@ function lgAutoSync(){
   // v4.2.5 合并式同步：先拉云端与本地取并集（墓碑过滤），再上传合并后的全量 → 云端恒为所有设备并集
   tryPullLedger(false, false)
     .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
-    .then(() => { lgSetStamp('push'); lgSetStamp('pull'); })
     .catch(() => {});
 }
-// 手动从云端下拉记账数据（强制覆盖本机，用于跨设备取回 / 还原）
+// v5.1.3：统一为 Supabase 手动下拉刷新（数据实时上传，无需 Gitee）
 function lgPullLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  tryPullLedger(true)
-    .then(() => { lgSetStamp('pull'); toast('已从云端下拉记账数据 ✓'); })
-    .catch(e => toast('下拉失败：' + (e && e.message ? e.message : '未知错误')));
+  sbLoadAll().then(() => { toast('已从云端刷新记账数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
-// 手动上传本地记账数据到云端（先合并云端再整体上传，不丢本地新录入）
+// v5.1.3：统一为 Supabase 手动刷新（数据实时上传，无需 Gitee）
 function lgPushLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  const btn = $('lgSync');
-  if(btn) btn.disabled = true;
-  tryPullLedger(false, false)
-    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
-    .then(() => { lgSetStamp('push'); toast('已上传记账数据到云端 ✓'); })
-    .catch(e => toast('上传失败：' + (e && e.message ? e.message : '未知错误')))
-    .finally(() => { if(btn) btn.disabled = false; });
+  sbLoadAll().then(() => { toast('已刷新云端记账数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
-// 双向同步（头部同步按钮）：先合并下拉，再整体上传，保证录入不丢且能取回
+// v5.1.3：统一为 Supabase 手动刷新（数据实时上传，无需 Gitee）
 function lgSyncLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  return tryPullLedger(false, false)
-    .then(() => pushLedgerData(state.user.name, new Date().toISOString()))
-    .then(() => { lgSetStamp('push'); lgSetStamp('pull'); toast('记账已双向同步 ✓'); })
-    .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
+  return sbLoadAll().then(() => { toast('记账已刷新云端数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
 
 /* ---------- 日历 ---------- */
@@ -5852,7 +5809,6 @@ function renderLedger(){
     lgRenderRecent();
     lgRenderCalendar();
     lgRenderStats();
-    lgRenderStamps();
   }catch(e){ console.error('renderLedger 异常：', e); }
 }
 let lgBound = false;
@@ -5876,16 +5832,13 @@ function lgBind(){
   $('lgStatNext').onclick = () => { lgState.statYM.m++; if(lgState.statYM.m > 12){ lgState.statYM.m = 1; lgState.statYM.y++; } lgRenderStats(); };
   $('lgQueryBtn').onclick = lgRunQuery;
   $('lgBudgetSet').onclick = lgSetBudget;
-  $('lgHeaderSync').onclick = () => { if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; } if(!state.user){ toast('请先登录'); return; } syncSpin($('lgHeaderSync'), lgSyncLedgerCloud); };
+  $('lgHeaderSync').onclick = () => {
+    if(!state.user){ toast('请先登录'); return; }
+    syncSpin($('lgHeaderSync'), sbLoadAll);
+  };
   $('lgSync').onclick = () => {
     if(!state.user){ toast('请先登录'); return; }
-    if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-    lgPushLedgerCloud();
-  };
-  $('lgPull').onclick = () => {
-    if(!state.user){ toast('请先登录'); return; }
-    if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-    lgPullLedgerCloud();
+    syncSpin($('lgSync'), lgSyncLedgerCloud);
   };
 }
 
@@ -6014,7 +5967,6 @@ function spAutoSync(){
   // v4.2.5 合并式同步：先拉云端与本地取并集（墓碑过滤），再上传合并后的全量 → 云端恒为所有设备并集
   tryPullSleep(false, false)
     .then(() => pushSleepData(state.user.name, new Date().toISOString()))
-    .then(() => { spSetStamp('push'); spSetStamp('pull'); })
     .catch(() => {});
 }
 function spRenderCalendar(){
@@ -6126,20 +6078,6 @@ function spRenderStats(){
     return '<div class="lg-daybar" title="' + d + ' ' + spFmtDur(m) + '"><div class="bi"><i class="sl" style="height:' + h + 'px"></i></div><small>' + parseInt(d.slice(8), 10) + '</small></div>';
   }).join('');
 }
-function spSetStamp(kind){
-  try{ localStorage.setItem(kind === 'push' ? 'sp_push_at' : 'sp_pull_at', new Date().toISOString()); }catch(e){}
-  spRenderStamps();
-}
-function spRenderStamps(){
-  const el = $('spSyncStamps'); if(!el) return;
-  let push = '', pull = '';
-  try{
-    const p = localStorage.getItem('sp_push_at'), l = localStorage.getItem('sp_pull_at');
-    if(p) push = '上次上传 ' + lgFmtStamp(new Date(p));
-    if(l) pull = '上次下拉 ' + lgFmtStamp(new Date(l));
-  }catch(e){}
-  el.textContent = (push || '尚未上传') + '　·　' + (pull || '尚未下拉');
-}
 /* ---------- Banner：HelloKitty 九宫格头像 + emoji 散射（与记账 lgRenderBanner 严格一致） ---------- */
 function spRenderBanner(panel){
   const el = (typeof panel === 'string') ? $('spp-' + panel) : panel;
@@ -6186,36 +6124,24 @@ function spSwitch(panel){
   if(panel === 'stats') spRenderStats();
   else if(panel === 'calendar') spRenderCalendar();
   else if(panel === 'overview') spRenderOverview();
-  else if(panel === 'bak') spRenderStamps();
 }
 /* 云端按钮统一守卫（供内联 onclick 使用；先登录态后令牌，与记账一致） */
 function spGuardSync(){
   if(!state.user){ toast('请先登录'); return false; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return false; }
-  return true;
+  return true;   // v5.1.3：已无 Gitee 令牌依赖，仅校验登录态
 }
 function spPullCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  tryPullSleep(true).then(() => { spSetStamp('pull'); toast('已从云端下拉睡眠数据 ✓'); }).catch(e => toast('下拉失败：' + (e && e.message ? e.message : '未知错误')));
+  // v5.1.3：统一为 Supabase 手动下拉刷新（数据实时上传，无需 Gitee）
+  sbLoadAll().then(() => { toast('已从云端刷新睡眠数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
 function spPushCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  const btn = $('spSync'); if(btn) btn.disabled = true;
-  tryPullSleep(false, false)
-    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
-    .then(() => { spSetStamp('push'); toast('已上传睡眠数据到云端 ✓'); })
-    .catch(e => toast('上传失败：' + (e && e.message ? e.message : '未知错误')))
-    .finally(() => { if(btn) btn.disabled = false; });
+  sbLoadAll().then(() => { toast('已刷新云端睡眠数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
 function spSyncCloud(){
   if(!state.user){ toast('请先登录'); return; }
-  if(!getGiteeToken()){ toast('请先在「我的」页填写 Gitee 令牌'); navTo(4); return; }
-  return tryPullSleep(false, false)
-    .then(() => pushSleepData(state.user.name, new Date().toISOString()))
-    .then(() => { spSetStamp('push'); spSetStamp('pull'); toast('睡眠已双向同步 ✓'); })
-    .catch(e => toast('同步失败：' + (e && e.message ? e.message : '未知错误')));
+  return sbLoadAll().then(() => { toast('睡眠已刷新云端数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
 let spBound = false;
 function spBind(){
@@ -6289,7 +6215,6 @@ function renderSleep(){
     spRenderToday();
     spRenderCalendar();
     spRenderStats();
-    spRenderStamps();
   }catch(e){ console.error('renderSleep 异常：', e); }
 }
 
