@@ -69,11 +69,11 @@
     requiredCreate: ['record_date', 'start_time', 'end_time', 'duration_minutes']
   });
 
-  /* 备忘：t→content、at→created_at（迁移时）；title 预留 */
+  /* 备忘：t→content、at→legacy_id（兼作备忘日期，v5.7.0 起允许编辑）；title=标题 */
   const memos = F({
     table: 'memos',
     createFields: ['title', 'content', 'legacy_id'],
-    updateFields: ['title', 'content'],
+    updateFields: ['title', 'content', 'legacy_id'],
     orderWhitelist: ['created_at', 'updated_at'],
     defaultOrder: 'created_at',
     requiredCreate: ['content']

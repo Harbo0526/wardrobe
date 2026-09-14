@@ -409,15 +409,72 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   border:1px solid rgba(255,255,255,.7);
 }
 #screen-home .home-reload:active{background:#ffd9a8;}
-/* 备忘编辑弹窗（v4.3.0：点击备忘条放大，二次编辑内容） */
-#screen-home .memo-modal-mask{position:fixed;inset:0;z-index:60;background:rgba(90,58,20,.42);display:flex;align-items:center;justify-content:center;padding:18px;}
-#screen-home .memo-modal{max-width:340px;width:100%;background:#fff;border-radius:22px;padding:16px 16px 18px;box-shadow:0 12px 44px rgba(255,167,38,.35);animation:fadeIn .2s ease;}
-#screen-home .memo-modal .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-#screen-home .memo-modal .mh h3{margin:0;font-size:16px;font-weight:800;color:#8a4b00;}
-#screen-home .memo-modal textarea{width:100%;min-height:110px;box-sizing:border-box;border:1.5px solid #ffd9a8;border-radius:14px;padding:10px 12px;font-size:14px;color:var(--ink);line-height:1.5;resize:vertical;background:#fffdf8;font-family:inherit;}
-#screen-home .memo-modal textarea:focus{outline:none;border-color:#ffb14e;}
-#screen-home .memo-edit-time{margin-top:8px;font-size:11.5px;color:var(--ink-faint);}
-#screen-home .memo-modal .mdel{width:28px;height:28px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+/* ===== v5.7.2：全屏通用「明细放大查看 + 二次编辑」弹窗组件 =====
+   备忘录 / 油费记录 / 记账明细 三处共用同一套结构与样式（.wb-mask / .wb-modal），
+   避免同一项目出现三套不同操作方式。组件放在 body 顶层（不随 .screen 显隐），
+   默认 style="display:none"，由 JS 切换为 flex。层级：明细弹窗 62 > 日历/搜索弹窗 61 > 页面 60。 */
+.wb-mask{position:fixed;inset:0;z-index:62;background:rgba(90,58,20,.42);display:flex;align-items:center;justify-content:center;padding:18px;}
+.wb-modal{max-width:340px;width:100%;max-height:84vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:22px;padding:16px 16px 18px;box-shadow:0 12px 44px rgba(255,167,38,.35);animation:fadeIn .2s ease;}
+.wb-modal .wb-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.wb-modal .wb-h h3{margin:0;font-size:16px;font-weight:800;color:#8a4b00;}
+.wb-x{width:28px;height:28px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:none;}
+.wb-view-title{font-size:15px;font-weight:800;color:#8a4b00;line-height:1.45;word-break:break-word;}
+.wb-view-body{margin-top:8px;font-size:14px;color:var(--ink);line-height:1.65;white-space:pre-wrap;word-break:break-word;}
+.wb-rows{margin-top:6px;display:flex;flex-direction:column;gap:7px;}
+.wb-row{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.5;}
+.wb-row .k{flex:0 0 70px;font-size:12px;color:var(--ink-faint);}
+.wb-row .v{flex:1;min-width:0;color:var(--ink);word-break:break-word;}
+.wb-row .v.exp{color:#FF6B8A;font-weight:800;}
+.wb-row .v.inc{color:#69D19D;font-weight:800;}
+.wb-time{margin-top:8px;font-size:11.5px;color:var(--ink-faint);}
+.wb-btns{display:flex;gap:10px;margin-top:12px;}
+.wb-btns .btn{flex:1;margin:0;}
+.wb-label{display:block;margin:10px 0 4px;font-size:11.5px;font-weight:700;color:#b0762e;}
+.wb-modal .input{width:100%;box-sizing:border-box;height:auto;background:#fffdf8;border:1.5px solid #ffd9a8;border-radius:14px;padding:9px 12px;font-size:14px;color:var(--ink);font-family:inherit;}
+.wb-modal .input:focus{outline:none;border-color:#ffb14e;box-shadow:none;}
+.wb-modal textarea{width:100%;min-height:110px;box-sizing:border-box;border:1.5px solid #ffd9a8;border-radius:14px;padding:10px 12px;font-size:14px;color:var(--ink);line-height:1.5;resize:vertical;background:#fffdf8;font-family:inherit;}
+.wb-modal textarea:focus{outline:none;border-color:#ffb14e;}
+.wb-btn-cancel{background:#fff3e3;color:#8a4b00;}
+.wb-hint{margin-top:8px;font-size:11.5px;color:#b0762e;line-height:1.5;background:#fff7ec;border-radius:10px;padding:7px 9px;}
+/* ===== v5.7.0：备忘录 日历 / 搜索 / 详情二次编辑 ===== */
+#screen-home .memo-head .memo-acts{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
+#screen-home .memo-act{width:28px;height:28px;border-radius:50%;background:#ffe9cf;color:#8a4b00;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;}
+#screen-home .memo-act:active{background:#ffd9a8;}
+#screen-home .memo-item .mt .mtitle{display:block;font-weight:800;color:#8a4b00;font-size:12.5px;margin-bottom:1px;}
+/* 备忘录日历弹窗（复用 .wb-* 组件；层级：明细/编辑 62 > 日历/搜索 61 > 页面 60） */
+#memoCalMask,#memoSearchMask{z-index:61;}
+.memo-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.memo-cal-head button{width:32px;height:32px;border-radius:50%;background:#fff3e3;color:#8a4b00;font-size:17px;font-weight:800;border:none;display:flex;align-items:center;justify-content:center;}
+.memo-cal-head button:active{background:#ffd9a8;}
+.memo-cal-head span{font-size:14px;font-weight:800;color:#8a4b00;}
+.memo-cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
+.memo-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.memo-cal-cell{border-radius:12px;background:#fff7ec;min-height:44px;padding:4px 1px 3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;}
+.memo-cal-cell.empty{background:transparent;cursor:default;}
+.memo-cal-cell .cd{font-size:12px;font-weight:600;color:var(--ink);}
+.memo-cal-cell.today .cd{color:#c0392b;font-weight:800;}
+.memo-cal-cell.has .cd{color:#8a4b00;font-weight:800;}
+.memo-cal-cell.sel{box-shadow:inset 0 0 0 2px #ffb14e;}
+.memo-cal-cell .cm{font-size:8.5px;line-height:1;margin-top:3px;padding:1px 5px;border-radius:8px;background:#ffb14e;color:#fff;font-weight:700;}
+.memo-cal-day{margin-top:10px;border-top:1px dashed #ffe0c0;padding-top:8px;}
+.memo-cal-day .cdh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.memo-cal-day .cdh b{font-size:12.5px;color:#8a4b00;}
+.memo-cal-day .cadd{font-size:12px;font-weight:800;color:#fff;background:#ffb14e;border-radius:12px;padding:5px 10px;border:none;white-space:nowrap;}
+.memo-cal-day .cadd:active{background:#ff9d1f;}
+.memo-cal-list{display:flex;flex-direction:column;gap:6px;max-height:150px;overflow-y:auto;}
+.memo-cal-mini{background:#fff7ec;border-radius:12px;padding:7px 10px;cursor:pointer;}
+.memo-cal-mini .t{font-size:12.5px;font-weight:800;color:#8a4b00;word-break:break-all;}
+.memo-cal-mini .c{font-size:12.5px;color:var(--ink);line-height:1.45;word-break:break-all;}
+.memo-cal-mini .mtime{font-size:10.5px;color:var(--ink-faint);margin-top:2px;}
+.memo-cal-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:8px 0;}
+/* 备忘录搜索弹窗 */
+.memo-search-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow-y:auto;}
+.memo-search-item{background:#fff7ec;border-radius:12px;padding:8px 10px;cursor:pointer;}
+.memo-search-item .t{font-size:12.5px;font-weight:800;color:#8a4b00;word-break:break-all;}
+.memo-search-item .c{font-size:12.5px;color:var(--ink);line-height:1.45;margin-top:2px;word-break:break-all;}
+.memo-search-item .mtime{font-size:10.5px;color:var(--ink-faint);margin-top:3px;}
+.memo-search-item mark{background:#ffe08a;color:#8a4b00;border-radius:3px;padding:0 1px;}
+.memo-search-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:14px 0;}
 .cloth-card{
   background:var(--card);
   border:1px solid var(--line);
@@ -1064,6 +1121,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-ledger .lg-rec .amt{font-weight:800;font-size:15px;flex:0 0 auto;}
 #screen-ledger .lg-rec.exp .amt{color:var(--lg-exp);}
 #screen-ledger .lg-rec.inc .amt{color:var(--lg-inc);}
+/* v5.7.2：记账明细整行可点击 → 放大查看/二次编辑；⛽ 标记表示该笔由油费记录同步生成 */
+#screen-ledger .lg-rec{cursor:pointer;}
+#screen-ledger .lg-rec:active{background:rgba(255,214,231,.4);border-radius:12px;}
+#screen-ledger .lg-rec .ri .t .fu-tag{font-size:11px;margin-right:3px;}
 #screen-ledger .lg-rec .del{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--lg-soft);color:var(--lg-exp);display:flex;align-items:center;justify-content:center;font-size:15px;}
 /* ============ 睡眠屏（复用记账粉色主题，作用域 #screen-sleep） ============ */
 /* 主题变量：--lg-* 原本只定义在 #screen-ledger 上，睡眠屏必须自持一份，否则 var() 全部失效
@@ -1243,9 +1304,21 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .fu-item .fu-amt{font-size:14.5px;font-weight:700;color:var(--lg-deep);}
 .fu-item .fu-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .fu-item .fu-del{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#ffe3e3;color:#c0392b;font-size:12px;display:flex;align-items:center;justify-content:center;}
-.fu-query-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
-.fu-query-row .input{flex:1;min-width:0;}
-.fu-query-sep{flex:0 0 auto;font-size:12px;color:var(--ink-faint);}
+/* v5.7.2：油费明细整行可点击 → 放大查看/二次编辑（复用通用弹窗 .wb-*） */
+.fu-item{cursor:pointer;}
+.fu-item:active{background:rgba(255,214,231,.35);border-radius:10px;}
+/* v5.7.2：日志查询「某天至某天」响应式修复——grid 的 minmax(0,1fr) 保证窄屏可收缩，
+   字号/内边距/高度用 clamp() 随屏宽自适应；不使用固定像素宽度、也不隐藏任何元素。 */
+.fu-query-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:clamp(4px,1.6vw,8px);margin-top:8px;width:100%;}
+.fu-query-row .input{width:100%;min-width:0;box-sizing:border-box;height:clamp(40px,11vw,48px);padding:0 clamp(8px,2.4vw,14px);font-size:clamp(11px,3.2vw,15px);text-overflow:ellipsis;}
+.fu-query-sep{flex:0 0 auto;font-size:clamp(11px,3.2vw,12px);color:var(--ink-faint);white-space:nowrap;line-height:1;}
+/* v5.7.2：油费日历「当天明细 + 当天统计」 */
+.fu-cal-day{margin-top:10px;border-top:1px dashed rgba(255,143,179,.45);padding-top:8px;}
+.fu-cal-day .cdh{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-bottom:6px;}
+.fu-cal-day .cdh b{font-size:12.5px;color:var(--lg-deep);}
+.fu-cal-day .cdh .sum{font-size:11.5px;color:var(--ink-faint);}
+.fu-cal-list{display:flex;flex-direction:column;gap:6px;max-height:186px;overflow-y:auto;overflow-x:hidden;}
+.fu-cal-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:8px 0;}
 .fu-query-result{margin-top:10px;}
 /* v5.4.7：日志查询结果里的日期字号调小 + 不换行不自适应压缩，保证窄屏/大字号下也能完整显示 */
 #fuQueryResult .fu-item .fu-date{flex:0 0 auto;min-width:74px;font-size:11px;letter-spacing:-.2px;white-space:nowrap;}
@@ -1518,6 +1591,10 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
       <div class="memo-head">
         <span class="memo-title">📝 备忘</span>
         <span class="memo-cnt" id="home-memo-cnt"></span>
+        <span class="memo-acts">
+          <button class="memo-act press" onclick="memoOpenCalendar()" title="备忘日历">📅</button>
+          <button class="memo-act press" onclick="memoOpenSearch()" title="搜索备忘">🔍</button>
+        </span>
       </div>
       <div class="memo-row">
         <input class="input" id="home-memo-input" placeholder="快速记一条备忘…" autocomplete="off" onkeydown="if(event.key==='Enter')addMemo()">
@@ -1554,18 +1631,6 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     <!-- 页脚版本号（自然流内，滚动到底可见；文字由 renderHome 从 APP_VERSION 渲染） -->
     <div class="home-version" id="home-version"></div>
 
-    <!-- 备忘点击放大弹窗（v4.3.0：二次编辑内容，只改文本不改创建时间） -->
-    <div class="memo-modal-mask" id="memoEditMask" style="display:none;" onclick="if(event.target===this)memoCloseEdit()">
-      <div class="memo-modal">
-        <div class="mh"><h3>📝 编辑备忘</h3><button class="mdel press" onclick="memoCloseEdit()">✕</button></div>
-        <textarea id="memoEditText" placeholder="备忘内容…"></textarea>
-        <div class="memo-edit-time" id="memoEditTime"></div>
-        <div style="display:flex;gap:10px;margin-top:12px;">
-          <button class="btn btn-primary press" style="flex:1;" onclick="memoSaveEdit()">保存修改</button>
-          <button class="btn btn-danger press" style="flex:1;" onclick="memoDeleteEdit()">删除</button>
-        </div>
-      </div>
-    </div>
     <!-- v5.4.2：海底气泡「前层」——浮在卡片上方，形成前后穿插的景深 -->
     <div class="bubble-field front" id="bubbleFront" aria-hidden="true"></div>
   </section>
@@ -2268,6 +2333,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
             </div>
             <div class="lg-cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
             <div class="lg-cal-grid" id="fuCalGrid"></div>
+            <!-- v5.7.2：点击某天后展示「当天全部油费明细 + 当天统计」 -->
+            <div class="fu-cal-day" id="fuCalDay"></div>
           </div>
 
           <!-- 日志查询 -->
@@ -2708,6 +2775,126 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   <div id="toast"></div>
 </div>
 
+<!-- ============ v5.7.2：明细「放大查看 + 二次编辑」通用弹窗（备忘录 / 油费 / 记账 共用同一组件） ============
+     置于 body 顶层（.screen 之外的固定层）→ 任意页面都能打开；默认 display:none，由 JS 切为 flex。 -->
+<!-- 备忘录：详情 / 二次编辑 -->
+<div class="wb-mask" id="memoEditMask" style="display:none;" onclick="if(event.target===this)memoCloseEdit()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3 id="memoModalTitle">📝 备忘详情</h3><button class="wb-x press" onclick="memoCloseEdit()">✕</button></div>
+    <div id="memoViewBox">
+      <div class="wb-view-title" id="memoViewTitle"></div>
+      <div class="wb-view-body" id="memoViewBody"></div>
+      <div class="wb-time" id="memoViewTime"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="memoSwitchEdit()">✏️ 编辑</button>
+        <button class="btn btn-danger press" onclick="memoDeleteEdit()">删除</button>
+      </div>
+    </div>
+    <div id="memoFormBox" style="display:none;">
+      <input class="input" id="memoEditTitle" placeholder="标题（可留空）" maxlength="60" autocomplete="off">
+      <label class="wb-label">内容 *</label>
+      <textarea id="memoEditText" placeholder="备忘内容…"></textarea>
+      <label class="wb-label">日期</label>
+      <input class="input" type="date" id="memoEditDate">
+      <div class="wb-time" id="memoEditTime"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="memoSaveEdit()">保存</button>
+        <button class="btn wb-btn-cancel press" onclick="memoCloseEdit()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 备忘录：日历 -->
+<div class="wb-mask" id="memoCalMask" style="display:none;" onclick="if(event.target===this)memoCalClose()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3>📅 备忘日历</h3><button class="wb-x press" onclick="memoCalClose()">✕</button></div>
+    <div class="memo-cal-head">
+      <button class="press" onclick="memoCalShift(-1)">‹</button>
+      <span id="memoCalTitle"></span>
+      <button class="press" onclick="memoCalShift(1)">›</button>
+    </div>
+    <div class="memo-cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+    <div class="memo-cal-grid" id="memoCalGrid"></div>
+    <div class="memo-cal-day" id="memoCalDay"></div>
+  </div>
+</div>
+
+<!-- 备忘录：搜索 -->
+<div class="wb-mask" id="memoSearchMask" style="display:none;" onclick="if(event.target===this)memoSearchClose()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3>🔍 搜索备忘</h3><button class="wb-x press" onclick="memoSearchClose()">✕</button></div>
+    <input class="input" id="memoSearchInput" placeholder="输入关键词，搜索标题或内容…" autocomplete="off" oninput="memoRunSearch()">
+    <div class="memo-search-list" id="memoSearchList"></div>
+  </div>
+</div>
+
+<!-- 油费：详情 / 二次编辑 -->
+<div class="wb-mask" id="fuEditMask" style="display:none;" onclick="if(event.target===this)fuCloseEdit()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3 id="fuModalTitle">⛽ 油费详情</h3><button class="wb-x press" onclick="fuCloseEdit()">✕</button></div>
+    <div id="fuViewBox">
+      <div class="wb-view-title" id="fuViewTitle"></div>
+      <div class="wb-rows" id="fuViewRows"></div>
+      <div class="wb-time" id="fuViewTime"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="fuSwitchEdit()">✏️ 编辑</button>
+        <button class="btn btn-danger press" onclick="fuDeleteEdit()">删除</button>
+      </div>
+    </div>
+    <div id="fuFormBox" style="display:none;">
+      <label class="wb-label">加油日期 *</label>
+      <input class="input" type="date" id="fuEditDate">
+      <label class="wb-label">加油金额（元）*</label>
+      <input class="input" type="number" inputmode="decimal" step="0.01" min="0" id="fuEditAmount" placeholder="如 300">
+      <label class="wb-label">加油单价（元/升）</label>
+      <input class="input" type="number" inputmode="decimal" step="0.01" min="0" id="fuEditPrice" placeholder="如 7.65">
+      <label class="wb-label">加油体积（升）</label>
+      <input class="input" type="number" inputmode="decimal" step="0.01" min="0" id="fuEditVol" placeholder="如 39.2">
+      <label class="wb-label">备注</label>
+      <input class="input" id="fuEditNote" placeholder="如：中石化 92#">
+      <div class="wb-hint" id="fuEditHint">💡 填「金额＋单价」自动算体积；填「金额＋体积」自动算单价</div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="fuSaveEdit()">保存</button>
+        <button class="btn wb-btn-cancel press" onclick="fuCloseEdit()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 记账：详情 / 二次编辑 -->
+<div class="wb-mask" id="lgEditMask" style="display:none;" onclick="if(event.target===this)lgCloseEdit()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3 id="lgModalTitle">📒 记账详情</h3><button class="wb-x press" onclick="lgCloseEdit()">✕</button></div>
+    <div id="lgViewBox">
+      <div class="wb-view-title" id="lgViewTitle"></div>
+      <div class="wb-rows" id="lgViewRows"></div>
+      <div class="wb-time" id="lgViewTime"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="lgSwitchEdit()">✏️ 编辑</button>
+        <button class="btn btn-danger press" onclick="lgDeleteEdit()">删除</button>
+      </div>
+    </div>
+    <div id="lgFormBox" style="display:none;">
+      <label class="wb-label">日期 *</label>
+      <input class="input" type="date" id="lgEditDate">
+      <label class="wb-label">类型 *</label>
+      <select class="input" id="lgEditType"><option value="exp">支出</option><option value="inc">收入</option></select>
+      <label class="wb-label">金额（元）*</label>
+      <input class="input" type="number" inputmode="decimal" step="0.01" min="0" id="lgEditAmount" placeholder="0.00">
+      <label class="wb-label">分类</label>
+      <input class="input" id="lgEditCat" placeholder="如 餐饮 / 工资 / 交通">
+      <label class="wb-label">备注</label>
+      <input class="input" id="lgEditNote" placeholder="可选">
+      <div class="wb-hint" id="lgEditHint" style="display:none;"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="lgSaveEdit()">保存</button>
+        <button class="btn wb-btn-cancel press" onclick="lgCloseEdit()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    电子衣橱 · 原型交互逻辑（中文注释）
@@ -2741,7 +2928,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.6.7';
+const APP_VERSION = '5.7.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3393,19 +3580,38 @@ const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','scre
 let wbScreen = '';   // 当前屏 id（供安卓物理返回键判断）
 
 function showScreen(id){
+  if(wbScreen === id){
+    /* v5.7.1：已在目标屏 → 不重复切换 class（避免重放 .screen.active 的 fadeIn 动画造成闪屏） */
+    const cur = $(id);
+    if(cur && !cur.classList.contains('active')) cur.classList.add('active');
+    return;
+  }
   wbScreen = id;
   SCREENS.forEach(s=>$(s).classList.remove('active'));
   $(id).classList.add('active');
   // 回到顶部
   const el = $(id);
   requestAnimationFrame(()=>{ el.scrollTop = 0; });
+  /* v5.7.1：进入子屏 → 按需埋哨兵（拦截系统返回）；回到根屏 → 消费掉哨兵。
+     保证根屏的历史条目就是 App 自身加载的那一条，App 之外不存在「可回退条目」。 */
+  if(wbIsRootScreen()) wbConsumeTrapForRoot(); else wbEnsureTrap();
 }
 
-/* ---------- 安卓系统返回键 → 程序内返回（v5.1.13） ----------
-   浏览器默认：无历史条目时按返回会直接退出 App。这里压一个「哨兵」历史条目来拦截：
-   - 有弹窗(.overlay.show) → 先关弹窗（最符合直觉）；
-   - 非根屏(首页/登录页) → 执行程序内返回 doAppBack() 并补回哨兵（持续拦截，不退出）；
-   - 根屏 → 不再补哨兵 → 这次返回才真正退出 App。 */
+/* ---------- 安卓系统返回键 / 左右滑动返回 → 程序内返回（v5.1.13 引入；v5.7.1 修复移动端 Bug） ----------
+   原理：只有当「存在更早的历史条目」时，返回手势才产生历史回退。
+   旧实现在**每次页面加载时都无条件 pushState 一个哨兵**，于是根屏（首页/登录页）上也常年存在
+   一个属于「App 之外」的历史条目；iOS 从左向右滑动 / 安卓返回手势会真的回退到它：
+     · iOS：回退目标是本次文档加载时的条目（URL 相同）→ Safari 走整页导航/重载，此时 App 尚未
+            恢复登录态、页面没有任何 .screen.active → 表现为「首页直接变成空白页」；
+     · Android：同样整页重载 → 启动先显示静态的 screen-auth（.screen.active 的 fadeIn ×1），
+            登录态恢复后再切到 screen-home（fadeIn ×2）→ 表现为「连闪两次后恢复正常」。
+   修复：改为「按需埋哨兵、回到根屏即消费」——
+     · 切到子屏（非根屏）时埋一个哨兵；同一时刻最多一个（已有则不重复埋，防历史栈增长）。
+     · 用页面内返回按钮或返回手势回到根屏后，把哨兵消费掉（history.back() 同文档回退一格，
+       无视觉变化、不会离开 App）→ 根屏的历史条目即 App 自身加载的那一条，
+       App 之外没有「可回退条目」→ 左右滑动返回不再触发整页重载（不白屏、不闪屏）。
+     · 仍在子屏时补回哨兵继续拦截；弹窗(.overlay.show) 优先关闭的规则保留。
+   页面内返回按钮、浏览器前进/后退均不受影响。 */
 function doAppBack(){
   switch(wbScreen){
     case 'screen-upload': goBackFromUpload(); break;
@@ -3428,14 +3634,47 @@ function wbCloseTopOverlay(){
 function wbIsRootScreen(){
   return wbScreen === 'screen-home' || wbScreen === 'screen-auth' || !wbScreen;
 }
+/* 是否还有「App 内可返回目标」：不在根屏即算（弹窗归属其所在屏一起处理） */
+function wbHasBackTarget(){ return !wbIsRootScreen(); }
+/* 按需埋哨兵：仅在「还有 App 内可返回目标」且当前条目还不是哨兵时埋 → 同一时刻最多一个 */
+function wbEnsureTrap(){
+  try{
+    if(!wbHasBackTarget()) return;                       // 根屏不埋（消费即消失）
+    if(history.state && history.state.wb) return;        // 已有哨兵 → 不重复埋
+    wbPushTrap();
+  }catch(e){}
+}
+/* 回到根屏：消费为子屏埋下的哨兵（同文档内回退一格，无视觉变化，也不会离开 App） */
+let wbConsuming = false, wbConsumeTimer = 0;
+function wbConsumeTrapForRoot(){
+  try{
+    if(wbHasBackTarget()) return;
+    if(!(history.state && history.state.wb)) return;     // 当前条目不是哨兵 → 无需处理
+    if(wbConsuming) return;
+    wbConsuming = true;
+    clearTimeout(wbConsumeTimer);
+    wbConsumeTimer = setTimeout(function(){ wbConsuming = false; }, 300);   // 兜底：正常由紧随其后的 popstate 立即清除
+    history.back();
+  }catch(e){ wbConsuming = false; }
+}
 window.addEventListener('popstate', function(){
-  if(wbCloseTopOverlay()){ wbPushTrap(); return; }   // ① 先关弹窗
-  if(wbIsRootScreen()) return;                       // ② 根屏：放行（允许退出）
-  doAppBack();                                       // ③ 子屏：程序内返回
-  wbPushTrap();                                      //    补回哨兵，继续拦截
+  clearTimeout(wbConsumeTimer);
+  if(wbConsuming){ wbConsuming = false; return; }      // 本次回退是为消费哨兵而发起：清标记后不做任何渲染
+  if(wbCloseTopOverlay()){ wbEnsureTrap(); return; }   // ① 弹窗优先关闭
+  if(!wbIsRootScreen()) doAppBack();                   // ② 子屏 → 程序内返回
+  /* 幂等：重复 popstate 不会重复渲染——showScreen 对「已在目标屏」直接早退、
+     wbEnsureTrap/wbConsumeTrapForRoot 各自判重、doAppBack 仅在非根屏执行。 */
+  if(wbIsRootScreen()) wbConsumeTrapForRoot();         // ③ 已回根屏 → 消费残留哨兵（根屏不留 App 外条目）
+  else wbEnsureTrap();                                 //    仍在子屏 → 补回哨兵继续拦截
 });
-// 初始压入哨兵（刷新后 history.state 仍在，不会重复叠加）
-if(!history.state || !history.state.wb){ wbPushTrap(); }
+/* iOS 常从往返缓存(bfcache)恢复页面：重新对齐当前屏 DOM，避免恢复后白屏/状态错位 */
+window.addEventListener('pageshow', function(e){
+  if(!e.persisted) return;
+  try{
+    if(wbScreen) SCREENS.forEach(function(s){ const el = $(s); if(el) el.classList.toggle('active', s === wbScreen); });
+  }catch(x){}
+  if(wbIsRootScreen()) wbConsumeTrapForRoot(); else wbEnsureTrap();
+});
 
 /* ============ v5.1.17：左侧导航自定义排序（长按 → ▲▼ → 云端保存） ============
    数据 = profiles.nav_orders（jsonb，形如 {cl:[...],lg:[...],sp:[...],ck:[...]}）。
@@ -3927,9 +4166,33 @@ function loadMemoStore(){
 }
 function saveMemoStore(st){ state.memos = { memos: st.memos, deleted: st.deleted }; }
 function loadMemos(){ return loadMemoStore().memos; }
+/* ---------- v5.7.0 备忘公共工具（日期一律走本地时间，避免 UTC 解析错位） ---------- */
+function memoPad2(n){ return (n < 10 ? '0' : '') + n; }
+/* 时间戳 → 本地日期键 YYYY-MM-DD（与日历/搜索/编辑共用同一口径） */
+function memoDateKey(ts){
+  const d = new Date(Number(ts));
+  return d.getFullYear() + '-' + memoPad2(d.getMonth()+1) + '-' + memoPad2(d.getDate());
+}
+function memoTimeHM(ts){ const d = new Date(Number(ts)); return memoPad2(d.getHours()) + ':' + memoPad2(d.getMinutes()); }
+function memoShortTime(ts){ const d = new Date(Number(ts)); return (d.getMonth()+1) + '/' + d.getDate() + ' ' + memoTimeHM(ts); }
+/* YYYY-MM-DD → 本地时间戳；时分秒毫秒沿用 baseTs（新建用「现在」），确保同日多条不冲突且当天排序自然 */
+function memoDateToTs(dateStr, baseTs){
+  const p = String(dateStr || '').split('-').map(Number);
+  if(p.length !== 3 || !p[0] || !p[1] || !p[2]) return null;
+  const b = baseTs ? new Date(Number(baseTs)) : new Date();
+  return new Date(p[0], p[1]-1, p[2], b.getHours(), b.getMinutes(), b.getSeconds(), b.getMilliseconds()).getTime();
+}
+/* 备忘身份统一用 _id（UUID，稳定）：修复原代码用 at 做身份 + 字符串/数字比较导致的删除失效 */
+function memoById(id){ return loadMemos().find(m => m && String(m._id) === String(id)) || null; }
+/* 任何增/改/删后统一刷新：列表 +（若打开）日历 +（若打开）搜索结果 */
+function memoRefreshAll(){
+  try{ renderMemos(); }catch(e){}
+  try{ const c = $('memoCalMask'); if(c && c.style.display !== 'none') memoRenderCal(); }catch(e){}
+  try{ const s = $('memoSearchMask'); if(s && s.style.display !== 'none') memoRunSearch(); }catch(e){}
+}
 function renderMemos(){
   const list = $('home-memo-list'); if(!list) return;
-  const memos = loadMemos().sort((a,b)=>b.at-a.at);   // 最新在最上
+  const memos = loadMemos().slice().sort((a,b)=>b.at-a.at);   // 最新在最上
   const cnt = $('home-memo-cnt');
   if(cnt) cnt.textContent = memos.length ? memos.length + ' 条' : '';
   if(!memos.length){
@@ -3937,30 +4200,43 @@ function renderMemos(){
     return;
   }
   list.innerHTML = memos.map(m=>{
-    const d = new Date(m.at);
-    const t = (d.getMonth()+1)+'/'+d.getDate()+' ' + ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-    return '<div class="memo-item" data-at="' + m.at + '"><span class="mt">' + spEsc(m.t) + '</span><span class="mtime">' + t + '</span><button class="mdel press" data-at="' + m.at + '">✕</button></div>';
+    const id = String(m._id || '');
+    return '<div class="memo-item" data-id="' + id + '"><span class="mt">' +
+      (m.title ? '<span class="mtitle">' + spEsc(m.title) + '</span>' : '') +
+      spEsc(m.t) + '</span><span class="mtime">' + memoShortTime(m.at) + '</span>' +
+      '<button class="mdel press" data-id="' + id + '">✕</button></div>';
   }).join('');
-  list.querySelectorAll('.memo-item').forEach(c => c.onclick = () => memoOpenEdit(c.dataset.at));
-  list.querySelectorAll('.mdel').forEach(b => b.onclick = (e) => { e.stopPropagation(); delMemo(b.dataset.at); });
+  list.querySelectorAll('.memo-item').forEach(c => c.onclick = () => memoOpenDetail(c.dataset.id));
+  list.querySelectorAll('.mdel').forEach(b => b.onclick = (e) => { e.stopPropagation(); delMemo(b.dataset.id); });
+}
+/* 新建备忘（dateStr 决定所属日期；不传则用当下时间）→ 上行 Supabase（title/content/legacy_id=at） */
+function memoCreate(content, title, at, dateStr){
+  const ts = (dateStr ? memoDateToTs(dateStr, at || Date.now()) : null) || at || Date.now();
+  const mid = wbUuid();                              // Phase 14：前端 UUID = Supabase 主键
+  const m = { t: content, title: title || '', at: ts, _id: mid, _sbSaved: false };
+  const st = loadMemoStore(); st.memos.push(m); saveMemoStore(st);
+  sbSaveObj('memos', {_id: mid, id: mid}, {title: m.title, content: content, legacy_id: String(ts)});
+  return m;
 }
 function addMemo(){
   const inp = $('home-memo-input'); if(!inp) return;
   const v = inp.value.trim(); if(!v){ toast('先写点什么吧'); return; }
-  const at = Date.now();
-  const mid = wbUuid();                              // Phase 14：前端 UUID = Supabase 主键
-  const m = { t:v, at:at, _id: mid, _sbSaved: false };
-  const st = loadMemoStore(); st.memos.push(m); saveMemoStore(st);
-  sbSaveObj('memos', {_id: mid, id: mid}, {content: v, legacy_id: String(at)});
-  inp.value = ''; renderMemos(); toast('已记下 ✓');
+  memoCreate(v, '', Date.now());
+  inp.value = ''; memoRefreshAll(); toast('已记下 ✓');
 }
-function delMemo(at){
+/* 删除：修复原 `filter(m => m.at !== at)` 的类型不匹配（number !== string 恒真 → 明细删不掉） */
+function delMemo(id, skipConfirm){
   const st = loadMemoStore();
-  const target = st.memos.find(m => Number(m.at) === Number(at));
-  st.memos = st.memos.filter(m => m.at !== at);
-  if(!st.deleted.some(x => Number(x) === Number(at))) st.deleted.push(Number(at));
-  if(target && target._id) sbRemoveObj('memos', {_id: target._id, id: target._id});   // Phase 14：DAL 软删除
-  saveMemoStore(st); renderMemos(); toast('已删除');
+  const target = st.memos.find(m => String(m._id) === String(id));
+  if(!target){ renderMemos(); return; }
+  if(!skipConfirm && !confirm('删除这条备忘？')) return;
+  const at = Number(target.at);
+  st.memos = st.memos.filter(m => String(m._id) !== String(id));
+  if(at && !st.deleted.some(x => Number(x) === at)) st.deleted.push(at);
+  if(target._id) sbRemoveObj('memos', {_id: target._id, id: target._id});   // Phase 14：DAL 软删除
+  saveMemoStore(st);
+  if(memoEditId && String(memoEditId) === String(id)) memoCloseEdit();
+  memoRefreshAll(); toast('已删除');
 }
 /* ---------- 备忘云端同步（v4.2.3：合并式同步，多设备不互相覆盖） ----------
    数据文件 data/<用户>/memo.json = { updatedAt, memos:[{t,at}], deleted:[at...] }。
@@ -3998,34 +4274,202 @@ async function memoAutoSync(){
     await pushMemoData(state.user.name);          // ② 上传合并后的全量 → 云端恒为所有设备并集
   }catch(e){}                                     // 静默失败，不影响本地使用
 }
-/* ---------- 备忘编辑弹窗（v4.3.0：点击备忘条放大，只改内容不改创建时间） ---------- */
-let memoEditAt = null;
-function memoOpenEdit(at){
-  const m = loadMemoStore().memos.find(x => Number(x.at) === Number(at));
-  if(!m) return;
-  memoEditAt = Number(at);
-  $('memoEditText').value = m.t;
-  const d = new Date(m.at);
-  $('memoEditTime').textContent = '创建于 ' + d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
-  $('memoEditMask').style.display = 'flex';
+/* ================= v5.7.2：明细「放大查看 + 二次编辑」通用弹窗框架 =================
+   备忘录 / 油费记录 / 记账明细 共用同一套 DOM（.wb-mask / .wb-modal）与同一套显隐逻辑，
+   每个功能只需给出 4 个元素 id 的 cfg（mask / title / viewBox / formBox），避免出现多套操作方式。 */
+function wbModalBox(cfg, view){
+  const v = $(cfg.viewBox), f = $(cfg.formBox);
+  if(v) v.style.display = view ? 'block' : 'none';
+  if(f) f.style.display = view ? 'none' : 'block';
 }
-function memoCloseEdit(){ $('memoEditMask').style.display = 'none'; memoEditAt = null; }
-function memoSaveEdit(){
-  const v = $('memoEditText').value.trim();
-  if(!v){ toast('内容不能为空'); return; }
-  const st = loadMemoStore();
-  const m = st.memos.find(x => Number(x.at) === Number(memoEditAt));
+function wbModalShow(cfg, view, titleText){
+  const m = $(cfg.mask); if(!m) return;
+  const t = $(cfg.title); if(t && titleText != null) t.textContent = titleText;
+  wbModalBox(cfg, view);
+  m.style.display = 'flex';
+}
+function wbModalHide(cfg){ const m = $(cfg.mask); if(m) m.style.display = 'none'; }
+/* 通用「字段行」（详情弹窗用）：k=标签、v=值（已转义或受控 HTML）、cls=可选样式类 */
+function wbRowHTML(k, v, cls){
+  return '<div class="wb-row"><span class="k">' + spEsc(k) + '</span><span class="v' + (cls ? ' ' + cls : '') + '">' +
+    (v == null || v === '' ? '—' : v) + '</span></div>';
+}
+/* 通用：YYYY-MM-DD → 本地时间戳（禁用 new Date('YYYY-MM-DD') 的 UTC 解析，避免日期错位） */
+function wbDateToLocalTs(dateStr, hm){
+  const p = String(dateStr || '').split('-').map(Number);
+  if(p.length !== 3 || !p[0] || !p[1] || !p[2]) return null;
+  const t = String(hm || '00:00').split(':').map(Number);
+  return new Date(p[0], p[1] - 1, p[2], t[0] || 0, t[1] || 0, 0, 0).getTime();
+}
+
+/* ================= 备忘：详情 / 二次编辑（复用通用框架） =================
+   查看模式（放大展示全文）⇄ 编辑模式（标题 / 内容 / 日期）。
+   身份一律用 _id；日期改动 → 同步写 legacy_id（DB 侧即备忘的 at 语义）。 */
+const MEMO_MODAL = { mask:'memoEditMask', title:'memoModalTitle', viewBox:'memoViewBox', formBox:'memoFormBox' };
+let memoEditId = null;      // 当前弹窗对应的备忘 UUID
+function memoShowBox(view){
+  wbModalShow(MEMO_MODAL, view, view ? '📝 备忘详情' : (memoEditId ? '✏️ 编辑备忘' : '📝 新增备忘'));
+}
+function memoOpenDetail(id){
+  const m = memoById(id); if(!m) return;
+  memoEditId = m._id;
+  const tt = $('memoViewTitle'), bb = $('memoViewBody'), tm = $('memoViewTime');
+  if(tt){ tt.textContent = m.title || ''; tt.style.display = m.title ? 'block' : 'none'; }
+  if(bb) bb.textContent = m.t || '';
+  if(tm) tm.textContent = '记录于 ' + memoDateKey(m.at) + ' ' + memoTimeHM(m.at);
+  memoShowBox(true);
+}
+/* 新建（可为指定日期）：dateStr = 'YYYY-MM-DD' */
+function memoOpenNew(dateStr){
+  memoEditId = null;
+  if($('memoEditTitle')) $('memoEditTitle').value = '';
+  if($('memoEditText')) $('memoEditText').value = '';
+  if($('memoEditDate')) $('memoEditDate').value = dateStr || memoDateKey(Date.now());
+  if($('memoEditTime')) $('memoEditTime').textContent = '';
+  memoShowBox(false);
+  const f = $('memoEditText'); if(f) setTimeout(() => { try{ f.focus(); }catch(e){} }, 30);
+}
+/* 查看 → 编辑：把当前备忘字段填入表单 */
+function memoSwitchEdit(){
+  const m = memoEditId ? memoById(memoEditId) : null;
   if(m){
-    m.t = v; saveMemoStore(st);
-    if(m._id) sbSaveObj('memos', {_id: m._id, id: m._id, _sbSaved: m._sbSaved}, {content: v});   // Phase 14
+    if($('memoEditTitle')) $('memoEditTitle').value = m.title || '';
+    if($('memoEditText')) $('memoEditText').value = m.t || '';
+    if($('memoEditDate')) $('memoEditDate').value = memoDateKey(m.at);
+    if($('memoEditTime')) $('memoEditTime').textContent = '创建于 ' + memoDateKey(m.at) + ' ' + memoTimeHM(m.at);
   }
-  memoCloseEdit(); renderMemos(); toast('已修改 ✓');
+  memoShowBox(false);
+}
+/* 关闭并彻底清理状态（防「弹窗关闭后状态残留」） */
+function memoCloseEdit(){
+  wbModalHide(MEMO_MODAL);
+  memoEditId = null;
+  if($('memoEditTitle')) $('memoEditTitle').value = '';
+  if($('memoEditText')) $('memoEditText').value = '';
+  if($('memoEditDate')) $('memoEditDate').value = '';
+  if($('memoEditTime')) $('memoEditTime').textContent = '';
+}
+function memoSaveEdit(){
+  const v = ($('memoEditText') ? $('memoEditText').value : '').trim();
+  const title = ($('memoEditTitle') ? $('memoEditTitle').value : '').trim();
+  const dateStr = ($('memoEditDate') ? $('memoEditDate').value : '') || memoDateKey(Date.now());
+  if(!v){ toast('内容不能为空'); return; }
+  if(memoEditId){
+    const st = loadMemoStore();
+    const m = st.memos.find(x => String(x._id) === String(memoEditId));
+    if(!m){ memoCloseEdit(); memoRefreshAll(); return; }
+    const newAt = memoDateToTs(dateStr, m.at) || m.at;
+    m.title = title; m.t = v; m.at = newAt;
+    saveMemoStore(st);
+    sbSaveObj('memos', {_id: m._id, id: m._id, _sbSaved: m._sbSaved}, {title: title, content: v, legacy_id: String(newAt)});
+  }else{
+    memoCreate(v, title, Date.now(), dateStr);
+  }
+  memoCloseEdit(); memoRefreshAll(); toast('已保存 ✓');
 }
 function memoDeleteEdit(){
-  if(memoEditAt == null) return;
-  const at = memoEditAt;
+  const id = memoEditId;
+  if(!id) return;
+  if(!confirm('删除这条备忘？')) return;
   memoCloseEdit();
-  delMemo(at);
+  delMemo(id, true);   // 已确认，避免二次弹窗
+}
+
+/* ================= v5.7.0：备忘日历弹窗 ================= */
+let memoCalState = { y: 0, m: 0, sel: null };
+function memoOpenCalendar(){
+  const now = new Date();
+  if(!memoCalState.y){ memoCalState.y = now.getFullYear(); memoCalState.m = now.getMonth()+1; }
+  if(!memoCalState.sel) memoCalState.sel = memoDateKey(Date.now());
+  memoRenderCal();
+  $('memoCalMask').style.display = 'flex';
+}
+function memoCalClose(){
+  const mask = $('memoCalMask'); if(mask) mask.style.display = 'none';
+  memoCalState.sel = null;   // 清理选择，避免下次打开残留旧日期
+}
+function memoCalShift(delta){
+  let m = memoCalState.m + delta, y = memoCalState.y;
+  while(m < 1){ m += 12; y -= 1; }
+  while(m > 12){ m -= 12; y += 1; }
+  memoCalState.m = m; memoCalState.y = y;
+  memoRenderCal();
+}
+function memoCalSelect(dateStr){ memoCalState.sel = dateStr; memoRenderCal(); }
+function memoDayMemos(dateStr){
+  return loadMemos().filter(m => memoDateKey(m.at) === dateStr).sort((a,b)=>b.at-a.at);
+}
+function memoRenderCal(){
+  const grid = $('memoCalGrid'); if(!grid) return;
+  const y = memoCalState.y, m = memoCalState.m;
+  const startDow = new Date(y, m-1, 1).getDay();
+  const days = new Date(y, m, 0).getDate();
+  const cells = [];
+  for(let i = 0; i < startDow; i++) cells.push(null);
+  for(let d = 1; d <= days; d++) cells.push(d);
+  while(cells.length % 7) cells.push(null);
+  const counts = {};                                   // 每个日期的备忘条数（实时统计）
+  loadMemos().forEach(mm => { const k = memoDateKey(mm.at); counts[k] = (counts[k] || 0) + 1; });
+  const today = memoDateKey(Date.now());
+  grid.innerHTML = cells.map(d => {
+    if(d === null) return '<div class="memo-cal-cell empty"></div>';
+    const ds = y + '-' + memoPad2(m) + '-' + memoPad2(d);
+    const n = counts[ds] || 0;
+    return '<div class="memo-cal-cell' + (ds === today ? ' today' : '') + (ds === memoCalState.sel ? ' sel' : '') + (n ? ' has' : '') +
+      '" data-date="' + ds + '"><div class="cd">' + d + '</div>' + (n ? '<div class="cm">' + n + '</div>' : '') + '</div>';
+  }).join('');
+  const t = $('memoCalTitle'); if(t) t.textContent = y + '年' + m + '月';
+  grid.querySelectorAll('.memo-cal-cell[data-date]').forEach(c => c.onclick = () => memoCalSelect(c.dataset.date));
+  memoRenderCalDay();
+}
+function memoRenderCalDay(){
+  const box = $('memoCalDay'); if(!box) return;
+  const ds = memoCalState.sel || memoDateKey(Date.now());
+  const items = memoDayMemos(ds);
+  const head = '<div class="cdh"><b>' + ds + (items.length ? '（' + items.length + ' 条）' : '') + '</b>' +
+    '<button class="cadd press" data-new="' + ds + '">＋ 新增备忘</button></div>';
+  const list = items.length
+    ? '<div class="memo-cal-list">' + items.map(mm =>
+        '<div class="memo-cal-mini" data-id="' + String(mm._id || '') + '">' +
+        (mm.title ? '<div class="t">' + spEsc(mm.title) + '</div>' : '') +
+        '<div class="c">' + spEsc(mm.t) + '</div>' +
+        '<div class="mtime">' + memoTimeHM(mm.at) + '</div></div>').join('') + '</div>'
+    : '<div class="memo-cal-empty">这一天还没有备忘</div>';
+  box.innerHTML = head + list;
+  const add = box.querySelector('.cadd');
+  if(add) add.onclick = () => memoOpenNew(add.dataset.new);
+  box.querySelectorAll('.memo-cal-mini').forEach(x => x.onclick = () => memoOpenDetail(x.dataset.id));
+}
+
+/* ================= v5.7.0：备忘搜索弹窗 ================= */
+function memoOpenSearch(){
+  const mask = $('memoSearchMask'); if(mask) mask.style.display = 'flex';
+  const inp = $('memoSearchInput'); if(inp){ inp.value = ''; setTimeout(() => { try{ inp.focus(); }catch(e){} }, 30); }
+  memoRunSearch();
+}
+function memoSearchClose(){
+  const mask = $('memoSearchMask'); if(mask) mask.style.display = 'none';
+  const inp = $('memoSearchInput'); if(inp) inp.value = '';
+  const list = $('memoSearchList'); if(list) list.innerHTML = '';
+}
+/* 高亮用的正则片段：先做 HTML 转义（与正文口径一致），再转义正则元字符 */
+function memoSearchEsc(s){ return spEsc(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function memoRunSearch(){
+  const list = $('memoSearchList'); if(!list) return;
+  const q = (($('memoSearchInput') && $('memoSearchInput').value) || '').trim().toLowerCase();
+  if(!q){ list.innerHTML = '<div class="memo-search-empty">输入关键词，搜索标题或内容</div>'; return; }
+  const hits = loadMemos().slice().sort((a,b)=>b.at-a.at)
+    .filter(m => (((m.title || '') + ' ' + (m.t || '')).toLowerCase().indexOf(q) >= 0));
+  if(!hits.length){ list.innerHTML = '<div class="memo-search-empty">暂无匹配备忘录</div>'; return; }
+  const re = new RegExp('(' + memoSearchEsc(q) + ')', 'gi');
+  list.innerHTML = hits.map(m => {
+    const title = spEsc(m.title || ''), body = spEsc(m.t || '');
+    return '<div class="memo-search-item" data-id="' + String(m._id || '') + '">' +
+      (title ? '<div class="t">' + title.replace(re, '<mark>$1</mark>') + '</div>' : '') +
+      '<div class="c">' + body.replace(re, '<mark>$1</mark>') + '</div>' +
+      '<div class="mtime">' + memoDateKey(m.at) + ' ' + memoTimeHM(m.at) + '</div></div>';
+  }).join('');
+  list.querySelectorAll('.memo-search-item').forEach(x => x.onclick = () => memoOpenDetail(x.dataset.id));
 }
 
 /* ---------- 衣橱子页面（v4.1.0：左侧导航 概览/衣物/云端 + 右侧功能页，粉色 HelloKitty 风格） ---------- */
@@ -6246,11 +6690,22 @@ function lgSwitch(panel){
 
 /* ---------- 录入 ---------- */
 function lgOneRecHTML(r){
-  return '<div class="lg-rec ' + r.type + '"><span class="dot"></span>' +
-    '<div class="ri"><div class="t">' + lgEsc(r.cat || (r.type==='inc'?'收入':'支出')) + (r.note ? ' · ' + lgEsc(r.note) : '') + '</div>' +
+  const fuTag = r.fuelId ? '<span class="fu-tag">⛽</span>' : '';
+  return '<div class="lg-rec ' + r.type + '" data-lgid="' + r.id + '"><span class="dot"></span>' +
+    '<div class="ri"><div class="t">' + fuTag + lgEsc(r.cat || (r.type==='inc'?'收入':'支出')) + (r.note ? ' · ' + lgEsc(r.note) : '') + '</div>' +
     '<div class="s">' + (r.date||'') + ' · ' + (r.type==='inc'?'收入':'支出') + '</div></div>' +
     '<span class="amt">' + (r.type==='inc'?'+':'−') + lgFmtMoney(r.amount) + '</span>' +
     '<button class="del press" data-id="' + r.id + '">✕</button></div>';
+}
+/* v5.7.2：明细行 → 放大详情弹窗；✕ → 删除（阻止冒泡，避免误开详情） */
+function lgBindRecClicks(box){
+  if(!box) return;
+  box.querySelectorAll('.lg-rec[data-lgid]').forEach(function(el){
+    el.onclick = function(){ lgOpenDetail(el.getAttribute('data-lgid')); };
+  });
+  box.querySelectorAll('.del').forEach(function(b){
+    b.onclick = function(ev){ if(ev) ev.stopPropagation(); lgDeleteRec(b.dataset.id); };
+  });
 }
 function lgRenderDayChart(date){
   const box = $('lgDayChart'); if(!box) return;
@@ -6283,14 +6738,14 @@ function lgRenderRecent(){
   $('lgTodayTitle').textContent = '记账明细' + (all.length ? '（最近 ' + recs.length + ' / 共 ' + all.length + ' 笔）' : '');
   if(!recs.length){ list.innerHTML = '<div class="empty"><span class="empty-emoji">🐱</span><div class="empty-text">还没有任何记账记录</div></div>'; return; }
   list.innerHTML = recs.map(lgOneRecHTML).join('');
-  list.querySelectorAll('.del').forEach(b => b.onclick = () => lgDeleteRec(b.dataset.id));
+  lgBindRecClicks(list);
 }
 // 渲染日历面板「当日明细」列表（与点击某天后展示的列表一致），删除后即时刷新且停留在日历界面
 function lgRenderCalDay(){
   const dl = $('lgCalDayList'); if(!dl) return;
   const recs = (state.ledger.records||[]).filter(r => r.date === lgState.selDate);
   dl.innerHTML = recs.length ? recs.map(lgOneRecHTML).join('') : '<div class="empty"><span class="empty-emoji">🐱</span><div class="empty-text">这一天还没有记录</div></div>';
-  dl.querySelectorAll('.del').forEach(b => b.onclick = () => lgDeleteRec(b.dataset.id));
+  lgBindRecClicks(dl);
   const t = $('lgCalDayTitle');
   if(t) t.textContent = '当日明细 · ' + lgState.selDate + (recs.length ? '（' + recs.length + ' 笔）' : '');
 }
@@ -6303,6 +6758,107 @@ function lgDeleteRec(id){
   lgRenderDayChart(lgState.selDate);
   lgRenderCalendar(); lgRenderStats(); lgRenderOverview();
   toast('已删除');
+}
+/* v5.7.2：记账任何增 / 改 / 删后统一刷新各视图（明细 / 日历 / 统计 / 概览 / 当天占比） */
+function lgRefreshAll(){
+  try{ lgRenderRecent(); }catch(e){}
+  try{ lgRenderCalendar(); }catch(e){}
+  try{ lgRenderStats(); }catch(e){}
+  try{ lgRenderOverview(); }catch(e){}
+  try{ lgRenderCalDay(); }catch(e){}
+  try{ lgRenderDayChart(lgState.selDate); }catch(e){}
+}
+/* ---------- v5.7.2：记账明细「放大查看 + 二次编辑」（复用通用弹窗组件） ---------- */
+const LG_MODAL = { mask:'lgEditMask', title:'lgModalTitle', viewBox:'lgViewBox', formBox:'lgFormBox' };
+let lgEditId = null;
+function lgRecById(id){
+  const list = (state.ledger && state.ledger.records) ? state.ledger.records : [];
+  return list.find(function(r){ return String(r.id) === String(id); }) || null;
+}
+function lgOpenDetail(id){
+  const r = lgRecById(id); if(!r) return;
+  lgEditId = r.id;
+  const isInc = r.type === 'inc';
+  const t = $('lgViewTitle');
+  if(t) t.textContent = (isInc ? '+' : '−') + lgFmtMoney(r.amount) + (r.date ? ' · ' + r.date : '');
+  const rows = $('lgViewRows');
+  if(rows){
+    rows.innerHTML = [
+      wbRowHTML('日期', lgEsc(r.date || '')),
+      wbRowHTML('类型', isInc ? '收入' : '支出'),
+      wbRowHTML('金额', (isInc ? '+' : '−') + lgFmtMoney(r.amount), isInc ? 'inc' : 'exp'),
+      wbRowHTML('分类', lgEsc(r.cat || '')),
+      wbRowHTML('备注', lgEsc(r.note || '')),
+      r.fuelId ? wbRowHTML('来源', '⛽ 由油费记录同步生成') : ''
+    ].join('');
+  }
+  const tm = $('lgViewTime');
+  if(tm) tm.textContent = r.createdAt ? ('记录于 ' + String(r.createdAt).slice(0,10)) : '';
+  wbModalShow(LG_MODAL, true, '📒 记账详情');
+}
+function lgSwitchEdit(){
+  const r = lgEditId ? lgRecById(lgEditId) : null;
+  if(r){
+    if($('lgEditDate')) $('lgEditDate').value = r.date || lgTodayStr();
+    if($('lgEditType')) $('lgEditType').value = (r.type === 'inc' ? 'inc' : 'exp');
+    if($('lgEditAmount')) $('lgEditAmount').value = (r.amount == null ? '' : r.amount);
+    if($('lgEditCat')) $('lgEditCat').value = r.cat || '';
+    if($('lgEditNote')) $('lgEditNote').value = r.note || '';
+    const hint = $('lgEditHint');
+    if(hint){
+      if(r.fuelId){ hint.style.display = 'block'; hint.textContent = '⛽ 该笔由「油费」记录同步生成；保存后日期/金额/备注会同步回油费记录（单价与升数保持不变）。'; }
+      else { hint.style.display = 'none'; hint.textContent = ''; }
+    }
+  }
+  wbModalShow(LG_MODAL, false, '✏️ 编辑记账');
+}
+/* 关闭/取消：只收起弹窗并清理表单状态，绝不改动原数据 */
+function lgCloseEdit(){
+  wbModalHide(LG_MODAL);
+  lgEditId = null;
+  ['lgEditDate','lgEditAmount','lgEditCat','lgEditNote'].forEach(function(k){ const el = $(k); if(el) el.value = ''; });
+  const hint = $('lgEditHint'); if(hint) hint.style.display = 'none';
+}
+function lgSaveEdit(){
+  if(!state.user){ toast('请先登录'); return; }
+  const r = lgEditId ? lgRecById(lgEditId) : null;
+  if(!r){ lgCloseEdit(); return; }
+  const date = $('lgEditDate').value || lgTodayStr();
+  const type = ($('lgEditType').value === 'inc') ? 'inc' : 'exp';
+  const amount = parseFloat($('lgEditAmount').value);
+  const cat = ($('lgEditCat').value || '').trim();
+  const note = ($('lgEditNote').value || '').trim();
+  if(!(amount > 0)){ toast('请输入有效金额'); return; }
+  r.date = date;
+  r.type = type;
+  r.amount = Math.round(amount * 100) / 100;
+  r.cat = cat;
+  r.note = note;
+  sbSaveObj('ledger', { id:r.id, _sbSaved:r._sbSaved }, {record_date:r.date, type:r.type, amount:r.amount, category:r.cat, note:r.note});
+  /* 油费来源的记账：把 日期/金额/备注 同步回油费记录，保证「油费 ↔ 记账」两处一致 */
+  if(r.fuelId){
+    try{
+      const fr = (state.fuel && state.fuel.records ? state.fuel.records : []).find(function(x){ return String(x.id) === String(r.fuelId); });
+      if(fr){
+        fr.date = r.date; fr.amount = r.amount; fr.note = r.note;
+        sbSaveObj('fuel', { id:fr.id, _sbSaved:fr._sbSaved }, { record_date:fr.date, amount:fr.amount, unit_price:fr.price, volume:fr.vol, note:fr.note });
+      }
+    }catch(e){}
+  }
+  lgState.selDate = r.date;
+  lgCloseEdit();
+  lgRefreshAll();
+  try{ fuRefreshAll(); }catch(e){}   /* 油费各视图同步 */
+  toast('已保存 ✓');
+}
+function lgDeleteEdit(){
+  const id = lgEditId;
+  if(!id) return;
+  const r = lgRecById(id);
+  const msg = (r && r.fuelId) ? '删除这条记账记录？（「⛽ 油费」原始记录不会被删除）' : '删除这条记账记录？';
+  if(!confirm(msg)) return;
+  lgCloseEdit();
+  lgDeleteRec(id);
 }
 /* ===== v5.5.0：油费 ↔ 普通记账 联动 =====
    油费保存时同步写入一条「支出」记账记录（分类 ⛽ 油费），使概览/日历/统计/明细一并计入；
@@ -6346,6 +6902,22 @@ function lgRemoveFuelExpense(fuelId){
   state.ledger.records = state.ledger.records.filter(function(r){ return r.fuelId !== fuelId; });
   hits.forEach(function(r){ try{ sbRemoveObj('ledger', r); }catch(e){} });
   lgRefreshLedgerViews();
+}
+/* v5.7.2：油费记录被「二次编辑」后，把 日期 / 金额 / 备注 同步到由它生成的那条记账支出。
+   只做「油费 → 记账」单向同步（与 v5.5.0 的删除联动一致），单价与升数不受影响。 */
+function fuSyncLedgerExpense(fuelRec){
+  if(!fuelRec) return;
+  try{
+    const led = (state.ledger && state.ledger.records) ? state.ledger.records : [];
+    led.forEach(function(x){
+      if(String(x.fuelId) === String(fuelRec.id)){
+        x.date = fuelRec.date;
+        x.amount = fuelRec.amount;
+        x.note = fuelRec.note || '';
+        sbSaveObj('ledger', { id:x.id, _sbSaved:x._sbSaved }, {record_date:x.date, type:x.type, amount:x.amount, category:x.cat, note:x.note});
+      }
+    });
+  }catch(e){}
 }
 
 function lgSave(){
@@ -6435,22 +7007,32 @@ function fuRenderOverview(){
 
 /* 记录明细（按日期倒序；容器限高约两行，可上下滑动看历史） */
 function fuSorted(){ return fuRecs().slice().sort(function(a,b){ return String(b.date||'').localeCompare(String(a.date||'')); }); }
+/* v5.7.2：明细行统一模板（记录明细 / 日历当天明细 / 查询结果共用）；整行可点击 → 放大详情弹窗 */
+function fuItemHTML(r, withDel){
+  const sub = [(r.price != null ? r.price + ' 元/升' : ''), (r.vol != null ? r.vol + 'L' : ''), (r.note || '')].filter(Boolean).join(' · ');
+  return '<div class="fu-item" data-fuid="' + r.id + '">' +
+    '<div class="fu-date">' + (r.date || '') + '</div>' +
+    '<div class="fu-main"><div class="fu-amt">' + fuMoney(r.amount) + '</div>' + (sub ? '<div class="fu-sub">' + spEsc(sub) + '</div>' : '') + '</div>' +
+    (withDel ? '<button class="fu-del" data-fudel="' + r.id + '" title="删除">✕</button>' : '') +
+  '</div>';
+}
+/* 绑定：整行 → 详情弹窗；✕ → 删除（阻止冒泡，避免误开详情） */
+function fuBindItems(box){
+  if(!box) return;
+  box.querySelectorAll('.fu-item[data-fuid]').forEach(function(el){
+    el.onclick = function(){ fuOpenDetail(el.getAttribute('data-fuid')); };
+  });
+  box.querySelectorAll('[data-fudel]').forEach(function(b){
+    b.onclick = function(ev){ ev.stopPropagation(); fuDelete(b.getAttribute('data-fudel')); };
+  });
+}
 function fuRenderList(){
   const box = $('fuList'); if(!box) return;
   const list = fuSorted();
   $('fuListTitle').textContent = '记录明细' + (list.length ? '（' + list.length + '）' : '');
   if(!list.length){ box.innerHTML = '<div class="empty"><span class="empty-emoji">⛽</span><div class="empty-text">还没有加油记录</div></div>'; return; }
-  box.innerHTML = list.map(function(r){
-    const sub = [(r.price != null ? r.price + ' 元/升' : ''), (r.vol != null ? r.vol + 'L' : ''), (r.note || '')].filter(Boolean).join(' · ');
-    return '<div class="fu-item">' +
-      '<div class="fu-date">' + (r.date || '') + '</div>' +
-      '<div class="fu-main"><div class="fu-amt">' + fuMoney(r.amount) + '</div>' + (sub ? '<div class="fu-sub">' + spEsc(sub) + '</div>' : '') + '</div>' +
-      '<button class="fu-del" data-fudel="' + r.id + '" title="删除">✕</button>' +
-    '</div>';
-  }).join('');
-  box.querySelectorAll('[data-fudel]').forEach(function(b){
-    b.onclick = function(ev){ ev.stopPropagation(); fuDelete(b.getAttribute('data-fudel')); };
-  });
+  box.innerHTML = list.map(function(r){ return fuItemHTML(r, true); }).join('');
+  fuBindItems(box);
 }
 
 /* v5.4.7：金额 / 单价 / 体积 自动换算。
@@ -6495,7 +7077,8 @@ function fuSave(){
   sbSaveObj('fuel', rec, { record_date: rec.date, amount: rec.amount, unit_price: rec.price, volume: rec.vol, note: rec.note });
   lgAddFuelExpense(rec);   /* v5.5.0：同步生成一条记账「支出」，概览/日历/统计/明细一并计入 */
   $('fuAmount').value = ''; $('fuPrice').value = ''; $('fuVol').value = ''; $('fuNote').value = '';
-  fuRenderOverview(); fuRenderList(); fuRenderCalendar();
+  fuState.selDate = rec.date;
+  fuRefreshAll();
   toast('已保存加油记录 ✓（已同步到记账）');
 }
 
@@ -6509,7 +7092,7 @@ function fuDelete(id){
   recs.splice(i, 1);
   try{ sbRemoveObj('fuel', rec); }catch(e){}
   lgRemoveFuelExpense(id);   /* v5.5.0：联动删除由这笔油费生成的记账支出 */
-  fuRenderOverview(); fuRenderList(); fuRenderCalendar();
+  fuRefreshAll();
   toast('已删除（已同步到记账）');
 }
 
@@ -6532,12 +7115,132 @@ function fuRenderCalendar(){
   for(let d = 1; d <= days; d++){
     const ds = ym.y + '-' + fuPad(ym.m) + '-' + fuPad(d);
     const amt = fuDayTotal(ds);
-    const cls = 'lg-cell' + (ds === today ? ' fu-today' : '') + (amt > 0 ? ' fu-has' : '');
-    h += '<span class="' + cls + '" title="' + ds + (amt > 0 ? ' ' + fuMoney(amt) : '') + '">' +
+    const cls = 'lg-cell' + (ds === today ? ' fu-today' : '') + (amt > 0 ? ' fu-has' : '') + (ds === fuState.selDate ? ' sel' : '');
+    h += '<span class="' + cls + '" data-fuday="' + ds + '" title="' + ds + (amt > 0 ? ' ' + fuMoney(amt) : '') + '">' +
          '<span class="lg-d">' + d + '</span>' +
          (amt > 0 ? '<b class="fu-cal-amt">' + (Math.round(amt * 10) / 10) + '</b>' : '') + '</span>';
   }
   grid.innerHTML = h;
+  grid.querySelectorAll('[data-fuday]').forEach(function(c){
+    c.onclick = function(){ fuCalSelect(c.getAttribute('data-fuday')); };
+  });
+}
+/* v5.7.2：点击日历某天 → 记录选中日期并刷新「当天明细」 */
+function fuCalSelect(ds){ fuState.selDate = ds; fuRenderCalendar(); fuRenderCalDay(); }
+/* v5.7.2：当天全部油费明细 + 当天统计（无记录明确提示） */
+function fuRenderCalDay(){
+  const box = $('fuCalDay'); if(!box) return;
+  const ds = fuState.selDate;
+  if(!ds){ box.innerHTML = '<div class="fu-cal-empty">点击上方日期查看当天油费明细</div>'; return; }
+  const list = fuRecs().filter(function(r){ return r.date === ds; })
+    .sort(function(a,b){ return String(a.createdAt||'').localeCompare(String(b.createdAt||'')); });
+  const totalAmt = list.reduce(function(s,r){ return s + (Number(r.amount)||0); }, 0);
+  const totalVol = list.reduce(function(s,r){ return s + (Number(r.vol)||0); }, 0);
+  const avg = totalVol > 0 ? (totalAmt / totalVol) : 0;
+  const head = '<div class="cdh"><b>' + ds + (list.length ? '（' + list.length + ' 笔）' : '') + '</b>' +
+    (list.length ? '<span class="sum">合计 ' + fuMoney(totalAmt) + ' · ' + (Math.round(totalVol*10)/10) + 'L' +
+      (avg ? ' · 均价 ' + (Math.round(avg*100)/100) + ' 元/升' : '') + '</span>' : '') + '</div>';
+  if(!list.length){ box.innerHTML = head + '<div class="fu-cal-empty">当天暂无油费记录</div>'; return; }
+  box.innerHTML = head + '<div class="fu-cal-list">' + list.map(function(r){ return fuItemHTML(r, false); }).join('') + '</div>';
+  fuBindItems(box);
+}
+/* v5.7.2：任何增 / 改 / 删后统一刷新——
+   概览统计 / 记录明细 / 日历标记 / 当天明细 / 查询结果 / 以及联动的记账各视图。 */
+function fuRefreshAll(){
+  try{ fuRenderOverview(); }catch(e){}
+  try{ fuRenderList(); }catch(e){}
+  try{ fuRenderCalendar(); }catch(e){}
+  try{ fuRenderCalDay(); }catch(e){}
+  try{ const q = $('fuQueryResult'); if(q && q.innerHTML) fuRunQuery(); }catch(e){}
+  try{ lgRefreshLedgerViews(); }catch(e){}
+}
+
+/* ---------- v5.7.2：油费明细「放大查看 + 二次编辑」（复用通用弹窗组件） ---------- */
+const FU_MODAL = { mask:'fuEditMask', title:'fuModalTitle', viewBox:'fuViewBox', formBox:'fuFormBox' };
+let fuEditId = null;
+function fuGet(id){ return fuRecs().find(function(r){ return String(r.id) === String(id); }) || null; }
+function fuHm(rec){
+  const d = rec && rec.createdAt ? new Date(rec.createdAt) : null;
+  return (d && !isNaN(d.getTime())) ? (fuPad(d.getHours()) + ':' + fuPad(d.getMinutes())) : '';
+}
+function fuOpenDetail(id){
+  const r = fuGet(id); if(!r) return;
+  fuEditId = r.id;
+  const t = $('fuViewTitle');
+  if(t) t.textContent = fuMoney(r.amount) + (r.date ? ' · ' + r.date : '');
+  const rows = $('fuViewRows');
+  if(rows){
+    rows.innerHTML = [
+      wbRowHTML('日期', spEsc(r.date || '')),
+      wbRowHTML('金额', fuMoney(r.amount), 'exp'),
+      wbRowHTML('单价', r.price != null ? (r.price + ' 元/升') : ''),
+      wbRowHTML('油量', r.vol != null ? (r.vol + ' L') : ''),
+      wbRowHTML('备注', spEsc(r.note || ''))
+    ].join('');
+  }
+  const tm = $('fuViewTime');
+  if(tm) tm.textContent = r.createdAt ? ('记录于 ' + String(r.createdAt).slice(0,10) + (fuHm(r) ? ' ' + fuHm(r) : '')) : '';
+  wbModalShow(FU_MODAL, true, '⛽ 油费详情');
+}
+function fuSwitchEdit(){
+  const r = fuEditId ? fuGet(fuEditId) : null;
+  if(r){
+    if($('fuEditDate')) $('fuEditDate').value = r.date || fuTodayStr();
+    if($('fuEditAmount')) $('fuEditAmount').value = (r.amount == null ? '' : r.amount);
+    if($('fuEditPrice')) $('fuEditPrice').value = (r.price == null ? '' : r.price);
+    if($('fuEditVol')) $('fuEditVol').value = (r.vol == null ? '' : r.vol);
+    if($('fuEditNote')) $('fuEditNote').value = r.note || '';
+  }
+  wbModalShow(FU_MODAL, false, '✏️ 编辑油费');
+}
+/* 关闭/取消：只收起弹窗并清理表单状态，绝不改动原数据 */
+function fuCloseEdit(){
+  wbModalHide(FU_MODAL);
+  fuEditId = null;
+  ['fuEditDate','fuEditAmount','fuEditPrice','fuEditVol','fuEditNote'].forEach(function(k){ const el = $(k); if(el) el.value = ''; });
+}
+/* 编辑弹窗内的金额 / 单价 / 体积自动换算（与录入区同一套规则） */
+function fuEditAutoCalc(src){
+  const amtEl = $('fuEditAmount'), priceEl = $('fuEditPrice'), volEl = $('fuEditVol');
+  if(!amtEl || !priceEl || !volEl) return;
+  const amt = parseFloat(amtEl.value); if(!(amt > 0)) return;
+  const price = parseFloat(priceEl.value), vol = parseFloat(volEl.value);
+  const r2 = function(n){ return String(Math.round(n * 100) / 100); };
+  if(src === 'price'){ if(price > 0) volEl.value = r2(amt / price); }
+  else if(src === 'vol'){ if(vol > 0) priceEl.value = r2(amt / vol); }
+  else { if(price > 0) volEl.value = r2(amt / price); else if(vol > 0) priceEl.value = r2(amt / vol); }
+}
+function fuSaveEdit(){
+  if(!state.user){ toast('请先登录'); return; }
+  const r = fuEditId ? fuGet(fuEditId) : null;
+  if(!r){ fuCloseEdit(); return; }
+  const date = $('fuEditDate').value;
+  const amount = parseFloat($('fuEditAmount').value);
+  const price = $('fuEditPrice').value === '' ? null : parseFloat($('fuEditPrice').value);
+  const vol = $('fuEditVol').value === '' ? null : parseFloat($('fuEditVol').value);
+  const note = ($('fuEditNote').value || '').trim();
+  if(!date){ toast('请选择加油日期'); return; }
+  if(!(amount > 0)){ toast('请输入有效的加油金额'); return; }
+  if(price !== null && !(price >= 0)){ toast('单价无效'); return; }
+  if(vol !== null && !(vol >= 0)){ toast('体积无效'); return; }
+  r.date = date;
+  r.amount = Math.round(amount * 100) / 100;
+  r.price = price === null ? null : Math.round(price * 100) / 100;
+  r.vol = vol === null ? null : Math.round(vol * 100) / 100;
+  r.note = note;
+  sbSaveObj('fuel', { id:r.id, _sbSaved:r._sbSaved }, { record_date:r.date, amount:r.amount, unit_price:r.price, volume:r.vol, note:r.note });
+  fuSyncLedgerExpense(r);   /* 油费 → 记账：同一条支出的日期/金额/备注保持一致 */
+  fuState.selDate = r.date;
+  fuCloseEdit();
+  fuRefreshAll();
+  toast('已保存 ✓（已同步到记账）');
+}
+function fuDeleteEdit(){
+  const id = fuEditId;
+  if(!id) return;
+  if(!confirm('删除这条加油记录？')) return;
+  fuCloseEdit();
+  fuDelete(id);
 }
 
 /* 日志查询：某天至某天的明细统计 */
@@ -6560,12 +7263,9 @@ function fuRunQuery(){
     '<div class="box"><div class="k">平均单价</div><div class="v">' + (avgPrice ? (Math.round(avgPrice*100)/100) + ' 元/升' : '—') + '</div></div>' +
     '<div class="box"><div class="k">加油次数 / 天数</div><div class="v">' + list.length + ' 次 / ' + nDays + ' 天</div></div>' +
   '</div>';
-  h += '<div style="margin-top:10px;">' + list.map(function(r){
-    const sub = [(r.price != null ? r.price + ' 元/升' : ''), (r.vol != null ? r.vol + 'L' : ''), (r.note || '')].filter(Boolean).join(' · ');
-    return '<div class="fu-item"><div class="fu-date">' + r.date + '</div><div class="fu-main"><div class="fu-amt">' + fuMoney(r.amount) + '</div>' +
-      (sub ? '<div class="fu-sub">' + spEsc(sub) + '</div>' : '') + '</div></div>';
-  }).join('') + '</div>';
+  h += '<div style="margin-top:10px;">' + list.map(function(r){ return fuItemHTML(r, false); }).join('') + '</div>';
   box.innerHTML = h;
+  fuBindItems(box);   /* v5.7.2：查询结果同样可点击放大 + 二次编辑 */
 }
 
 /* 渲染入口（切到「油费」面板时调用） */
@@ -6574,13 +7274,18 @@ function fuRenderAll(){
   if(!$('fuDate').value) $('fuDate').value = fuTodayStr();
   if(!$('fuQStart').value) $('fuQStart').value = fuTodayStr();
   if(!$('fuQEnd').value) $('fuQEnd').value = fuTodayStr();
-  fuRenderOverview(); fuRenderList(); fuRenderCalendar();
+  if(!fuState.selDate) fuState.selDate = fuTodayStr();
+  fuRenderOverview(); fuRenderList(); fuRenderCalendar(); fuRenderCalDay();
   $('fuQueryResult').innerHTML = '';
   $('fuSave').onclick = fuSave;
   /* v5.4.7：金额 / 单价 / 体积 三者即时自动换算 */
   $('fuAmount').oninput = function(){ fuAutoCalc('amount'); };
   $('fuPrice').oninput = function(){ fuAutoCalc('price'); };
   $('fuVol').oninput = function(){ fuAutoCalc('vol'); };
+  /* v5.7.2：编辑弹窗内同样支持自动换算 */
+  if($('fuEditAmount')) $('fuEditAmount').oninput = function(){ fuEditAutoCalc('amount'); };
+  if($('fuEditPrice')) $('fuEditPrice').oninput = function(){ fuEditAutoCalc('price'); };
+  if($('fuEditVol')) $('fuEditVol').oninput = function(){ fuEditAutoCalc('vol'); };
   $('fuCalPrev').onclick = function(){ const ym = fuState.calYM; ym.m--; if(ym.m < 1){ ym.m = 12; ym.y--; } fuRenderCalendar(); };
   $('fuCalNext').onclick = function(){ const ym = fuState.calYM; ym.m++; if(ym.m > 12){ ym.m = 1; ym.y++; } fuRenderCalendar(); };
   $('fuQueryBtn').onclick = fuRunQuery;
@@ -6623,7 +7328,7 @@ function lgRenderCalendar(){
     const dl = $('lgCalDayList');
     if(dl){
       dl.innerHTML = recs.length ? recs.map(lgOneRecHTML).join('') : '<div class="empty"><span class="empty-emoji">🐱</span><div class="empty-text">这一天还没有记录</div></div>';
-      dl.querySelectorAll('.del').forEach(b => b.onclick = () => lgDeleteRec(b.dataset.id));
+      lgBindRecClicks(dl);
     }
     lgRenderDayChart(c.dataset.date);
   });
@@ -7285,21 +7990,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.6.7"></script>
-<script src="./js/data/supabase.js?v=5.6.7"></script>
+<script src="./js/config.js?v=5.7.2"></script>
+<script src="./js/data/supabase.js?v=5.7.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.6.7"></script>
-<script src="./js/data/query.js?v=5.6.7"></script>
-<script src="./js/auth/session.js?v=5.6.7"></script>
-<script src="./js/data/groups.js?v=5.6.7"></script>
-<script src="./js/data/clothgroups.js?v=5.6.7"></script>
-<script src="./js/data/clothes.js?v=5.6.7"></script>
-<script src="./js/data/modules.js?v=5.6.7"></script>
-<script src="./js/data/index.js?v=5.6.7"></script>
-<script src="./js/storage/paths.js?v=5.6.7"></script>
-<script src="./js/storage/images.js?v=5.6.7"></script>
-<script src="./js/storage/index.js?v=5.6.7"></script>
-<script src="./js/auth/index.js?v=5.6.7"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.6.7"></script>
+<script src="./js/data/errors.js?v=5.7.2"></script>
+<script src="./js/data/query.js?v=5.7.2"></script>
+<script src="./js/auth/session.js?v=5.7.2"></script>
+<script src="./js/data/groups.js?v=5.7.2"></script>
+<script src="./js/data/clothgroups.js?v=5.7.2"></script>
+<script src="./js/data/clothes.js?v=5.7.2"></script>
+<script src="./js/data/modules.js?v=5.7.2"></script>
+<script src="./js/data/index.js?v=5.7.2"></script>
+<script src="./js/storage/paths.js?v=5.7.2"></script>
+<script src="./js/storage/images.js?v=5.7.2"></script>
+<script src="./js/storage/index.js?v=5.7.2"></script>
+<script src="./js/auth/index.js?v=5.7.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.7.2"></script>
 </body>
 </html>
