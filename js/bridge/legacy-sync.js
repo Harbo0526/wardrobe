@@ -118,7 +118,8 @@
     const MODULE_LOAD = [
       ['衣橱分组', 'groups'], ['衣物', 'clothes'], ['调酒材料', 'materials'], ['调酒配方', 'recipes'],
       ['配方明细', 'recipeItems'], ['记账', 'ledger'], ['记账预算', 'ledgerBudgets'],
-      ['睡眠', 'sleep'], ['备忘', 'memos'], ['油费', 'fuel'], ['公告', 'announcements']
+      ['睡眠', 'sleep'], ['备忘', 'memos'], ['油费', 'fuel'], ['公告', 'announcements'],
+      ['待办', 'todos']   /* v5.9.2：待办清单（独立模块；按模块容错，缺失/失败不影响其它模块） */
     ];
     const failedModules = [];
     const res = await Promise.all(MODULE_LOAD.map(function (m) {
@@ -141,7 +142,7 @@
       console.warn('[云端加载] ' + m);
       toast(m);
     }
-    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9], ann = res[10];
+    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9], ann = res[10], tdo = res[11];
 
     /* 分组（id 即 UUID，旧 UI 的内联调用点已加引号适配） */
     state.groups = gl.map(function (x) {
@@ -227,6 +228,28 @@
     state.announcements.sort(function (a, b) {
       return String(b.at || '').localeCompare(String(a.at || ''));
     });
+
+    /* v5.9.2 待办清单（独立模块）：type='daily'|'temporary'、business_date=每日待办业务日期、
+       done/done_at=完成状态与时间；提醒字段 reminder_at/reminder_status 由前端写、
+       reminder_sent_at 由服务端回写（前端只读）。 */
+    state.todos = {
+      records: (tdo || []).map(function (x) {
+        return {
+          id: x.id,
+          type: x.type || 'temporary',
+          content: x.content || '',
+          businessDate: x.business_date || null,
+          done: !!x.done,
+          doneAt: x.done_at || null,
+          reminderAt: x.reminder_at || null,
+          reminderStatus: x.reminder_status || 'none',
+          reminderSentAt: x.reminder_sent_at || null,
+          createdAt: x.created_at || '',
+          _sbSaved: true
+        };
+      }),
+      deleted: []
+    };
 
     /* 会话隔离：加载耗时较长，完成时若已切换用户则丢弃整批结果（不写 state / 不渲染 / 不补图） */
     if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;

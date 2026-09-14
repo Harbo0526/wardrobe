@@ -510,6 +510,31 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .memo-search-item .c{font-size:12.5px;color:var(--ink);line-height:1.45;margin-top:2px;word-break:break-all;}
 .memo-search-item .mtime{font-size:10.5px;color:var(--ink-faint);margin-top:3px;}
 .memo-search-item mark{background:#ffe08a;color:#8a4b00;border-radius:3px;padding:0 1px;}
+
+/* ============ 待办清单（v5.9.2 独立模块）============
+   仅用既有语义/组件令牌着色 → 「活力卡通」「极简简约」两套主题自动适配，不新增第三套色系。
+   列表固定约 3 行高、区域内部独立滚动；文字 min-width:0 + 省略号 → 绝不错位、绝不撑破卡片。 */
+.todo-card{margin:0 16px 12px;}
+.todo-sec + .todo-sec{margin-top:12px;padding-top:12px;border-top:1px dashed var(--t-divider);}
+.todo-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.todo-title{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;}
+.todo-cnt{font-size:11.5px;font-weight:700;color:var(--ink-faint);white-space:nowrap;}
+.todo-add{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:17px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
+.todo-add:active{filter:brightness(.94);}
+.todo-list{max-height:132px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.todo-item{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--t-divider);}
+.todo-item:last-child{border-bottom:none;}
+.todo-ck{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:1.6px solid var(--primary);background:transparent;color:var(--primary-deep);font-size:12px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.todo-item.done .todo-ck{background:var(--primary);color:#fff;border-color:var(--primary);}
+.todo-tx{flex:1;min-width:0;font-size:13px;color:var(--ink);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.todo-item.done .todo-tx{color:var(--ink-faint);text-decoration:line-through;}
+/* 提醒铃铛：仅「已设提醒」的行显示（未设提醒的行保持 ⭕ 内容 ✏ 三段式，不增加视觉噪音） */
+.todo-bell{flex:0 0 auto;font-size:11px;line-height:1;opacity:.4;}
+.todo-bell.on{opacity:.95;}
+.todo-ed{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--group-bg);color:var(--ink-sub);font-size:12px;display:flex;align-items:center;justify-content:center;border:none;padding:0;}
+.todo-ed:active{background:var(--primary-soft);}
+.todo-day{font-size:11px;font-weight:700;color:var(--ink-faint);padding:6px 0 1px;}
+.todo-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:10px 0;}
 .memo-search-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:14px 0;}
 .cloth-card{
   background:var(--card);
@@ -1238,6 +1263,24 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .lg-zoom-close{width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,.05);color:#666;font-size:15px;flex:0 0 auto;}
 .lg-zoom-body{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;}
 .lg-zoom-body svg{display:block;height:auto;}
+/* ===== v5.10.0 账本（支出构成）：只用既有主题令牌 → 「活力卡通」「极简简约」自动适配 ===== */
+/* v5.10.2 参考稿布局：金额卡 / 图表卡 / 每类一张明细卡 / 底部小提示 */
+.book-money{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.book-money .bm{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:12px 14px;min-width:0;}
+.book-money .bm .t{font-size:12px;color:var(--ink-sub);}
+.book-money .bm .v{font-size:22px;font-weight:800;margin-top:6px;color:var(--ink);overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+.book-money .bm.inc .v{color:var(--lg-inc);}
+.book-money .bm.exp .v{color:var(--lg-exp);}
+/* 支出分类：每类一张卡片，一行两列网格（移动端同样两列） */
+.book-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0;align-items:stretch;}
+.book-row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r-card);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card);min-width:0;}
+.book-row .bi{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;background:var(--primary-soft);}
+.book-row .bmid{flex:1 1 auto;min-width:0;}
+.book-row .bn{font-size:13px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.book-row .bv{font-size:13px;font-weight:800;color:var(--ink);margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.book-row .bp{flex:0 0 auto;align-self:flex-start;margin-top:1px;font-size:12px;color:var(--ink-sub);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.book-tip{margin-top:10px;background:var(--primary-soft);}
+.book-tip p{margin:0;font-size:12.5px;line-height:1.7;color:var(--ink-sub);}
 #screen-sleep .lg-daybars{display:flex;align-items:flex-end;gap:4px;height:84px;overflow-x:auto;padding:4px 0;}
 #screen-sleep .lg-daybar{flex:0 0 auto;width:16px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;cursor:pointer;}
 #screen-sleep .lg-daybar .bi{display:flex;align-items:flex-end;gap:1px;width:100%;height:64px;justify-content:center;}
@@ -1896,6 +1939,26 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
       <div class="memo-list" id="home-memo-list"></div>
     </div>
 
+    <!-- 待办清单（v5.9.2 独立模块：每日待办 / 临时待办；数据 state.todos，云端 public.todos） -->
+    <div class="card todo-card" id="todoCard">
+      <div class="todo-sec">
+        <div class="todo-head">
+          <span class="todo-title">📋 每日待办</span>
+          <span class="todo-cnt" id="todoDailyCnt"></span>
+          <button class="todo-add press" type="button" onclick="todoOpenNew('daily')" title="新增每日待办">＋</button>
+        </div>
+        <div class="todo-list" id="todoDailyList"></div>
+      </div>
+      <div class="todo-sec">
+        <div class="todo-head">
+          <span class="todo-title">📌 临时待办</span>
+          <span class="todo-cnt" id="todoTempCnt"></span>
+          <button class="todo-add press" type="button" onclick="todoOpenNew('temporary')" title="新增临时待办">＋</button>
+        </div>
+        <div class="todo-list" id="todoTempList"></div>
+      </div>
+    </div>
+
     <!-- 功能入口（v4.2.0：两列卡片网格，「我的」独占一行） -->
     <div class="sec-title">功能入口</div>
     <div class="home-groups" id="home-entries">
@@ -2390,6 +2453,7 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
         <button class="lg-nav" data-lg="entry"><span class="lg-emoji">✍️</span><span class="lg-label">录入</span></button>
         <button class="lg-nav" data-lg="calendar"><span class="lg-emoji">📅</span><span class="lg-label">日历</span></button>
         <button class="lg-nav" data-lg="stats"><span class="lg-emoji">📊</span><span class="lg-label">统计</span></button>
+        <button class="lg-nav" data-lg="book"><span class="lg-emoji">📒</span><span class="lg-label">账本</span></button>
         <button class="lg-nav" data-lg="query"><span class="lg-emoji">🔍</span><span class="lg-label">查询</span></button>
         <button class="lg-nav" data-lg="bak"><span class="lg-emoji">☁️</span><span class="lg-label">云端</span></button>
       </aside>
@@ -2525,6 +2589,27 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
           <div class="card" style="margin-top:10px;">
             <div class="ck-sec"><h3>📅 每日收支</h3></div>
             <div id="lgStatDays" class="lg-daybars"></div>
+          </div>
+        </div>
+
+        <!-- 账本（v5.10.1）：独立子页面（顶部导航 data-lg="book"）。
+             只读展示：仅从 state.ledger.records[] 聚合，不改动任何记账业务逻辑 -->
+        <div class="lg-panel" id="lgp-book">
+          <div class="lg-banner" data-title="📒 账本" data-sub="支出构成，心中有数">
+            <div class="lg-banner-row">
+              <div class="lg-banner-avatar"></div>
+              <div class="lg-banner-text"><h3>📒 账本</h3><p>支出构成，心中有数</p></div>
+              <div class="lg-banner-emojis"></div>
+            </div>
+          </div>
+          <div class="book-money">
+            <div class="bm inc"><div class="t">本月收入</div><div class="v" id="bookInc">¥0</div></div>
+            <div class="bm exp"><div class="t">本月支出</div><div class="v" id="bookExp">¥0</div></div>
+          </div>
+          <div class="book-list" id="bookList"></div>
+          <div class="card book-tip">
+            <div class="ck-sec"><h3>💡 小提示</h3></div>
+            <p>支出构成按「居住、购物、学习、餐饮、美妆、宠物 + 其他」七类汇总本月金额：分类取自你记账时填写的文字，未归入前六类的支出统一计入「其他」。每张卡片显示该类金额与占当月总支出比例。</p>
           </div>
         </div>
 
@@ -3151,6 +3236,33 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
   </div>
 </div>
 
+<!-- 待办：详情 / 二次编辑（v5.9.2；复用通用 .wb-* 弹窗框架 → 两套主题自动适配） -->
+<div class="wb-mask" id="todoEditMask" style="display:none;" onclick="if(event.target===this)todoCloseEdit()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3 id="todoModalTitle">待办详情</h3><button class="wb-x press" onclick="todoCloseEdit()">✕</button></div>
+    <div id="todoViewBox">
+      <div class="wb-view-body" id="todoViewBody"></div>
+      <div class="wb-rows" id="todoViewRows"></div>
+      <div class="wb-time" id="todoViewTime"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="todoSwitchEdit()">✏️ 编辑</button>
+        <button class="btn btn-danger press" onclick="todoDeleteEdit()">删除</button>
+      </div>
+    </div>
+    <div id="todoFormBox" style="display:none;">
+      <label class="wb-label">待办内容 *</label>
+      <textarea id="todoEditText" placeholder="要做什么…"></textarea>
+      <label class="wb-label">提醒时间（可选）</label>
+      <input class="input" type="datetime-local" id="todoEditRemind">
+      <div class="wb-hint" id="todoEditMeta"></div>
+      <div class="wb-btns">
+        <button class="btn btn-primary press" onclick="todoSaveEdit()">保存</button>
+        <button class="btn wb-btn-cancel press" onclick="todoCloseEdit()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 油费：详情 / 二次编辑 -->
 <div class="wb-mask" id="fuEditMask" style="display:none;" onclick="if(event.target===this)fuCloseEdit()">
   <div class="wb-modal">
@@ -3250,7 +3362,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.9.1';
+const APP_VERSION = '5.10.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -4040,9 +4152,9 @@ const NAV_META = {
     items:{ overview:{emoji:'🏠',label:'概览'}, list:{emoji:'👗',label:'衣物'}, bak:{emoji:'☁️',label:'云端'} }
   },
   lg: {
-    box:'lgSide', attr:'data-lg', fn:'lgSwitch', def:['overview','entry','calendar','stats','query','fuel','bak'],
+    box:'lgSide', attr:'data-lg', fn:'lgSwitch', def:['overview','entry','calendar','stats','book','query','fuel','bak'],
     items:{ overview:{emoji:'🏠',label:'概览'}, entry:{emoji:'✍️',label:'录入'}, calendar:{emoji:'📅',label:'日历'},
-            stats:{emoji:'📊',label:'统计'}, query:{emoji:'🔍',label:'查询'}, fuel:{emoji:'⛽',label:'油费'}, bak:{emoji:'☁️',label:'云端'} }
+            stats:{emoji:'📊',label:'统计'}, book:{emoji:'📒',label:'账本'}, query:{emoji:'🔍',label:'查询'}, fuel:{emoji:'⛽',label:'油费'}, bak:{emoji:'☁️',label:'云端'} }
   },
   sp: {
     box:'spSide', attr:'data-sp', fn:'spSwitch', def:['overview','entry','calendar','stats','bak'],
@@ -4391,6 +4503,7 @@ function renderHome(){
   loadQuoteLibrary();
   homeScatter();
   renderMemos();
+  todoRender();   /* v5.9.2：待办清单（独立模块；内部已 try/catch，不影响首页其它渲染） */
 
   // 页脚版本号（从 APP_VERSION 渲染，不写死在 HTML）
   var v = $('home-version');
@@ -7040,6 +7153,7 @@ function lgSwitch(panel){
   else if(panel === 'overview') lgRenderOverview();
   else if(panel === 'fuel') fuRenderAll();          /* v5.3.0：油费面板 */
   else if(panel === 'entry') lgRenderRecent();      /* v5.6.3：录入/明细面板切换也刷新明细列表（修复"只有保存后才显示"） */
+  else if(panel === 'book') lgRenderBook();         /* v5.10.1：账本独立子页面（切到该页即按当前数据渲染） */
 }
 
 /* ---------- 录入 ---------- */
@@ -7324,6 +7438,372 @@ function lgSyncLedgerCloud(){
   if(!state.user){ toast('请先登录'); return; }
   return sbLoadAll().then(() => { toast('记账已刷新云端数据 ✓'); }).catch(e => toast('刷新失败：' + (e && e.message ? e.message : '未知错误')));
 }
+
+/* =====================================================================
+   待办清单（v5.9.2 独立模块：每日待办 / 临时待办 ＋ 提醒时间）
+   ─────────────────────────────────────────────────────────────────────
+   数据：state.todos.records[] = {
+     id, type:'daily'|'temporary', content,
+     businessDate:'YYYY-MM-DD'|null,      // 仅每日待办：业务日期（每天 02:00 为切换点）
+     done:bool, doneAt:ISO|null,          // 完成状态 / 实际完成时间（取实际操作时刻）
+     reminderAt:ISO|null,                 // 提醒时间（本机时区）
+     reminderStatus:'none'|'pending'|'sent'|'failed'|'cancelled',
+     reminderSentAt:ISO|null,             // 服务端回写的实际投递时间（前端只读）
+     createdAt:ISO, _sbSaved:bool }
+   云端：public.todos（DAL 模块名 'todos'，见 js/data/index.js）
+
+   业务日期：每天 02:00 为切换点（02:00 前仍属前一天）——与系统自然日解耦。
+   提醒（Phase 1 只落库 + 预留接口，不真正投递）：
+     · 投递由「Supabase Edge Function + pg_cron」在服务端完成（见
+       supabase/functions/todo-reminder/ 与 supabase/todo-reminder-cron.sql），
+       因此**不依赖用户打开页面**；前端**不使用 setTimeout 等仅靠页面存活的方案**。
+     · 前端只做两件事：① 把提醒时间写进 reminder_at（reminder_status='pending'）；
+       ② 用户授权后把 Web Push 订阅端点上报到 push_subscriptions（接口见 WBReminders）。
+   本模块不改动备忘录 / 油费 / 记账 / 睡眠 / 衣橱等任何既有数据与逻辑。
+   ===================================================================== */
+const TODO_LABEL = { daily: '每日待办', temporary: '临时待办' };
+const TODO_REMIND_TEXT = { none: '', pending: '待提醒', sent: '已提醒', failed: '提醒失败', cancelled: '已取消提醒' };
+let todoEditId = null;        /* 当前弹窗对应的待办 UUID（null = 新增） */
+let todoEditType = 'daily';   /* 新增时归属的分区 */
+
+function todoPad2(n){ return (n < 10 ? '0' : '') + n; }
+/* 业务日期：每天 02:00 切换（02:00 前仍算前一天）→ 返回值即「当前业务日」 */
+function todoBizDate(ts){
+  const d = new Date(ts == null ? Date.now() : ts);
+  if(d.getHours() < 2) d.setDate(d.getDate() - 1);
+  return d.getFullYear() + '-' + todoPad2(d.getMonth()+1) + '-' + todoPad2(d.getDate());
+}
+/* ISO / 时间戳 → 'YYYY-MM-DD HH:MM'（本地时区，展示用） */
+function todoStamp(v){
+  if(v == null || v === '') return '';
+  const d = new Date(v);
+  if(isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + todoPad2(d.getMonth()+1) + '-' + todoPad2(d.getDate()) + ' ' +
+         todoPad2(d.getHours()) + ':' + todoPad2(d.getMinutes());
+}
+/* datetime-local 值（'YYYY-MM-DDTHH:MM'）→ ISO 字符串；空/非法 → '' */
+function todoLocalToIso(v){
+  if(!v) return '';
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? '' : d.toISOString();
+}
+/* ISO → datetime-local 值 */
+function todoIsoToLocal(iso){
+  if(!iso) return '';
+  const d = new Date(iso); if(isNaN(d.getTime())) return '';
+  return d.getFullYear() + '-' + todoPad2(d.getMonth()+1) + '-' + todoPad2(d.getDate()) + 'T' +
+         todoPad2(d.getHours()) + ':' + todoPad2(d.getMinutes());
+}
+/* 存储层：懒初始化（登录前 / 模块缺失时也能安全渲染） */
+function todoStore(){
+  if(!state.todos || typeof state.todos !== 'object' || !Array.isArray(state.todos.records)){
+    state.todos = { records: [], deleted: [] };
+  }
+  if(!Array.isArray(state.todos.deleted)) state.todos.deleted = [];
+  return state.todos;
+}
+function todoRecs(){ return todoStore().records; }
+function todoById(id){ return todoRecs().find(t => String(t.id) === String(id)) || null; }
+/* 展示态提醒状态：reminderSentAt 由服务端回写；已完成且未发送 → 视为已取消 */
+function todoRemindState(t){
+  if(!t || !t.reminderAt) return 'none';
+  if(t.reminderSentAt) return 'sent';
+  if(t.reminderStatus === 'failed') return 'failed';
+  if(t.done) return 'cancelled';
+  return 'pending';
+}
+/* 排序：未完成在前，同组按创建顺序（清单语义） */
+function todoCmp(a, b){
+  const d = (a.done ? 1 : 0) - (b.done ? 1 : 0);
+  if(d) return d;
+  return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+}
+function todoItemHTML(t){
+  const done = !!t.done;
+  const rs = todoRemindState(t);
+  const bell = (rs === 'none') ? '' :
+    '<span class="todo-bell' + (rs === 'pending' ? ' on' : '') + '" title="' +
+    spEsc('提醒 ' + todoStamp(t.reminderAt) + (TODO_REMIND_TEXT[rs] ? ' · ' + TODO_REMIND_TEXT[rs] : '')) + '">🔔</span>';
+  return '<div class="todo-item' + (done ? ' done' : '') + '" data-id="' + spEsc(String(t.id)) + '">' +
+    '<button class="todo-ck" type="button" data-ck="' + spEsc(String(t.id)) + '">' + (done ? '✓' : '') + '</button>' +
+    '<span class="todo-tx">' + spEsc(t.content || '') + '</span>' + bell +
+    '<button class="todo-ed" type="button" data-ed="' + spEsc(String(t.id)) + '">✏</button>' +
+  '</div>';
+}
+function todoEmptyHTML(){ return '<div class="todo-empty">还没有待办，点右上角 ＋ 添加</div>'; }
+/* 渲染两区（每次渲染后重绑事件，避免重复绑定） */
+function todoRender(){
+  try{
+    const biz = todoBizDate();
+    /* ---- ① 每日待办：今日业务日在前，历史按业务日期倒序分组（历史永久保留） ---- */
+    const dl = $('todoDailyList');
+    if(dl){
+      const byDate = {};
+      todoRecs().filter(t => t.type === 'daily').forEach(t => {
+        const k = t.businessDate || '';
+        (byDate[k] = byDate[k] || []).push(t);
+      });
+      const dates = Object.keys(byDate).sort((a, b) => String(b).localeCompare(String(a)));   /* 新日期在前 */
+      let html = '';
+      if(!dates.length){
+        html = todoEmptyHTML();
+      }else{
+        if(!byDate[biz]) html += '<div class="todo-empty">今日暂无待办，点 ＋ 添加</div>';
+        dates.forEach(dt => {
+          if(dt) html += '<div class="todo-day">' + spEsc(dt + (dt === biz ? ' · 今天' : '')) + '</div>';
+          html += byDate[dt].slice().sort(todoCmp).map(todoItemHTML).join('');
+        });
+      }
+      dl.innerHTML = html;
+      const today = byDate[biz] || [];
+      const c = $('todoDailyCnt');
+      if(c) c.textContent = today.length ? '（' + today.filter(t => t.done).length + '/' + today.length + '）' : '';
+    }
+    /* ---- ② 临时待办：不随业务日切换，长期保留 ---- */
+    const tl = $('todoTempList');
+    if(tl){
+      const all = todoRecs().filter(t => t.type === 'temporary');
+      tl.innerHTML = all.length ? all.slice().sort(todoCmp).map(todoItemHTML).join('') : todoEmptyHTML();
+      const c2 = $('todoTempCnt');
+      if(c2) c2.textContent = all.length ? '（' + all.filter(t => t.done).length + '/' + all.length + '）' : '';
+    }
+    /* ---- 事件绑定 ---- */
+    [dl, tl].forEach(box => {
+      if(!box) return;
+      box.querySelectorAll('[data-ck]').forEach(b => { b.onclick = function(e){ e.stopPropagation(); todoToggle(this.dataset.ck); }; });
+      box.querySelectorAll('[data-ed]').forEach(b => { b.onclick = function(e){ e.stopPropagation(); todoOpenDetail(this.dataset.ed); }; });
+    });
+  }catch(e){ console.error('todoRender 异常：', e); }
+}
+/* 新建：每日待办自动挂当前业务日期；提醒时间可选 */
+function todoCreate(type, content, remindIso){
+  const isTemp = (type === 'temporary');
+  const t = {
+    id: wbUuid(),
+    type: isTemp ? 'temporary' : 'daily',
+    content: content,
+    businessDate: isTemp ? null : todoBizDate(),
+    done: false, doneAt: null,
+    reminderAt: remindIso || null,
+    reminderStatus: remindIso ? 'pending' : 'none',
+    reminderSentAt: null,
+    createdAt: new Date().toISOString(),
+    _sbSaved: false
+  };
+  todoRecs().push(t);
+  sbSaveObj('todos', t, {
+    type: t.type, content: t.content, business_date: t.businessDate,
+    done: false, done_at: null, reminder_at: t.reminderAt, reminder_status: t.reminderStatus
+  });
+  return t;
+}
+/* 完成 / 取消完成（均二次确认）；完成时间取实际操作时刻 */
+function todoToggle(id){
+  const t = todoById(id); if(!t) return;
+  if(!t.done){
+    if(!confirm('标记为「已完成」？')) return;
+    const now = new Date().toISOString();
+    t.done = true; t.doneAt = now;
+    if(t.reminderAt && !t.reminderSentAt) t.reminderStatus = 'cancelled';   /* 已完成 → 服务端不再投递 */
+    sbSaveObj('todos', t, { done: true, done_at: now, reminder_status: t.reminderStatus });
+    toast('已完成 ✓');
+  }else{
+    if(!confirm('取消完成，恢复为「未完成」？')) return;
+    t.done = false; t.doneAt = null;
+    if(t.reminderAt && !t.reminderSentAt) t.reminderStatus = 'pending';     /* 复原 → 重新排队等待投递 */
+    sbSaveObj('todos', t, { done: false, done_at: null, reminder_status: t.reminderStatus });
+    toast('已取消完成');
+  }
+  todoRender();
+}
+/* ---------- 详情 / 编辑弹窗（复用通用 .wb-* 框架） ---------- */
+const TODO_MODAL = { mask:'todoEditMask', title:'todoModalTitle', viewBox:'todoViewBox', formBox:'todoFormBox' };
+function todoShowBox(view){
+  const title = view ? '待办详情'
+    : (todoEditId ? '✏️ 编辑待办' : ('＋ 新增' + (TODO_LABEL[todoEditType] || '待办')));
+  wbModalShow(TODO_MODAL, view, title);
+}
+function todoEditMetaHint(){
+  const el = $('todoEditMeta'); if(!el) return;
+  if(todoEditType === 'daily'){
+    el.textContent = '归入「每日待办」· 业务日期 ' + todoBizDate() + '（每天 02:00 切换，02:00 前算前一天）';
+  }else{
+    el.textContent = '归入「临时待办」· 不随每日初始化清空，长期保留';
+  }
+}
+function todoOpenNew(type){
+  todoEditId = null;
+  todoEditType = (type === 'temporary') ? 'temporary' : 'daily';
+  if($('todoEditText')) $('todoEditText').value = '';
+  if($('todoEditRemind')) $('todoEditRemind').value = '';
+  todoEditMetaHint();
+  todoShowBox(false);
+  const f = $('todoEditText');
+  if(f){ try{ f.focus(); }catch(e){} }   /* 同步聚焦即可，无需 setTimeout */
+}
+function todoOpenDetail(id){
+  const t = todoById(id); if(!t) return;
+  todoEditId = t.id; todoEditType = t.type;
+  const b = $('todoViewBody'); if(b) b.textContent = t.content || '';
+  const rows = $('todoViewRows');
+  if(rows){
+    const rs = todoRemindState(t);
+    let html = wbRowHTML('类型', TODO_LABEL[t.type] || t.type);
+    if(t.type === 'daily') html += wbRowHTML('归属日期', spEsc(t.businessDate || '—'));
+    html += wbRowHTML('创建时间', spEsc(todoStamp(t.createdAt) || '—'));
+    if(t.done){
+      html += wbRowHTML('完成状态', '✓ 已完成', 'inc');
+      html += wbRowHTML('完成时间', spEsc(todoStamp(t.doneAt) || '—'));
+    }else{
+      html += wbRowHTML('完成状态', '未完成');
+    }
+    if(t.reminderAt){
+      html += wbRowHTML('提醒时间', spEsc(todoStamp(t.reminderAt)));
+      html += wbRowHTML('提醒状态', spEsc(TODO_REMIND_TEXT[rs] || rs));
+      if(t.reminderSentAt) html += wbRowHTML('实际提醒于', spEsc(todoStamp(t.reminderSentAt)));
+    }else{
+      html += wbRowHTML('提醒', '未设置');
+    }
+    rows.innerHTML = html;
+  }
+  const tm = $('todoViewTime');
+  if(tm) tm.textContent = (t.done && t.doneAt) ? ('完成于 ' + todoStamp(t.doneAt)) : '';
+  todoShowBox(true);
+}
+function todoSwitchEdit(){
+  const t = todoEditId ? todoById(todoEditId) : null;
+  if(t){
+    if($('todoEditText')) $('todoEditText').value = t.content || '';
+    if($('todoEditRemind')) $('todoEditRemind').value = todoIsoToLocal(t.reminderAt);
+  }
+  todoEditMetaHint();
+  todoShowBox(false);
+}
+function todoCloseEdit(){
+  wbModalHide(TODO_MODAL);
+  todoEditId = null;
+  if($('todoEditText')) $('todoEditText').value = '';
+  if($('todoEditRemind')) $('todoEditRemind').value = '';
+  if($('todoEditMeta')) $('todoEditMeta').textContent = '';
+}
+function todoSaveEdit(){
+  const v = ($('todoEditText') ? $('todoEditText').value : '').trim();
+  if(!v){ toast('内容不能为空'); return; }
+  const remind = todoLocalToIso($('todoEditRemind') ? $('todoEditRemind').value : '');
+  if(todoEditId){
+    const t = todoById(todoEditId);
+    if(!t){ todoCloseEdit(); todoRender(); return; }
+    t.content = v;
+    /* 提醒时间有变 → 状态重置为待提醒并清掉旧的投递时间（服务端按新时间重新排队） */
+    if(String(t.reminderAt || '') !== String(remind || '')){
+      t.reminderAt = remind || null;
+      t.reminderStatus = remind ? 'pending' : 'none';
+      t.reminderSentAt = null;
+    }
+    sbSaveObj('todos', t, { content: t.content, reminder_at: t.reminderAt, reminder_status: t.reminderStatus });
+  }else{
+    todoCreate(todoEditType, v, remind);
+  }
+  todoCloseEdit(); todoRender(); toast('已保存 ✓');
+}
+function todoDelete(id, skipConfirm){
+  const st = todoStore();
+  const t = st.records.find(x => String(x.id) === String(id));
+  if(!t){ todoRender(); return; }
+  if(!skipConfirm && !confirm('删除这条待办？')) return;
+  st.records = st.records.filter(x => String(x.id) !== String(id));
+  sbRemoveObj('todos', t);                                     /* DAL 软删除 */
+  if(todoEditId && String(todoEditId) === String(id)) todoCloseEdit();
+  todoRender(); toast('已删除');
+}
+function todoDeleteEdit(){
+  const id = todoEditId; if(!id) return;
+  if(!confirm('删除这条待办？')) return;
+  todoCloseEdit();
+  todoDelete(id, true);                                        /* 已确认，避免二次弹窗 */
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   提醒投递通道：Web Push 预留接口（Phase 1 只提供接口，不真正订阅 / 投递）
+   Phase 2 启用（详见 supabase/functions/todo-reminder/README.md）：
+     ① supabase secrets set VAPID_PUBLIC_KEY=… VAPID_PRIVATE_KEY=… WEBPUSH_SUBJECT=mailto:…
+     ② 把 VAPID 公钥填进 js/config.js 的 WB_VAPID_PUBLIC_KEY
+     ③ 部署 Edge Function，并按 supabase/todo-reminder-cron.sql 建 pg_cron 任务（每分钟）
+   前端职责仅：申请通知权限 + 上报订阅端点；**到点投递完全在服务端**，不依赖页面存活。
+   ───────────────────────────────────────────────────────────────────── */
+const WBReminders = {
+  supported(){
+    return !!(typeof window !== 'undefined' && 'Notification' in window &&
+              'serviceWorker' in navigator && 'PushManager' in window);
+  },
+  permission(){ return (typeof Notification !== 'undefined') ? Notification.permission : 'unsupported'; },
+  vapidKey(){
+    try{ return (typeof WB_VAPID_PUBLIC_KEY === 'string') ? WB_VAPID_PUBLIC_KEY.trim() : ''; }catch(e){ return ''; }
+  },
+  enabled(){ return this.supported() && !!this.vapidKey(); },
+  /* base64url 的 VAPID 公钥 → Uint8Array（PushManager.subscribe 要求） */
+  _urlB64ToUint8(base64){
+    const pad = '='.repeat((4 - base64.length % 4) % 4);
+    const raw = atob((base64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+    const out = new Uint8Array(raw.length);
+    for(let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  },
+  async requestPermission(){
+    if(!this.supported()) return 'unsupported';
+    try{ return await Notification.requestPermission(); }catch(e){ return 'denied'; }
+  },
+  async currentSubscription(){
+    if(!this.supported()) return null;
+    try{ const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }
+    catch(e){ return null; }
+  },
+  /* 上报订阅（endpoint 唯一 → 已存在则更新密钥） */
+  async syncSubscription(sub){
+    if(!sub) return false;
+    const j = (typeof sub.toJSON === 'function') ? sub.toJSON() : {};
+    const keys = j.keys || {};
+    const endpoint = j.endpoint || sub.endpoint || '';
+    const payload = { endpoint: endpoint, p256dh: keys.p256dh || '', auth: keys.auth || '',
+                      user_agent: (navigator.userAgent || '').slice(0, 200) };
+    if(!payload.endpoint || !payload.p256dh || !payload.auth) return false;
+    try{
+      const D = window.WBData;
+      if(!D || !D.pushSubscriptions) return false;
+      const rows = await D.pushSubscriptions.list({ limit: 200 });
+      const hit = (rows || []).filter(r => r.endpoint === payload.endpoint)[0];
+      if(hit) await D.pushSubscriptions.update(hit.id, { p256dh: payload.p256dh, auth: payload.auth, user_agent: payload.user_agent });
+      else await D.pushSubscriptions.create(payload);
+      return true;
+    }catch(e){ return false; }
+  },
+  /* 订阅并上报（Phase 2 由用户在设置里主动触发） */
+  async subscribe(){
+    if(!this.enabled()) return { ok: false, reason: 'push-not-enabled' };
+    const perm = await this.requestPermission();
+    if(perm !== 'granted') return { ok: false, reason: perm };
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub){
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: this._urlB64ToUint8(this.vapidKey()) });
+      }
+      const ok = await this.syncSubscription(sub);
+      return { ok: ok, subscription: sub };
+    }catch(e){ return { ok: false, reason: (e && e.message) || 'subscribe-failed' }; }
+  },
+  async unsubscribe(){
+    const sub = await this.currentSubscription();
+    try{ if(sub) await sub.unsubscribe(); }catch(e){}
+    return true;
+  },
+  statusText(){
+    if(!this.supported()) return '当前浏览器不支持系统通知';
+    if(!this.vapidKey()) return '系统级提醒推送尚未启用（Phase 2）';
+    return '通知权限：' + this.permission();
+  }
+};
+window.WBReminders = WBReminders;
 
 /* =====================================================================
    油费模块（v5.3.0）：概览统计 / 记录加油 / 记录明细 / 日历统计 / 日志查询
@@ -7750,6 +8230,105 @@ function lgZoomStatChart(){
     svg.style.height = 'auto';
   }
   $('lgStatZoomModal').classList.add('show');
+}
+
+/* =====================================================================
+   账本（v5.10.0）：支出构成「只读展示」模块
+   ─────────────────────────────────────────────────────────────────────
+   只读边界：不修改 lgSave / lgRenderRecent / 日历 / 查询 / 二次编辑 / 删除 /
+   搜索 等任何既有记账逻辑，仅从 state.ledger.records[] 聚合后展示。
+   数据：{ id, date:'YYYY-MM-DD', type:'inc'|'exp', amount, cat, note, createdAt }
+     · 本月收入 = 当月 type==='inc' 的 amount 合计
+     · 本月支出 = 当月 type==='exp' 的 amount 合计
+     · 支出构成 = 当月支出按 cat 归入「固定六类 + 其他」（见 LG_BOOK_CATS）
+     分类字段说明：记账「分类」是**自由文本**输入（placeholder「如 餐饮 / 工资 / 交通」），
+     项目里并无固定分类枚举，因此这里用「关键词命中」把自由文本归入六类：
+      · 按 LG_BOOK_CATS 的声明顺序（= 图表从左到右的顺序）依次匹配，
+        一条记录命中第一个关键词即归入该类 → 确定性归类，绝不重复计数；
+      · 未命中任何关键词的支出（含分类为空）→ 全部兜入最后一类「其他」，
+        因此「支出构成」7 根柱子金额之和 = 本月支出总额（百分比合计 100%）。
+     ⇒ 需要增删关键词 / 别名，只改 LG_BOOK_CATS 一处即可。
+     ===================================================================== */
+     const LG_BOOK_CATS = [
+  { name: '居住', emoji: '🏠', color: '#D4A017', keys: ['居住','房租','租房','租金','房贷','水电','电费','水费','燃气','煤气','物业','家居','家具','家电','装修','宽带','网费','窗帘','床品','收纳','五金','维修'] },
+  { name: '购物', emoji: '🛍️', color: '#D07CB0', keys: ['购物','衣服','服饰','鞋','裤','裙','帽','包包','数码','电子','日用','超市','淘宝','京东','拼多多','商场','饰品'] },
+  { name: '学习', emoji: '📚', color: '#4E8FD0', keys: ['学习','书','培训','课程','教育','文具','学费','考试','报名','网课','资料'] },
+  { name: '餐饮', emoji: '🍜', color: '#F08A3C', keys: ['餐饮','吃','饭','外卖','美食','咖啡','奶茶','饮料','零食','早餐','午餐','午饭','晚餐','晚饭','夜宵','聚餐','食堂','水果','菜','饼','火锅','烧烤','汉堡','披萨','蛋糕','面包','粥','汤','米线','米粉','快餐','面馆','小吃','饭店','酒楼','烘焙'] },
+  { name: '美妆', emoji: '💄', color: '#B49BE0', keys: ['美妆','化妆','护肤','美容','口红','面膜','香水','洗发','沐浴','洗护','身体乳'] },
+  { name: '宠物', emoji: '🐱', color: '#5FA463', keys: ['宠物','猫','狗','猫粮','狗粮','猫砂','疫苗','驱虫','宠物医院'] },
+  /* v5.10.0 兜底类：rest:true → 不参与关键词匹配，承接所有未归类支出（含分类为空） */
+  { name: '其他', emoji: '🧾', color: '#8896A0', keys: [], rest: true }
+];
+/* 金额显示：整数略去小数、非整数保留两位（与设计稿「¥980 / ¥1280 / ¥0」一致） */
+function lgBookMoney(v){
+  const n = Math.round((Number(v) || 0) * 100) / 100;
+  return '¥' + (Number.isInteger(n) ? String(n) : n.toFixed(2));
+}
+/* 聚合当前视图月份（lgState.statYM 首次渲染即当前月）→ { inc, exp, cats[] } */
+function lgBookAgg(){
+  const d0 = new Date();
+  const ym = lgState.statYM || { y: d0.getFullYear(), m: d0.getMonth() + 1 };
+  const prefix = ym.y + '-' + lgPad(ym.m);
+  const REST_IDX = LG_BOOK_CATS.findIndex(function(c){ return !!c.rest; });   /* 「其他」下标 */
+  let inc = 0, exp = 0;
+  const sums = LG_BOOK_CATS.map(function(){ return 0; });
+  (state.ledger.records || []).forEach(function(r){
+    if(!r || !r.date || String(r.date).indexOf(prefix) !== 0) return;
+    const amt = Number(r.amount) || 0;
+    if(r.type === 'inc'){ inc += amt; return; }
+    if(r.type !== 'exp') return;
+    exp += amt;
+    const cat = String(r.cat || '').trim().toLowerCase();
+    let hit = -1;
+    if(cat){                                            /* 分类为空 → 直接进「其他」 */
+      for(let i = 0; i < LG_BOOK_CATS.length && hit < 0; i++){
+        if(LG_BOOK_CATS[i].rest) continue;              /* 「其他」不参与关键词匹配 */
+        const keys = LG_BOOK_CATS[i].keys;
+        for(let k = 0; k < keys.length; k++){
+          if(cat.indexOf(keys[k].toLowerCase()) !== -1){ hit = i; break; }   /* 命中第一个即归类 */
+        }
+      }
+    }
+    if(hit < 0) hit = REST_IDX;                         /* 未命中任何关键词 → 兜入「其他」 */
+    if(hit >= 0) sums[hit] += amt;
+  });
+  inc = Math.round(inc * 100) / 100;
+  exp = Math.round(exp * 100) / 100;
+  const cats = LG_BOOK_CATS.map(function(c, i){
+    const amount = Math.round(sums[i] * 100) / 100;
+    let pct = 0;
+    if(exp > 0){                                        /* 总支出为 0 → 一律 0.0，杜绝 NaN / Infinity */
+      const p = amount / exp * 100;
+      if(isFinite(p)) pct = Math.round(p * 10) / 10;
+    }
+    return { name: c.name, emoji: c.emoji, color: c.color, amount: amount, pct: pct };
+  });
+  return { inc: inc, exp: exp, cats: cats };
+}
+/* 右侧分类明细：每类一张独立卡片 =「彩色浅底图标块 + 分类名 / 金额两行 + 右侧占比」
+   图标块底色取该分类识别色的 15% 透明（c.color + '26'），与左侧柱色一一对应 */
+function lgBookListHTML(cats){
+  return cats.map(function(c){
+    return '<div class="book-row">' +
+      '<div class="bi" style="background:' + c.color + '26">' + c.emoji + '</div>' +
+      '<div class="bmid">' +
+        '<div class="bn">' + lgEsc(c.name) + '</div>' +
+        '<div class="bv">' + lgBookMoney(c.amount) + '</div>' +
+      '</div>' +
+      '<div class="bp">' + c.pct.toFixed(1) + '%</div>' +
+    '</div>';
+  }).join('');
+}
+/* 渲染入口：lgSwitch('book') 调用 → 切到账本页 / 新增 / 编辑 / 删除 / 云端数据到达后实时联动 */
+function lgRenderBook(){
+  try{
+    const agg = lgBookAgg();
+    const incEl = $('bookInc'), expEl = $('bookExp');
+    if(incEl) incEl.textContent = lgFmtMoney(agg.inc);
+    if(expEl) expEl.textContent = lgFmtMoney(agg.exp);
+    const list = $('bookList');
+    if(list) list.innerHTML = lgBookListHTML(agg.cats);
+  }catch(e){ console.error('lgRenderBook 异常：', e); }
 }
 
 /* ---------- 查询（柱状图 + 折线图） ---------- */
@@ -8392,21 +8971,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.9.1"></script>
-<script src="./js/data/supabase.js?v=5.9.1"></script>
+<script src="./js/config.js?v=5.10.1"></script>
+<script src="./js/data/supabase.js?v=5.10.1"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.9.1"></script>
-<script src="./js/data/query.js?v=5.9.1"></script>
-<script src="./js/auth/session.js?v=5.9.1"></script>
-<script src="./js/data/groups.js?v=5.9.1"></script>
-<script src="./js/data/clothgroups.js?v=5.9.1"></script>
-<script src="./js/data/clothes.js?v=5.9.1"></script>
-<script src="./js/data/modules.js?v=5.9.1"></script>
-<script src="./js/data/index.js?v=5.9.1"></script>
-<script src="./js/storage/paths.js?v=5.9.1"></script>
-<script src="./js/storage/images.js?v=5.9.1"></script>
-<script src="./js/storage/index.js?v=5.9.1"></script>
-<script src="./js/auth/index.js?v=5.9.1"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.9.1"></script>
+<script src="./js/data/errors.js?v=5.10.1"></script>
+<script src="./js/data/query.js?v=5.10.1"></script>
+<script src="./js/auth/session.js?v=5.10.1"></script>
+<script src="./js/data/groups.js?v=5.10.1"></script>
+<script src="./js/data/clothgroups.js?v=5.10.1"></script>
+<script src="./js/data/clothes.js?v=5.10.1"></script>
+<script src="./js/data/modules.js?v=5.10.1"></script>
+<script src="./js/data/index.js?v=5.10.1"></script>
+<script src="./js/storage/paths.js?v=5.10.1"></script>
+<script src="./js/storage/images.js?v=5.10.1"></script>
+<script src="./js/storage/index.js?v=5.10.1"></script>
+<script src="./js/auth/index.js?v=5.10.1"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.10.1"></script>
 </body>
 </html>

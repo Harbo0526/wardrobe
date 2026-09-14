@@ -100,6 +100,35 @@
     requiredCreate: ['body']
   });
 
+  /* 待办（v5.9.2）：type='daily'|'temporary'；business_date=每日待办的业务日期（每天 02:00 切换）；
+   * done/done_at=完成状态与完成时间；
+   * 提醒字段（Phase 1 建表即预留、Phase 2 由 Edge Function + pg_cron 服务端投递）：
+   *   reminder_at=提醒时间、reminder_status='none'|'pending'|'sent'|'failed'|'cancelled'；
+   *   reminder_sent_at 归服务端回写 → 刻意排除在 create/update 白名单外，前端不可伪造。
+   * 投递不依赖页面存活（前端不使用 setTimeout）。 */
+  const todos = F({
+    table: 'todos',
+    createFields: ['type', 'content', 'business_date', 'done', 'done_at',
+                   'reminder_at', 'reminder_status', 'sort_order', 'legacy_id'],
+    updateFields: ['type', 'content', 'business_date', 'done', 'done_at',
+                   'reminder_at', 'reminder_status', 'sort_order'],
+    orderWhitelist: ['business_date', 'created_at', 'updated_at', 'sort_order'],
+    defaultOrder: 'created_at',
+    requiredCreate: ['type', 'content']
+  });
+
+  /* Push 订阅（v5.9.2 预留，Phase 2 启用）：一行 = 一台设备的 Web Push 端点；
+   * 无 deleted_at 列（订阅失效直接物理删除）→ noSoftDelete */
+  const pushSubscriptions = F({
+    table: 'push_subscriptions',
+    createFields: ['endpoint', 'p256dh', 'auth', 'user_agent'],
+    updateFields: ['p256dh', 'auth', 'user_agent'],
+    orderWhitelist: ['created_at', 'updated_at'],
+    defaultOrder: 'created_at',
+    requiredCreate: ['endpoint', 'p256dh', 'auth'],
+    noSoftDelete: true
+  });
+
   window.WBData = {
     clothes: window.WBClothes,
     groups: window.WBGroupsApi,
@@ -112,7 +141,9 @@
     sleep: sleep,
     memos: memos,
     fuel: fuel,
-    announcements: announcements
+    announcements: announcements,
+    todos: todos,
+    pushSubscriptions: pushSubscriptions
   };
 
   /* 便捷调用：WBData.call(asyncFn) → { data, error } 统一返回结构 */

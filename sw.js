@@ -6,7 +6,7 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v5.9.1';
+const CACHE_NAME = 'wardrobe-v5.10.2';
 // Phase 14：js/ 模块（DAL/Auth/Storage/bridge）纳入预缓存；Supabase API 跨域请求不缓存（fetch 拦截器对跨域直接放行）
 const APP_SHELL = [
   './',
@@ -97,6 +97,45 @@ self.addEventListener('fetch', function(e){
         caches.open(CACHE_NAME).then(function(c){ c.put(req, copy); });
         return res;
       });
+    })
+  );
+});
+
+/* ============================================================
+   v5.9.2：Web Push 接收端（待办提醒）
+   ────────────────────────────────────────────────────────────
+   架构：PWA + Service Worker + Web Push + Supabase Edge Function + pg_cron
+     · 到点投递由服务端（Edge Function，pg_cron 每分钟触发）完成，
+       **不依赖页面是否打开**；前端全程不使用 setTimeout 等页面存活方案。
+     · 本 SW 只负责「收」：收到 push → 弹系统通知；点通知 → 聚焦 / 打开 App。
+   Phase 1：接口已就位但服务端尚未部署，因此这里不会被触发，
+   也不影响既有「网络优先 + 缓存优先」的离线逻辑。
+   ============================================================ */
+self.addEventListener('push', function(e){
+  var d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = {}; }
+  var title = d.title || '待办提醒';
+  var opts = {
+    body: d.body || '你有一条待办到时间了',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: d.tag || ('todo-' + (d.id || Date.now())),   /* 同一条待办重复推送只保留一条通知 */
+    renotify: false,
+    data: { url: d.url || './index.html', id: d.id || null }
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+
+/* 点击通知：优先聚焦已打开的窗口，其次新开 */
+self.addEventListener('notificationclick', function(e){
+  e.notification.close();
+  var target = (e.notification.data && e.notification.data.url) || './index.html';
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list){
+      for (var i = 0; i < list.length; i++) {
+        if ('focus' in list[i]) return list[i].focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
     })
   );
 });

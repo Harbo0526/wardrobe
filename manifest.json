@@ -1,6 +1,6 @@
 {
   "name": "生活象限",
-  "version": "5.1.14",
+  "version": "5.10.2",
   "short_name": "生活象限",
   "description": "衣橱 / 调酒 / 记账 / 睡眠一站式私人生活管理，数据 Supabase 云端同步",
   "lang": "zh-CN",
