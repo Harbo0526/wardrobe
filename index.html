@@ -1609,8 +1609,12 @@ html[data-theme="minimal"] #screen-home .home-hero{
 }
 html[data-theme="minimal"] #screen-home .memo-card,
 html[data-theme="minimal"] #screen-home #home-entries .group-card{
-  border-radius:var(--r-card);padding:12px 14px;margin:0 16px 10px;
+  border-radius:var(--r-card);padding:12px 14px;
 }
+/* v5.9.1：只有「备忘卡」（块级、#screen-home 直接子元素）用左右外边距内缩；
+   「功能入口」卡在 grid 内、容器 #home-entries 已有 padding:0 16px，且卡片自身是 width:100% 的 grid 项，
+   再叠 margin:0 16px 会让它右移 16px、向右溢出 16px（破坏居中）—— 这里不加外边距。 */
+html[data-theme="minimal"] #screen-home .memo-card{margin:0 16px 10px;}
 html[data-theme="minimal"] #screen-home #home-entries .group-card{padding:14px;}
 html[data-theme="minimal"] #screen-home .group-card:active,
 html[data-theme="minimal"] #screen-home #home-entries .group-card:active{
@@ -3246,7 +3250,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.9.0';
+const APP_VERSION = '5.9.1';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -8388,21 +8392,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.9.0"></script>
-<script src="./js/data/supabase.js?v=5.9.0"></script>
+<script src="./js/config.js?v=5.9.1"></script>
+<script src="./js/data/supabase.js?v=5.9.1"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.9.0"></script>
-<script src="./js/data/query.js?v=5.9.0"></script>
-<script src="./js/auth/session.js?v=5.9.0"></script>
-<script src="./js/data/groups.js?v=5.9.0"></script>
-<script src="./js/data/clothgroups.js?v=5.9.0"></script>
-<script src="./js/data/clothes.js?v=5.9.0"></script>
-<script src="./js/data/modules.js?v=5.9.0"></script>
-<script src="./js/data/index.js?v=5.9.0"></script>
-<script src="./js/storage/paths.js?v=5.9.0"></script>
-<script src="./js/storage/images.js?v=5.9.0"></script>
-<script src="./js/storage/index.js?v=5.9.0"></script>
-<script src="./js/auth/index.js?v=5.9.0"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.9.0"></script>
+<script src="./js/data/errors.js?v=5.9.1"></script>
+<script src="./js/data/query.js?v=5.9.1"></script>
+<script src="./js/auth/session.js?v=5.9.1"></script>
+<script src="./js/data/groups.js?v=5.9.1"></script>
+<script src="./js/data/clothgroups.js?v=5.9.1"></script>
+<script src="./js/data/clothes.js?v=5.9.1"></script>
+<script src="./js/data/modules.js?v=5.9.1"></script>
+<script src="./js/data/index.js?v=5.9.1"></script>
+<script src="./js/storage/paths.js?v=5.9.1"></script>
+<script src="./js/storage/images.js?v=5.9.1"></script>
+<script src="./js/storage/index.js?v=5.9.1"></script>
+<script src="./js/auth/index.js?v=5.9.1"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.9.1"></script>
 </body>
 </html>
