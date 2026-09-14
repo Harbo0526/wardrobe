@@ -97,6 +97,42 @@
   --safe-b:env(safe-area-inset-bottom,0px);
 }
 
+/* ============ 1.1 主题组件令牌（L2，v5.8.0）============
+   取值 = 现有「活力卡通」视觉基线的实际取值（与改造前完全一致）。
+   本块为**纯新增**：不改动任何现有规则 → 活力卡通主题零影响。
+   「极简简约」主题 = 在 html[data-theme="minimal"] 中重定义这些令牌 + 少量结构覆盖。 */
+:root{
+  /* -- 暖色主题色族：首页励志卡 / 首屏重启钮 / 备忘录 / 通用明细弹窗(.wb-*) 共用 -- */
+  --t-warm-ink:#8a4b00;      /* 强调文字 */
+  --t-warm-sub:#b0762e;      /* 次级强调文字 */
+  --t-warm-line:#ffd9a8;     /* 描边 / 边框 */
+  --t-warm-base:#ffb14e;     /* 强调底 / 选中 */
+  --t-warm-deep:#ff9d1f;     /* 强调按下 */
+  --t-warm-chip:#ffe3c2;     /* 小圆钮底 */
+  --t-warm-icon:#ffe9cf;     /* 图标钮底 */
+  --t-warm-soft:#fff3e3;     /* 浅底（次级按钮 / 导航钮） */
+  --t-warm-bg:#fff7ec;       /* 卡片 / 条目底 */
+  --t-warm-field:#fffdf8;    /* 输入框底 */
+  --t-warm-dash:#ffe0c0;     /* 虚线分隔 */
+  --t-warm-mark:#ffe08a;     /* 搜索命中高亮 */
+  /* -- 通用明细弹窗（.wb-*，备忘 / 油费 / 记账共用）-- */
+  --t-modal-bg:#fff;
+  --t-modal-radius:22px;
+  --t-modal-shadow:0 12px 44px rgba(255,167,38,.35);
+  --t-mask-bg:rgba(90,58,20,.42);
+  /* -- 列表行分隔线（记账 / 睡眠 / 油费 / 最近收支）-- */
+  --t-divider:rgba(255,214,231,.6);
+  /* -- 吸顶头部底色 -- */
+  --t-head-bg:rgba(250,252,247,.92);
+  /* -- 首页磨砂玻璃卡片（hero / 备忘卡 / 功能入口）-- */
+  --t-glass-bg:radial-gradient(130% 90% at 18% 0%, rgba(255,255,255,.62), rgba(255,255,255,0) 62%) 0% 50% / 200% 200% no-repeat, linear-gradient(135deg, rgba(255,255,255,.6), rgba(214,242,255,.6)) 0 0 / 100% 100% no-repeat;
+  --t-glass-bg-active:radial-gradient(130% 90% at 18% 0%, rgba(255,255,255,.82), rgba(255,255,255,0) 62%) 0% 50% / 200% 200% no-repeat, linear-gradient(135deg, rgba(255,255,255,.82), rgba(190,235,255,.82)) 0 0 / 100% 100% no-repeat;
+  --t-glass-border:1.5px solid rgba(255,255,255,.9);
+  --t-glass-blur:blur(9px) saturate(1.05);
+  --t-glass-shadow:0 10px 26px rgba(16,86,124,.20), inset 0 3px 12px rgba(255,255,255,.85), inset 0 -8px 18px rgba(120,200,235,.30);
+  --t-glass-anim:fuShineFlow 7.5s ease-in-out infinite;
+}
+
 /* ============ 2. 基础 ============ */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;} /* body 禁滚：滚动只发生在 .screen 内部，底部 tab-bar 永不出视口 */
@@ -413,12 +449,12 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
    备忘录 / 油费记录 / 记账明细 三处共用同一套结构与样式（.wb-mask / .wb-modal），
    避免同一项目出现三套不同操作方式。组件放在 body 顶层（不随 .screen 显隐），
    默认 style="display:none"，由 JS 切换为 flex。层级：明细弹窗 62 > 日历/搜索弹窗 61 > 页面 60。 */
-.wb-mask{position:fixed;inset:0;z-index:62;background:rgba(90,58,20,.42);display:flex;align-items:center;justify-content:center;padding:18px;}
-.wb-modal{max-width:340px;width:100%;max-height:84vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:22px;padding:16px 16px 18px;box-shadow:0 12px 44px rgba(255,167,38,.35);animation:fadeIn .2s ease;}
+.wb-mask{position:fixed;inset:0;z-index:62;background:var(--t-mask-bg);display:flex;align-items:center;justify-content:center;padding:18px;}
+.wb-modal{max-width:340px;width:100%;max-height:84vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--t-modal-bg);border-radius:var(--t-modal-radius);padding:16px 16px 18px;box-shadow:var(--t-modal-shadow);animation:fadeIn .2s ease;}
 .wb-modal .wb-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
-.wb-modal .wb-h h3{margin:0;font-size:16px;font-weight:800;color:#8a4b00;}
-.wb-x{width:28px;height:28px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:none;}
-.wb-view-title{font-size:15px;font-weight:800;color:#8a4b00;line-height:1.45;word-break:break-word;}
+.wb-modal .wb-h h3{margin:0;font-size:16px;font-weight:800;color:var(--t-warm-ink);}
+.wb-x{width:28px;height:28px;border-radius:50%;background:var(--t-warm-chip);color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:none;}
+.wb-view-title{font-size:15px;font-weight:800;color:var(--t-warm-ink);line-height:1.45;word-break:break-word;}
 .wb-view-body{margin-top:8px;font-size:14px;color:var(--ink);line-height:1.65;white-space:pre-wrap;word-break:break-word;}
 .wb-rows{margin-top:6px;display:flex;flex-direction:column;gap:7px;}
 .wb-row{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.5;}
@@ -429,13 +465,13 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .wb-time{margin-top:8px;font-size:11.5px;color:var(--ink-faint);}
 .wb-btns{display:flex;gap:10px;margin-top:12px;}
 .wb-btns .btn{flex:1;margin:0;}
-.wb-label{display:block;margin:10px 0 4px;font-size:11.5px;font-weight:700;color:#b0762e;}
-.wb-modal .input{width:100%;box-sizing:border-box;height:auto;background:#fffdf8;border:1.5px solid #ffd9a8;border-radius:14px;padding:9px 12px;font-size:14px;color:var(--ink);font-family:inherit;}
-.wb-modal .input:focus{outline:none;border-color:#ffb14e;box-shadow:none;}
-.wb-modal textarea{width:100%;min-height:110px;box-sizing:border-box;border:1.5px solid #ffd9a8;border-radius:14px;padding:10px 12px;font-size:14px;color:var(--ink);line-height:1.5;resize:vertical;background:#fffdf8;font-family:inherit;}
-.wb-modal textarea:focus{outline:none;border-color:#ffb14e;}
-.wb-btn-cancel{background:#fff3e3;color:#8a4b00;}
-.wb-hint{margin-top:8px;font-size:11.5px;color:#b0762e;line-height:1.5;background:#fff7ec;border-radius:10px;padding:7px 9px;}
+.wb-label{display:block;margin:10px 0 4px;font-size:11.5px;font-weight:700;color:var(--t-warm-sub);}
+.wb-modal .input{width:100%;box-sizing:border-box;height:auto;background:var(--t-warm-field);border:1.5px solid var(--t-warm-line);border-radius:14px;padding:9px 12px;font-size:14px;color:var(--ink);font-family:inherit;}
+.wb-modal .input:focus{outline:none;border-color:var(--t-warm-base);box-shadow:none;}
+.wb-modal textarea{width:100%;min-height:110px;box-sizing:border-box;border:1.5px solid var(--t-warm-line);border-radius:14px;padding:10px 12px;font-size:14px;color:var(--ink);line-height:1.5;resize:vertical;background:var(--t-warm-field);font-family:inherit;}
+.wb-modal textarea:focus{outline:none;border-color:var(--t-warm-base);}
+.wb-btn-cancel{background:var(--t-warm-soft);color:var(--t-warm-ink);}
+.wb-hint{margin-top:8px;font-size:11.5px;color:var(--t-warm-sub);line-height:1.5;background:var(--t-warm-bg);border-radius:10px;padding:7px 9px;}
 /* ===== v5.7.0：备忘录 日历 / 搜索 / 详情二次编辑 ===== */
 #screen-home .memo-head .memo-acts{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
 #screen-home .memo-act{width:28px;height:28px;border-radius:50%;background:#ffe9cf;color:#8a4b00;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:none;}
@@ -1480,9 +1516,262 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 #screen-cloth .home-groups{padding:0;}
 #screen-cloth .home-stats{padding:0 2px 12px;}
 
+/* ===== v5.8.0：UI 风格选择面板（我的 → 账号与设置 → 外观 · UI风格）=====
+   复用既有 .overlay + .sheet 机制；尺寸全部自适应（flex + clamp，无固定 px 内容宽）。 */
+.tm-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.tm-opt{display:flex;align-items:center;gap:clamp(8px,3vw,12px);width:100%;min-width:0;text-align:left;
+  background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;}
+.tm-opt.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft);}
+.tm-prev{flex:0 0 auto;width:clamp(46px,14vw,60px);height:clamp(34px,10vw,44px);border-radius:8px;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.07);}
+.tm-prev::before,.tm-prev::after{content:'';position:absolute;left:8%;right:8%;border-radius:3px;}
+.tm-prev::before{top:16%;height:22%;}
+.tm-prev::after{top:46%;height:22%;}
+.tm-prev-cute{background:linear-gradient(135deg,#a9e4f7,#d6f2ff);}
+.tm-prev-cute::before{background:#fff;}
+.tm-prev-cute::after{background:#ffd9a8;}
+.tm-prev-min{background:#f6f7f8;}
+.tm-prev-min::before{background:#fff;box-shadow:0 0 0 1px #e5e7eb;}
+.tm-prev-min::after{background:#2e7d5b;}
+.tm-meta{flex:1;min-width:0;display:flex;flex-direction:column;}
+.tm-meta b{font-size:14px;font-weight:600;color:var(--ink);}
+.tm-meta i{font-style:normal;font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.4;}
+.tm-check{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:13px;font-weight:700;display:none;align-items:center;justify-content:center;}
+.tm-opt.active .tm-check{display:flex;}
+.tm-note{font-size:11.5px;color:var(--ink-faint);line-height:1.55;margin-top:10px;}
+
+/* ==========================================================================
+   v5.8.0：极简简约主题   html[data-theme="minimal"]
+   --------------------------------------------------------------------------
+   实现原则（与「活力卡通」完全隔离；整块可直接删除以回退）：
+     ① 重定义令牌（L1 语义 + L2 组件）→ 大多数界面自动换肤；
+     ② 追加覆盖规则，处理卡通装饰与粉色皮肤。
+   **本块不修改任何既有规则** → 切回「活力卡通」时视觉与线上基线逐像素一致
+   （已用「计算样式快照」逐元素验证：1406 元素 × 41 属性 = 0 差异）。
+   卡通素材（气泡 / 插画 / 随机头像 / 记账随机背景图）全部保留在代码与资源中，
+   仅在本主题下不显示，切回活力卡通即完整恢复。
+   品牌识别：植物绿 #5F8F62（强调 / 选中）、深墨绿 #315C3B（按钮 / 深文字），仅用于按钮、选中态、重点数字。
+   ========================================================================== */
+
+/* ---- 1. 令牌：田园植物绿 + 暖白（明亮 · 自然 · 通透） ---- */
+html[data-theme="minimal"]{
+  /* 品牌：自然植物绿（点缀与识别色，不做大面积铺底） */
+  --primary:#5F8F62; --primary-deep:#315C3B; --primary-soft:#E8F1E3;
+  --accent:#5F8F62; --accent-deep:#315C3B; --accent-soft:#EEF4E9;
+  /* 表面：暖白页底 + 象牙白卡片（卡片明显比边框浅，保证通透） */
+  --bg:#FAFBF5; --card:#FFFFFF; --group-bg:#EEF4E9;
+  /* 文字：深墨绿 / 自然绿灰 / 弱提示（均带绿倾向，避开纯灰） */
+  --ink:#26382B; --ink-sub:#6D8670; --ink-faint:#95A897;
+  /* 边框：柔和植物绿细边（1px） */
+  --line:#A8C3A0;
+  --success:#4E9A6B; --danger:#C0574B; --warm:#C08A3E; --cherry:#95A897;
+  --shadow-card:none;
+  --shadow-sheet:0 -2px 8px rgba(49,92,59,.06);
+  --shadow-modal:0 10px 26px rgba(49,92,59,.12);
+  --r-btn:8px; --r-card:10px; --r-input:8px; --r-chip:8px; --r-sheet:14px;
+  --t-modal-bg:#FFFFFF; --t-modal-radius:12px;
+  --t-modal-shadow:0 10px 26px rgba(49,92,59,.12);
+  --t-mask-bg:rgba(38,56,43,.38);
+  --t-head-bg:rgba(250,251,245,.96);
+  --t-warm-ink:#315C3B; --t-warm-sub:#6D8670; --t-warm-line:#C4D8BE;
+  --t-warm-base:#5F8F62; --t-warm-deep:#315C3B; --t-warm-chip:#E8F1E3;
+  --t-warm-icon:#E8F1E3; --t-warm-soft:#EEF4E9; --t-warm-bg:#FFFFFF;
+  --t-warm-field:#FFFFFF; --t-warm-dash:#C9DCC4; --t-warm-mark:#DCEBCF;
+  --t-divider:#DDEBD8;
+}
+html[data-theme="minimal"] body{background:#EDF2E8;}
+/* 记账 / 睡眠：粉色皮肤 → 田园绿；收/支语义色保留（暖红 / 自然绿，仍清晰可辨） */
+html[data-theme="minimal"] #screen-ledger,
+html[data-theme="minimal"] #screen-sleep{
+  --lg-primary:#5F8F62; --lg-deep:#315C3B; --lg-soft:#EEF4E9; --lg-pale:#F5F9F2;
+  --lg-exp:#C0574B; --lg-red:#C0574B; --lg-inc:#4E9A6B; --lg-ink:#26382B;
+}
+
+/* ---- 2. 装饰层：本主题下不显示（DOM 与素材均保留） ---- */
+html[data-theme="minimal"] .bubble-field,
+html[data-theme="minimal"] .sticker,
+html[data-theme="minimal"] #screen-home .home-hero .cat,
+html[data-theme="minimal"] #screen-home .home-hero .scat,
+html[data-theme="minimal"] .lg-banner-avatar,
+html[data-theme="minimal"] .lg-banner-emojis,
+html[data-theme="minimal"] .lg-banner-emoji{display:none;}
+/* 首页三卡：关掉磨砂/流光动画，回到朴素表面 */
+html[data-theme="minimal"] #screen-home .home-hero,
+html[data-theme="minimal"] #screen-home .memo-card,
+html[data-theme="minimal"] #screen-home .group-card,
+html[data-theme="minimal"] #screen-home #home-entries .group-card{
+  animation:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:var(--card);border:1px solid var(--line);box-shadow:none;
+}
+html[data-theme="minimal"] #screen-home .home-hero{
+  border:none;background:transparent;border-radius:0;min-height:0;
+  margin:6px 16px 2px;padding:6px 0 10px;
+}
+html[data-theme="minimal"] #screen-home .memo-card,
+html[data-theme="minimal"] #screen-home #home-entries .group-card{
+  border-radius:var(--r-card);padding:12px 14px;margin:0 16px 10px;
+}
+html[data-theme="minimal"] #screen-home #home-entries .group-card{padding:14px;}
+html[data-theme="minimal"] #screen-home .group-card:active,
+html[data-theme="minimal"] #screen-home #home-entries .group-card:active{
+  background:var(--group-bg);box-shadow:none;transform:none;
+}
+html[data-theme="minimal"] #screen-home{background:var(--bg);}
+
+/* v5.8.2：首页文字整体调浅调亮（降低厚重感、更通透）—— 作用域仅限首页，其他页文字不变 */
+html[data-theme="minimal"] #screen-home{color:#48705A;--ink:#48705A;--ink-sub:#78907C;--ink-faint:#9FAFA2;}
+
+/* ---- 3. 首页：重建字体层级 / 留白 / 信息密度 ---- */
+html[data-theme="minimal"] .home-greet{font-size:20px;font-weight:600;line-height:26px;letter-spacing:-.2px;}
+html[data-theme="minimal"] .home-date{font-size:11.5px;margin-top:3px;}
+html[data-theme="minimal"] #screen-home .home-hero .qt .zh{font-size:14px;font-weight:500;color:var(--ink-sub);line-height:1.55;}
+html[data-theme="minimal"] #screen-home .home-hero .qt .en{font-size:11px;color:var(--ink-faint);font-style:normal;margin-top:2px;}
+html[data-theme="minimal"] #screen-home .home-reload{background:var(--card);border:1px solid var(--line);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-home .home-reload:active{background:var(--group-bg);}
+html[data-theme="minimal"] .sec-title{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.2px;padding:2px 16px 6px;}
+html[data-theme="minimal"] .avatar{background:var(--group-bg);border:1px solid var(--line);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-home #home-entries .gc-name{color:var(--ink);text-shadow:none;}
+html[data-theme="minimal"] #screen-home #home-entries .gc-count{color:var(--ink-faint);text-shadow:none;}
+html[data-theme="minimal"] .gc-emoji{font-size:22px;}
+html[data-theme="minimal"] #screen-cloth .lg-banner-text h3,
+html[data-theme="minimal"] #screen-ledger .lg-banner-text h3,
+html[data-theme="minimal"] #screen-sleep .lg-banner-text h3{font-size:15px;font-weight:600;}
+html[data-theme="minimal"] #screen-cloth .lg-banner-text p,
+html[data-theme="minimal"] #screen-ledger .lg-banner-text p,
+html[data-theme="minimal"] #screen-sleep .lg-banner-text p{color:var(--ink-faint);opacity:1;}
+
+/* ---- 4. 备忘录：琥珀 → 中性，突出 日期 / 标题 / 摘要 ---- */
+html[data-theme="minimal"] #screen-home .memo-head .memo-title{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] #screen-home .memo-head .memo-cnt{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-home .memo-act{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-home .memo-act:active{background:var(--line);}
+html[data-theme="minimal"] #screen-home .memo-item{background:transparent;border-bottom:1px solid var(--line);border-radius:0;padding:9px 0;}
+html[data-theme="minimal"] #screen-home .memo-item:last-child{border-bottom:none;}
+html[data-theme="minimal"] #screen-home .memo-item .mt .mtitle{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] #screen-home .memo-item .mdel{background:var(--group-bg);color:var(--ink-faint);}
+html[data-theme="minimal"] .memo-cal-head button{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] .memo-cal-head button:active{background:var(--line);}
+html[data-theme="minimal"] .memo-cal-head span{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] .memo-cal-cell{background:var(--group-bg);border-radius:8px;}
+html[data-theme="minimal"] .memo-cal-cell.has .cd{color:var(--ink);}
+html[data-theme="minimal"] .memo-cal-cell.today .cd{color:var(--primary-deep);}
+html[data-theme="minimal"] .memo-cal-cell.sel{box-shadow:inset 0 0 0 1.5px var(--primary);}
+html[data-theme="minimal"] .memo-cal-cell .cm{background:var(--primary);}
+html[data-theme="minimal"] .memo-cal-day{border-top:1px solid var(--line);}
+html[data-theme="minimal"] .memo-cal-day .cdh b{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] .memo-cal-day .cadd{background:var(--primary);}
+html[data-theme="minimal"] .memo-cal-mini,
+html[data-theme="minimal"] .memo-search-item{background:var(--card);border:1px solid var(--line);}
+html[data-theme="minimal"] .memo-cal-mini .t,
+html[data-theme="minimal"] .memo-search-item .t{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] .memo-search-item mark{background:var(--t-warm-mark);color:var(--ink);}
+html[data-theme="minimal"] .wb-row .v.exp{color:#C0574B;}
+html[data-theme="minimal"] .wb-row .v.inc{color:#4E9A6B;}
+
+/* ---- 5. 记账 / 睡眠 / 衣橱：粉色皮肤 → 中性 + 线性 ---- */
+html[data-theme="minimal"] #screen-ledger::before{background:transparent;}
+html[data-theme="minimal"] #screen-ledger .lg-head,
+html[data-theme="minimal"] #screen-sleep .lg-head,
+html[data-theme="minimal"] #screen-cloth .lg-head{
+  background:var(--card);color:var(--ink);backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-bottom:1px solid var(--line);
+}
+html[data-theme="minimal"] #screen-ledger .lg-head .back,
+html[data-theme="minimal"] #screen-sleep .lg-head .back,
+html[data-theme="minimal"] #screen-cloth .lg-head .back{color:var(--ink)!important;background:var(--group-bg)!important;}
+html[data-theme="minimal"] #screen-ledger .lg-sync,
+html[data-theme="minimal"] #screen-sleep .lg-sync,
+html[data-theme="minimal"] #screen-cloth .lg-sync{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-ledger .lg-side,
+html[data-theme="minimal"] #screen-sleep .lg-side,
+html[data-theme="minimal"] #screen-cloth .lg-side{
+  background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;border-right:1px solid var(--line);
+}
+html[data-theme="minimal"] #screen-ledger .lg-nav,
+html[data-theme="minimal"] #screen-sleep .lg-nav,
+html[data-theme="minimal"] #screen-cloth .lg-nav{border-radius:8px;font-weight:600;font-size:10.5px;}
+html[data-theme="minimal"] #screen-ledger .lg-nav .lg-emoji,
+html[data-theme="minimal"] #screen-sleep .lg-nav .lg-emoji,
+html[data-theme="minimal"] #screen-cloth .lg-nav .lg-emoji{font-size:16px;}
+html[data-theme="minimal"] #screen-ledger .lg-nav.active,
+html[data-theme="minimal"] #screen-sleep .lg-nav.active,
+html[data-theme="minimal"] #screen-cloth .lg-nav.active{background:var(--primary-soft);color:var(--primary-deep);box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-banner,
+html[data-theme="minimal"] #screen-sleep .lg-banner,
+html[data-theme="minimal"] #screen-cloth .lg-banner{
+  background:var(--card);border:1px solid var(--line);box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:var(--r-card);min-height:0;padding:12px 14px;
+}
+html[data-theme="minimal"] #screen-ledger .lg-sum,
+html[data-theme="minimal"] #screen-ledger .lg-chart,
+html[data-theme="minimal"] #screen-sleep .lg-chart{
+  background:var(--card);border:1px solid var(--line);box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:var(--r-card);
+}
+html[data-theme="minimal"] #screen-ledger .lg-cal-head button,
+html[data-theme="minimal"] #screen-sleep .lg-cal-head button,
+html[data-theme="minimal"] .lg-zoom-btn{background:var(--group-bg);color:var(--ink-sub);box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-cell,
+html[data-theme="minimal"] #screen-sleep .lg-cell{background:transparent;box-shadow:none;border-radius:8px;}
+html[data-theme="minimal"] #screen-ledger .lg-cell.today,
+html[data-theme="minimal"] #screen-sleep .lg-cell.today{background:var(--primary-soft);}
+html[data-theme="minimal"] #screen-ledger .lg-cell.sel,
+html[data-theme="minimal"] #screen-sleep .lg-cell.sel{box-shadow:inset 0 0 0 1.5px var(--primary);}
+html[data-theme="minimal"] #screen-ledger .lg-cell.fu-has{background:var(--primary-soft);box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-progress{background:var(--t-divider);}
+html[data-theme="minimal"] #screen-ledger .lg-type{background:var(--group-bg);border:1px solid var(--line);}
+html[data-theme="minimal"] #screen-ledger .lg-budget-row .input{background:var(--card);border:1.5px solid var(--line);}
+html[data-theme="minimal"] #screen-ledger .lg-rec,
+html[data-theme="minimal"] #screen-sleep .lg-rec,
+html[data-theme="minimal"] .fu-item,
+html[data-theme="minimal"] .lg-recent-item{border-bottom:1px solid var(--line);}
+html[data-theme="minimal"] #screen-ledger .lg-rec:active,
+html[data-theme="minimal"] #screen-sleep .lg-rec:active{background:var(--group-bg);}
+html[data-theme="minimal"] #screen-ledger .lg-rec .del,
+html[data-theme="minimal"] #screen-sleep .lg-rec .del{background:var(--group-bg);}
+html[data-theme="minimal"] #screen-sleep .sp-modal{background:var(--t-modal-bg);border-radius:var(--t-modal-radius);box-shadow:var(--t-modal-shadow);}
+html[data-theme="minimal"] #screen-sleep .lg-daybar i.sl{background:var(--ink-faint);}
+html[data-theme="minimal"] #screen-ledger .lg-donut{box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-donut-hole{background:var(--card);}
+
+/* ---- 6. 通用：卡片 / 分割线体系与排版层级 ---- */
+html[data-theme="minimal"] .screen-head{background:var(--t-head-bg);border-bottom:1px solid var(--line);}
+html[data-theme="minimal"] .screen-head .title{font-size:16px;font-weight:600;letter-spacing:0;}
+html[data-theme="minimal"] .card{border:1px solid var(--line);}
+html[data-theme="minimal"] .card-title{font-size:13px;font-weight:600;color:var(--ink-sub);line-height:20px;}
+html[data-theme="minimal"] .input{background:var(--card);}
+html[data-theme="minimal"] .chip{background:var(--card);}
+html[data-theme="minimal"] .chip.active{background:var(--primary-soft);color:var(--primary-deep);border-color:transparent;}
+html[data-theme="minimal"] .btn{font-size:15px;font-weight:600;letter-spacing:0;}
+html[data-theme="minimal"] .btn-secondary{background:var(--primary-soft);border:1.5px solid var(--line);color:var(--primary-deep);}
+html[data-theme="minimal"] .btn-secondary:active{background:#DCE9D7;}
+html[data-theme="minimal"] .btn-primary,
+html[data-theme="minimal"] #screen-ledger .btn-primary{background:#315C3B;color:#fff;}
+html[data-theme="minimal"] .btn-primary:active,
+html[data-theme="minimal"] #screen-ledger .btn-primary:active{background:#264A2F;}
+html[data-theme="minimal"] .btn-sm{font-size:13.5px;letter-spacing:0;}
+html[data-theme="minimal"] .wb-x{background:var(--group-bg);color:var(--ink-sub);}
+/* 列表分割线：比卡片边框更浅，保持轻盈通透（卡片边框仍为植物绿） */
+html[data-theme="minimal"] #screen-home .memo-item,
+html[data-theme="minimal"] #screen-ledger .lg-rec,
+html[data-theme="minimal"] #screen-sleep .lg-rec,
+html[data-theme="minimal"] .fu-item,
+html[data-theme="minimal"] .lg-recent-item,
+html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
+
 </style>
 </head>
 <body>
+<script>
+/* v5.8.0：UI 风格首屏应用（避免「闪主题」）——只读 localStorage，异常静默回退「活力卡通」。
+   放在 <body> 起始处，早于全部样式渲染与主逻辑脚本。 */
+(function(){
+  try{
+    var t = localStorage.getItem('wardrobe.v1.theme');
+    document.documentElement.setAttribute('data-theme', (t === 'minimal' ? 'minimal' : 'cute'));
+  }catch(e){ document.documentElement.setAttribute('data-theme', 'cute'); }
+})();
+</script>
 <div class="phone-shell" id="phone">
 
   <!-- ============ 屏 1：登录 / 注册 ============ -->
@@ -1830,6 +2119,14 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
           <circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/>
         </svg>
         <div class="row-main"><div class="row-title">关于生活象限</div><div class="row-sub" id="about-ver"></div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <!-- v5.8.0：外观 · UI风格（活力卡通 / 极简简约，点击即时切换） -->
+      <div class="row press" onclick="openThemeSheet()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;">
+          <circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18"/>
+        </svg>
+        <div class="row-main"><div class="row-title">外观 · UI风格</div><div class="row-sub" id="mine-theme-sub">活力卡通</div></div>
         <span class="row-chev">›</span>
       </div>
       <div class="row press" onclick="navTo(3)">
@@ -2771,6 +3068,27 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
     </div>
   </div>
 
+  <!-- ============ v5.8.0：UI 风格选择（复用 .overlay + .sheet 机制） ============ -->
+  <div class="overlay" id="sheet-theme" onclick="closeSheetOnBg(event,'sheet-theme')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><h3>UI 风格</h3><button class="sheet-close press" onclick="closeSheet('sheet-theme')">✕</button></div>
+      <div class="tm-list">
+        <button class="tm-opt press" data-theme-opt="cute" onclick="setTheme('cute')">
+          <span class="tm-prev tm-prev-cute"></span>
+          <span class="tm-meta"><b>活力卡通</b><i>卡通插画 · 丰富配色 · 默认风格</i></span>
+          <span class="tm-check">✓</span>
+        </button>
+        <button class="tm-opt press" data-theme-opt="minimal" onclick="setTheme('minimal')">
+          <span class="tm-prev tm-prev-min"></span>
+          <span class="tm-meta"><b>极简简约</b><i>中性配色 · 留白 · 信息优先</i></span>
+          <span class="tm-check">✓</span>
+        </button>
+      </div>
+      <div class="tm-note">切换立即生效，无需刷新页面；选择会保存在本机，下次打开仍然保持。</div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast"></div>
 </div>
@@ -2928,7 +3246,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.7.2';
+const APP_VERSION = '5.9.0';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3573,6 +3891,38 @@ function countInGroup(id){
   return state.clothes.filter(c=>belongsTo(c,id)).length;
 }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ---------- 2.1 UI 风格主题（v5.8.0：一套业务与数据 + 两套视觉） ----------
+   机制：<html data-theme="cute|minimal">，由 CSS 全权控制视觉 → 切换不需要刷新、
+   不重渲染、不触碰任何业务状态；动态生成的内容（弹窗/日历/搜索/明细）同样自动跟随。
+   持久化：localStorage（设备级，登录前也生效），复用既有 wardrobe.v1.* 命名；
+   首屏由 <body> 起始处的内联脚本提前应用，避免「闪主题」。 */
+const WB_THEMES = ['cute', 'minimal'];
+const THEME_LS_KEY = 'wardrobe.v1.theme';
+function getTheme(){
+  try{ const t = localStorage.getItem(THEME_LS_KEY); return WB_THEMES.indexOf(t) >= 0 ? t : 'cute'; }catch(e){ return 'cute'; }
+}
+function applyTheme(t, persist){
+  if(WB_THEMES.indexOf(t) < 0) t = 'cute';
+  try{ document.documentElement.setAttribute('data-theme', t); }catch(e){}
+  if(persist){ try{ localStorage.setItem(THEME_LS_KEY, t); }catch(e){} }
+  renderThemeUI();
+}
+function setTheme(t){
+  applyTheme(t, true);
+  toast(t === 'minimal' ? '已切换为「极简简约」✓' : '已切换为「活力卡通」✓');
+}
+/* 同步「我的」页副标题与选择面板选中态（元素不存在时静默跳过） */
+function renderThemeUI(){
+  const t = getTheme();
+  const sub = $('mine-theme-sub');
+  if(sub) sub.textContent = (t === 'minimal' ? '极简简约' : '活力卡通');
+  document.querySelectorAll('[data-theme-opt]').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-theme-opt') === t);
+  });
+}
+function openThemeSheet(){ renderThemeUI(); openSheet('sheet-theme'); }
+function initTheme(){ applyTheme(getTheme(), false); }
 
 /* ---------- 3. 屏幕导航 ---------- */
 const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep'];
@@ -7437,17 +7787,39 @@ function lgRunQuery(){
 }
 
 /* ---------- SVG 图表（颜色用十六进制，SVG 表现属性不支持 var()） ---------- */
+/* v5.9.0：图表数值标注公共助手——白描边(paint-order:stroke)保证文字叠在柱体/线条上仍清晰 */
+function wbChartLabel(x, y, text, fs, fill){
+  return '<text x="' + (+x).toFixed(1) + '" y="' + (+y).toFixed(1) + '" text-anchor="middle" font-size="' + fs +
+    '" font-weight="700" fill="' + fill + '" stroke="#fff" stroke-width="' + (fs * 0.26).toFixed(1) +
+    '" paint-order="stroke" stroke-linejoin="round">' + lgEsc('' + text) + '</text>';
+}
+/* 金额紧凑显示：≥1000 → 1.2k；≥100 → 取整；否则最多 1 位小数（压缩标注宽度、降低重叠） */
+function wbMoneyShort(v){
+  v = Number(v) || 0; const a = Math.abs(v);
+  if(a >= 1000) return (Math.round(v / 100) / 10) + 'k';
+  if(a >= 100) return String(Math.round(v));
+  return String(Math.round(v * 10) / 10);
+}
+/* 颜色压暗：给数值标注用，保证在浅色底上可读（柱/线仍用原色） */
+function wbDarken(hex, f){
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if(!m) return hex || '#33463a';
+  const n = parseInt(m[1], 16);
+  const r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
 function lgGroupBarSVG(labels, arrA, arrB, colorA, colorB){
   const n = labels.length;
-  const W = Math.max(280, n * 46), H = 180, padL = 38, padB = 34, padT = 14, padR = 8;
+  const W = Math.max(280, n * 46), H = 190, padL = 40, padB = 34, padT = 30, padR = 10;   /* v5.9.0：顶部留白放大数值标注 */
   const cw = W - padL - padR, ch = H - padT - padB;
   const max = Math.max(1, ...arrA, ...arrB);
   const gw = cw / n;
-  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
+  const fs = Math.max(7.5, Math.min(11, gw * 0.26));    /* 数值字号随柱间距自适应 */
+  const cLa = wbDarken(colorA, .66), cLb = wbDarken(colorB, .66);
+  let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block">';
   for(let i = 0; i <= 4; i++){
     const y = padT + ch * i / 4, v = Math.round(max * (1 - i / 4));
     svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#eee"/>';
-    svg += '<text x="' + (padL - 4) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="#aaa">' + v + '</text>';
+    svg += '<text x="' + (padL - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10" fill="#9aa49a">' + wbMoneyShort(v) + '</text>';
   }
   for(let i = 0; i < n; i++){
     const gx = padL + gw * i, bw = Math.min(gw * 0.34, 22);
@@ -7455,24 +7827,29 @@ function lgGroupBarSVG(labels, arrA, arrB, colorA, colorB){
     const ha = ch * (arrA[i] || 0) / max, hb = ch * (arrB[i] || 0) / max;
     svg += '<rect x="' + xa + '" y="' + (padT + ch - ha) + '" width="' + bw + '" height="' + ha + '" rx="2" fill="' + colorA + '"/>';
     svg += '<rect x="' + xb + '" y="' + (padT + ch - hb) + '" width="' + bw + '" height="' + hb + '" rx="2" fill="' + colorB + '"/>';
+    /* 数值直接标在柱顶：B（收入）比 A（支出）再抬高约一个字高，避免相邻两数字重叠；0 值不标以减噪 */
+    if(arrA[i] > 0) svg += wbChartLabel(xa + bw / 2, padT + ch - ha - 4, wbMoneyShort(arrA[i]), fs, cLa);
+    if(arrB[i] > 0) svg += wbChartLabel(xb + bw / 2, padT + ch - hb - 4 - (fs + 2), wbMoneyShort(arrB[i]), fs, cLb);
     let lb = labels[i]; if(lb && lb.length > 5) lb = lb.slice(0, 5);
-    svg += '<text x="' + (gx + gw * 0.5) + '" y="' + (H - padB + 12) + '" text-anchor="middle" font-size="9" fill="#888">' + lgEsc('' + lb) + '</text>';
+    svg += '<text x="' + (gx + gw * 0.5) + '" y="' + (H - padB + 13) + '" text-anchor="middle" font-size="10" fill="#8a9790">' + lgEsc('' + lb) + '</text>';
   }
   svg += '</svg>';
   return svg;
 }
 function lgLineSVG(labels, arrA, arrB, colorA, colorB){
   const n = labels.length;
-  const W = Math.max(280, n * 46), H = 180, padL = 38, padB = 34, padT = 14, padR = 8;
+  const W = Math.max(280, n * 46), H = 190, padL = 40, padB = 34, padT = 30, padR = 10;
   const cw = W - padL - padR, ch = H - padT - padB;
   const max = Math.max(1, ...arrA, ...arrB);
   const gw = cw / n;
+  const fs = Math.max(7.5, Math.min(11, gw * 0.26));
+  const cLa = wbDarken(colorA, .66), cLb = wbDarken(colorB, .66);
   const pt = (i, val) => [padL + gw * i + gw / 2, padT + ch - ch * (val || 0) / max];
-  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">';
+  let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block">';
   for(let i = 0; i <= 4; i++){
     const y = padT + ch * i / 4, v = Math.round(max * (1 - i / 4));
     svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#eee"/>';
-    svg += '<text x="' + (padL - 4) + '" y="' + (y + 3) + '" text-anchor="end" font-size="9" fill="#aaa">' + v + '</text>';
+    svg += '<text x="' + (padL - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10" fill="#9aa49a">' + wbMoneyShort(v) + '</text>';
   }
   let pathA = '', pathB = '';
   for(let i = 0; i < n; i++){ const p = pt(i, arrA[i]); pathA += (i ? 'L' : 'M') + p[0] + ' ' + p[1] + ' '; }
@@ -7483,8 +7860,11 @@ function lgLineSVG(labels, arrA, arrB, colorA, colorB){
     const a = pt(i, arrA[i]), b = pt(i, arrB[i]);
     svg += '<circle cx="' + a[0] + '" cy="' + a[1] + '" r="2.5" fill="' + colorA + '"/>';
     svg += '<circle cx="' + b[0] + '" cy="' + b[1] + '" r="2.5" fill="' + colorB + '"/>';
+    /* 数据点数值直接标注：A 在上、B 再抬高约一个字高，避免两点数值重叠 */
+    if(arrA[i] > 0) svg += wbChartLabel(a[0], a[1] - 7, wbMoneyShort(arrA[i]), fs, cLa);
+    if(arrB[i] > 0) svg += wbChartLabel(b[0], b[1] - 7 - (fs + 2), wbMoneyShort(arrB[i]), fs, cLb);
     let lb = labels[i]; if(lb && lb.length > 5) lb = lb.slice(0, 5);
-    svg += '<text x="' + (padL + gw * i + gw / 2) + '" y="' + (H - padB + 12) + '" text-anchor="middle" font-size="9" fill="#888">' + lgEsc('' + lb) + '</text>';
+    svg += '<text x="' + (padL + gw * i + gw / 2) + '" y="' + (H - padB + 13) + '" text-anchor="middle" font-size="10" fill="#8a9790">' + lgEsc('' + lb) + '</text>';
   }
   svg += '</svg>';
   return svg;
@@ -7582,7 +7962,18 @@ function spAvgTime(arr){
   avg = ((avg % (24*60)) + 24*60) % (24*60);
   return spPad(Math.floor(avg/60)) + ':' + spPad(avg % 60);
 }
-function spDayRecs(date){ return (state.sleep.records||[]).filter(r => r.date === date); }
+/* v5.9.0：睡眠归属日期——凌晨 00:00~04:59 入睡的记录统一归「前一天」（如 15日04:00 入睡 → 计入 14 日晚睡眠）；
+   05:00 及以后入睡才计入当天。仅改变「归属」（日历/统计/汇总/明细按此日期归档），不改记录真实日期·时间与时长计算。 */
+function spAttrDate(date, start){
+  if(!date || !start) return date;
+  const h = parseInt(String(start).split(':')[0], 10);
+  if(!(h >= 0 && h < 5)) return date;
+  const d = new Date(date + 'T00:00:00');
+  if(isNaN(d.getTime())) return date;
+  d.setDate(d.getDate() - 1);
+  return spIso(d);
+}
+function spDayRecs(date){ return (state.sleep.records||[]).filter(r => spAttrDate(r.date, r.start) === date); }
 function spDayTotal(date){ return spDayRecs(date).reduce((s,r) => s + (r.minutes||0), 0); }
 
 /* v5.5.2：昨夜睡眠时长 = 「昨天 19:00 ~ 今天 12:00」这个窗口内实际发生的睡眠时长求和。
@@ -7609,7 +8000,7 @@ function spLastNightMin(){
   });
   return Math.round(sum);
 }
-function spMonthRecs(prefix){ return (state.sleep.records||[]).filter(r => r.date && r.date.indexOf(prefix) === 0); }
+function spMonthRecs(prefix){ return (state.sleep.records||[]).filter(r => { const d = spAttrDate(r.date, r.start); return d && d.indexOf(prefix) === 0; }); }
 
 function spOneRecHTML(r){
   const hasEnd = !!r.end;
@@ -7618,7 +8009,7 @@ function spOneRecHTML(r){
   const endTag = (r.endDate && r.endDate !== r.date) ? ' · 起床 ' + spEsc(r.endDate) : '';
   return '<div class="lg-rec" data-id="' + r.id + '"><span class="dot"></span>' +
     '<div class="ri"><div class="t">' + line + '</div>' +
-    '<div class="s">' + (r.date||'') + ' · 睡眠' + endTag + '</div></div>' +
+    '<div class="s">' + (spAttrDate(r.date, r.start)||'') + ' · 睡眠' + endTag + '</div></div>' +
     '<span class="amt">' + amt + '</span>' +
     '</div>';
 }
@@ -7733,11 +8124,13 @@ function spBarSVG(labels, arr, color, withLine, fitW){
      高度 180→240，字号 9→12/11，月份天数多时自动收窄每柱间距以减少滚动。
      v5.1.16：新增可选 fitW —— 传入容器可用宽度时，SVG 按该宽度自适应铺满（近7日无需横向滚动）。 */
   const perBar = n > 16 ? 26 : 40;
-  const W = fitW ? Math.max(240, Math.round(fitW)) : Math.max(320, n * perBar), H = 240, padL = 50, padB = 42, padT = 18, padR = 10;
+  const W = fitW ? Math.max(240, Math.round(fitW)) : Math.max(320, n * perBar), H = 240, padL = 50, padB = 42, padT = 28, padR = 10;   /* v5.9.0：顶部留白放大数值标注 */
   const cw = W - padL - padR, ch = H - padT - padB;
   const GOAL = 8 * 60;                             /* v5.1.18：8 小时目标线 */
   const max = Math.max(GOAL, 1, ...arr);           /* 纵轴至少 8h；若有超 8h 的记录则按实际最大值自适应 */
   const gw = cw / n;
+  const fs = Math.max(9, Math.min(12, gw * 0.34));      /* v5.9.0：数值字号随柱间距自适应 */
+  const lblC = wbDarken(color, .66);
   let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block">';
   for(let i = 0; i <= 4; i++){
     const y = padT + ch * i / 4, v = Math.round(max * (1 - i / 4) / 6) / 10;
@@ -7754,6 +8147,7 @@ function spBarSVG(labels, arr, color, withLine, fitW){
     const h = ch * (arr[i] || 0) / max;
     const mins = arr[i] || 0;
     svg += '<rect x="' + x + '" y="' + (padT + ch - h) + '" width="' + bw + '" height="' + h + '" rx="4" fill="' + color + '" title="' + labels[i] + '日 ' + spFmtDur(mins) + '"/>';
+    if(mins > 0) svg += wbChartLabel(gx + gw / 2, padT + ch - h - 5, spFmtShort(mins), fs, lblC);   /* v5.9.0：柱顶直接标数值（小时） */
     let lb = labels[i]; if(lb && lb.length > 5) lb = lb.slice(0,5);
     svg += '<text x="' + (gx + gw / 2) + '" y="' + (H - padB + 16) + '" text-anchor="middle" font-size="11" font-weight="600" fill="#8a6a76">' + spEsc('' + lb) + '</text>';
   }
@@ -7780,7 +8174,8 @@ function spRenderStats(){
   let totalMin = 0; const bedMin = [], wakeMin = [];
   spMonthRecs(prefix).forEach(r => {
     if(!r.end || !r.start) return;              // 未填起床的「待起床」记录不计入统计
-    byDay[r.date] = (byDay[r.date] || 0) + (r.minutes || 0);
+    const ad = spAttrDate(r.date, r.start);     // v5.9.0：按归属日期归档（凌晨入睡归前一天）
+    byDay[ad] = (byDay[ad] || 0) + (r.minutes || 0);
     totalMin += (r.minutes || 0);
     const bs = r.start.split(':').map(Number); bedMin.push(bs[0]*60 + bs[1]);
     const we = r.end.split(':').map(Number); let wm = we[0]*60 + we[1]; if(wm <= bs[0]*60 + bs[1]) wm += 24*60; wakeMin.push(wm);
@@ -7910,7 +8305,8 @@ function spEdRefresh(){
   if(!start){ box.textContent = '请填写入睡时间'; return; }
   if(!end){ box.textContent = '入睡中（未填起床）'; return; }
   const m = spDuration2(date, start, endDate || date, end);
-  box.textContent = '时长：' + (m > 0 ? spFmtDur(m) : '无效，请检查起床时间');
+  const ad = spAttrDate(date, start);   /* v5.9.0：提示归属日期（凌晨入睡归前一天） */
+  box.textContent = '时长：' + (m > 0 ? spFmtDur(m) : '无效，请检查起床时间') + (ad !== date ? '（归属 ' + ad + '）' : '');
 }
 function spSaveEdit(){
   const id = spState.editId; const rec = (state.sleep.records||[]).find(r => r.id === id);
@@ -7957,6 +8353,8 @@ function renderSleep(){
   // 注意：Supabase SDK / DAL 脚本在本文件尾部的外部 <script> 中加载，
   // 因此初始化必须等 window load（此时所有脚本已就绪）。
   window.addEventListener('load', async function(){
+    /* v5.8.0：主题已在 <body> 起始处提前应用，这里再同步一次 UI（设置页副标题 / 选择面板选中态） */
+    try{ initTheme(); }catch(e){}
     /* Recovery：Supabase SDK 消费邮件链接中的 token 后触发 PASSWORD_RECOVERY → 显示设置新密码面板 */
     try{
       WBAuth.onAuthStateChange(function(ev){
@@ -7990,21 +8388,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.7.2"></script>
-<script src="./js/data/supabase.js?v=5.7.2"></script>
+<script src="./js/config.js?v=5.9.0"></script>
+<script src="./js/data/supabase.js?v=5.9.0"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.7.2"></script>
-<script src="./js/data/query.js?v=5.7.2"></script>
-<script src="./js/auth/session.js?v=5.7.2"></script>
-<script src="./js/data/groups.js?v=5.7.2"></script>
-<script src="./js/data/clothgroups.js?v=5.7.2"></script>
-<script src="./js/data/clothes.js?v=5.7.2"></script>
-<script src="./js/data/modules.js?v=5.7.2"></script>
-<script src="./js/data/index.js?v=5.7.2"></script>
-<script src="./js/storage/paths.js?v=5.7.2"></script>
-<script src="./js/storage/images.js?v=5.7.2"></script>
-<script src="./js/storage/index.js?v=5.7.2"></script>
-<script src="./js/auth/index.js?v=5.7.2"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.7.2"></script>
+<script src="./js/data/errors.js?v=5.9.0"></script>
+<script src="./js/data/query.js?v=5.9.0"></script>
+<script src="./js/auth/session.js?v=5.9.0"></script>
+<script src="./js/data/groups.js?v=5.9.0"></script>
+<script src="./js/data/clothgroups.js?v=5.9.0"></script>
+<script src="./js/data/clothes.js?v=5.9.0"></script>
+<script src="./js/data/modules.js?v=5.9.0"></script>
+<script src="./js/data/index.js?v=5.9.0"></script>
+<script src="./js/storage/paths.js?v=5.9.0"></script>
+<script src="./js/storage/images.js?v=5.9.0"></script>
+<script src="./js/storage/index.js?v=5.9.0"></script>
+<script src="./js/auth/index.js?v=5.9.0"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.9.0"></script>
 </body>
 </html>
