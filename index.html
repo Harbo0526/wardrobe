@@ -1951,6 +1951,19 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
 .boot-dots i:nth-child(3){animation-delay:.3s;}
 @keyframes bootDot{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:.9;transform:translateY(-3px);}}
 @keyframes bootAutoHide{to{opacity:0;visibility:hidden;}}
+
+/* ===== v5.13.6（Phase 1·待办提醒）：我的页「系统提醒推送」弹层（复用全局令牌，两套主题自适应） ===== */
+.push-wrap{display:flex;flex-direction:column;gap:10px;}
+.push-status{
+  font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.6;
+  background:var(--group-bg);border-radius:12px;padding:10px 12px;
+}
+.push-hint{
+  font-size:12px;color:var(--ink-sub);line-height:1.65;white-space:pre-line;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+}
+.push-btns{display:flex;gap:10px;margin-top:2px;}
+.push-btns .btn{flex:1;margin:0;}
 </style>
 </head>
 <body>
@@ -2365,6 +2378,14 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
           <circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18"/>
         </svg>
         <div class="row-main"><div class="row-title">外观 · UI风格</div><div class="row-sub" id="mine-theme-sub">活力卡通</div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <!-- v5.13.6（Phase 1·待办提醒）：系统提醒推送开关 -->
+      <div class="row press" onclick="openPushSheet()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
+        </svg>
+        <div class="row-main"><div class="row-title">系统提醒推送</div><div class="row-sub" id="mine-push-sub">—</div></div>
         <span class="row-chev">›</span>
       </div>
       <div class="row press" onclick="navTo(3)">
@@ -2968,10 +2989,10 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
 
         <!-- 记录 -->
         <div class="lg-panel" id="spp-entry">
-          <div class="lg-banner" data-title="✍️ 记睡眠" data-sub="记下入睡与起床时间">
+          <div class="lg-banner" data-title="✍️ 记睡眠" data-sub="记下入睡与起床时间，可以先只记录入睡时间哦~">
             <div class="lg-banner-row">
               <div class="lg-banner-avatar"></div>
-              <div class="lg-banner-text"><h3>✍️ 记睡眠</h3><p>记下入睡与起床时间</p></div>
+              <div class="lg-banner-text"><h3>✍️ 记睡眠</h3><p>记下入睡与起床时间，，可以先只记录入睡时间哦~</p></div>
               <div class="lg-banner-emojis"></div>
             </div>
           </div>
@@ -3222,6 +3243,25 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
       <div class="av-view-name" id="avatar-view-name">小绿</div>
       <div class="av-view-hint">双指捏合缩放 · 单指拖动查看细节 · 双击放大/复位</div>
       <button class="btn btn-primary press" onclick="avatarViewGoMine()">👤 进入「我的」</button>
+    </div>
+  </div>
+
+  <!-- ============ Sheet：系统提醒推送（v5.13.6 Phase 1：申请权限 + 上报订阅端点；到点投递在服务端） ============ -->
+  <div class="overlay" id="sheet-push" onclick="closeSheetOnBg(event,'sheet-push')">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h3>🔔 系统提醒推送</h3>
+        <button class="sheet-close press" onclick="closeSheet('sheet-push')">✕</button>
+      </div>
+      <div class="push-wrap">
+        <div class="push-status" id="pushStatus">—</div>
+        <div class="push-hint" id="pushHint"></div>
+        <div class="push-btns">
+          <button class="btn btn-primary press" id="pushOnBtn" onclick="pushEnable()">开启提醒</button>
+          <button class="btn btn-secondary press" id="pushOffBtn" onclick="pushDisable()">关闭提醒</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3615,7 +3655,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.5';
+const APP_VERSION = '5.13.6';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -6137,6 +6177,9 @@ function renderMine(){
   var av = $('about-ver');
   if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
 
+  // v5.13.6（Phase 1）：系统提醒推送行副标题（随通知权限变化）
+  try{ refreshPushSubtitle(); }catch(e){}
+
   // v5.6.0：公告发布卡片仅管理员可见（真正的写入权限由数据库 RLS 卡死，此处只是入口显隐）
   var annCard = $('mine-ann-card');
   if(annCard){
@@ -8145,6 +8188,28 @@ function todoCleanLegacyDaily(){
     });
   }catch(e){ console.error('todoCleanLegacyDaily 异常：', e); }
 }
+/* v5.13.6（Phase 1·待办提醒）：每日待办「实例」继承模板的提醒时刻。
+   ─────────────────────────────────────────────────────────────
+   语义（已确认）：模板只提供「一天中的时刻」，实例按自己的业务日套用该时刻：
+     模板 reminderAt = 09:00  →  09-15 实例 = 2026-09-15 09:00
+                              →  09-16 实例 = 2026-09-16 09:00
+   模板上的「日期」不参与计算（并不表示"从某天才开始提醒"）。
+   边界：算出的时刻若已经过去（例如当天 10:00 才首次打开、提醒时间为 09:00），
+         本次不设提醒（返回 null）→ 避免打开 App 时立刻补发一条过期通知。
+   返回：可投放的提醒时刻 ISO 字符串；未设提醒 / 已过点 → null。
+   注意：只影响「新生成」的实例；当天已存在的实例由编辑流程（todoSaveEdit）更新。 */
+function todoReminderForBiz(tp, biz){
+  if(!tp || !tp.reminderAt || !biz) return null;
+  const src = new Date(tp.reminderAt);
+  if(isNaN(src.getTime())) return null;
+  const p = String(biz).split('-');
+  if(p.length !== 3) return null;
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]),
+                     src.getHours(), src.getMinutes(), 0, 0);
+  if(isNaN(d.getTime())) return null;
+  if(d.getTime() <= Date.now()) return null;
+  return d.toISOString();
+}
 /* 每日待办「打卡」机制（v5.10.3）：
    每条每日待办 = 一条模板(template：type='daily'、businessDate 空、templateId 空)。
    每次渲染前，为「当前业务日」生成一份未完成实例（businessDate=今日业务日、templateId=模板 id）。
@@ -8163,16 +8228,17 @@ function todoEnsureDaily(){
         return todoIsInstance(r) && r.businessDate === biz && String(r.templateId) === String(tp.id);
       });
       if(exists) return;
+      const rIso = todoReminderForBiz(tp, biz);   /* v5.13.6：继承模板提醒时刻（已过点 → null） */
       const inst = {
         id: wbUuid(), type: 'daily', content: tp.content,
         businessDate: biz, done: false, doneAt: null,
-        reminderAt: null, reminderStatus: 'none', reminderSentAt: null,   // 提醒不自动重复（Phase 1 未真正投递）
+        reminderAt: rIso, reminderStatus: rIso ? 'pending' : 'none', reminderSentAt: null,
         templateId: tp.id, createdAt: new Date().toISOString(), _sbSaved: false
       };
       recs.push(inst);
       sbSaveObj('todos', inst, {
         type: 'daily', content: inst.content, business_date: inst.businessDate,
-        done: false, done_at: null, reminder_at: null, reminder_status: 'none',
+        done: false, done_at: null, reminder_at: rIso, reminder_status: rIso ? 'pending' : 'none',
         template_id: tp.id
       });
     });
@@ -8207,9 +8273,10 @@ function todoShowBox(view){
 function todoEditMetaHint(){
   const el = $('todoEditMeta'); if(!el) return;
   if(todoEditType === 'daily'){
-    el.textContent = '「每日待办」· 每天自动生成一份新的未完成待办（打卡），历史按业务日期归档（每天 02:00 切换，02:00 前算前一天）';
+    el.textContent = '「每日待办」· 每天自动生成一份新的未完成待办（打卡），历史按业务日期归档（每天 02:00 切换，02:00 前算前一天）。' +
+                     '提醒时间只取「时刻」—— 此后每天到该时刻各提醒一次（今天该时刻已过则从明天开始）。';
   }else{
-    el.textContent = '归入「临时待办」· 不随每日初始化清空，长期保留';
+    el.textContent = '归入「临时待办」· 不随每日初始化清空，长期保留；提醒时间只对本次这一条生效。';
   }
 }
 function todoOpenNew(type){
@@ -8412,6 +8479,82 @@ const WBReminders = {
   }
 };
 window.WBReminders = WBReminders;
+
+/* =====================================================================
+   v5.13.6（Phase 1·待办提醒）：我的页「系统提醒推送」开关
+   ─────────────────────────────────────────────────────────────────────
+   职责边界（严格按 Phase 划分）：
+     · 本段只做两件事：① 申请/查看通知权限；② 上报/清理本设备的订阅端点。
+     · **不做任何投递** —— 到点投递由 Phase 2 的 Edge Function + Phase 3 的 pg_cron 在服务端完成，
+       不依赖页面存活，前端不使用 setTimeout。
+     · 未配置 WB_VAPID_PUBLIC_KEY 时 WBReminders.enabled() 为 false：
+       按钮置灰并提示「尚未启用」，且**不申请权限、不产生任何网络请求**。
+   ===================================================================== */
+function pushIsIOS(){
+  const ua = navigator.userAgent || '';
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function pushIsStandalone(){
+  try{
+    if(window.navigator.standalone === true) return true;    /* iOS「添加到主屏幕」后 */
+    return !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  }catch(e){ return false; }
+}
+/* Android / iOS 环境提示：明确「能不能用、怎么才能用」 */
+function pushEnvHint(){
+  if(!WBReminders.supported())
+    return '当前浏览器不支持系统级提醒（需要 HTTPS + Service Worker + PushManager）。\n建议换用手机 Chrome / Edge，或把本页「添加到主屏幕」后再打开。';
+  if(pushIsIOS()){
+    if(!pushIsStandalone())
+      return 'iPhone / iPad：系统提醒必须先把本应用「添加到主屏幕」，再从桌面图标打开（iOS 16.4 及以上）。\nSafari 普通标签页不支持系统级推送。';
+    return '已在主屏幕独立窗口运行 ✓\n若从未弹过通知授权，可到「设置 → 通知 → 生活象限」中允许通知。';
+  }
+  if(/Android/i.test(navigator.userAgent || ''))
+    return '安卓：Chrome / Edge 均支持。\n若没有弹出授权，可到「系统设置 → 应用 → 通知」里允许本站通知。';
+  return '桌面端：Chrome / Edge 支持；macOS 上的 Safari 16.4+ 亦支持。';
+}
+function pushStatusLabel(){
+  if(!WBReminders.supported()) return '当前设备不支持';
+  const p = WBReminders.permission();
+  if(p === 'granted') return '已开启';
+  if(p === 'denied') return '已被系统拒绝';
+  return '未开启';
+}
+function renderPushSheet(){
+  const st = $('pushStatus'), hint = $('pushHint'), on = $('pushOnBtn'), off = $('pushOffBtn');
+  const enabled = WBReminders.enabled();
+  if(st){
+    st.textContent = '当前状态：' + pushStatusLabel() +
+      (WBReminders.supported() ? '（通知权限：' + WBReminders.permission() + '）' : '') +
+      (enabled ? '' : '\n推送通道：尚未启用');
+  }
+  if(hint){
+    hint.textContent = (enabled ? '' :
+      '说明：系统级提醒推送尚未在本版本启用（需先完成服务端配置）。\n你现在仍可正常设置待办提醒时间，功能启用后立即生效。\n\n') + pushEnvHint();
+  }
+  if(on){ on.disabled = !enabled || WBReminders.permission() === 'granted'; on.style.opacity = on.disabled ? '.5' : ''; }
+  if(off){ off.disabled = !WBReminders.supported(); off.style.opacity = off.disabled ? '.5' : ''; }
+}
+function openPushSheet(){ renderPushSheet(); openSheet('sheet-push'); }
+async function pushEnable(){
+  const r = await WBReminders.subscribe();
+  renderPushSheet(); refreshPushSubtitle();
+  if(r.ok) toast('已开启系统提醒 ✓');
+  else if(r.reason === 'push-not-enabled') toast('推送通道尚未启用（Phase 2）');
+  else if(r.reason === 'denied') toast('通知权限被拒绝，请到系统设置中允许');
+  else if(r.reason === 'unsupported') toast('当前设备不支持系统通知');
+  else toast('开启失败：' + (r.reason || '未知原因'));
+}
+async function pushDisable(){
+  await WBReminders.unsubscribe();
+  renderPushSheet(); refreshPushSubtitle();
+  toast('已关闭本设备的提醒推送');
+}
+/* 我的页「系统提醒推送」行副标题 */
+function refreshPushSubtitle(){
+  const el = $('mine-push-sub'); if(!el) return;
+  el.textContent = pushStatusLabel() + (WBReminders.enabled() ? '' : ' · 待启用');
+}
 
 /* =====================================================================
    油费模块（v5.3.0）：概览统计 / 记录加油 / 记录明细 / 日历统计 / 日志查询
@@ -9594,23 +9737,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.5"></script>
-<script src="./js/data/supabase.js?v=5.13.5"></script>
+<script src="./js/config.js?v=5.13.6"></script>
+<script src="./js/data/supabase.js?v=5.13.6"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.5"></script>
-<script src="./js/data/query.js?v=5.13.5"></script>
-<script src="./js/auth/session.js?v=5.13.5"></script>
-<script src="./js/data/groups.js?v=5.13.5"></script>
-<script src="./js/data/clothgroups.js?v=5.13.5"></script>
-<script src="./js/data/clothes.js?v=5.13.5"></script>
-<script src="./js/data/modules.js?v=5.13.5"></script>
-<script src="./js/data/index.js?v=5.13.5"></script>
-<script src="./js/storage/paths.js?v=5.13.5"></script>
-<script src="./js/storage/images.js?v=5.13.5"></script>
-<script src="./js/storage/index.js?v=5.13.5"></script>
-<script src="./js/auth/index.js?v=5.13.5"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.5"></script>
+<script src="./js/data/errors.js?v=5.13.6"></script>
+<script src="./js/data/query.js?v=5.13.6"></script>
+<script src="./js/auth/session.js?v=5.13.6"></script>
+<script src="./js/data/groups.js?v=5.13.6"></script>
+<script src="./js/data/clothgroups.js?v=5.13.6"></script>
+<script src="./js/data/clothes.js?v=5.13.6"></script>
+<script src="./js/data/modules.js?v=5.13.6"></script>
+<script src="./js/data/index.js?v=5.13.6"></script>
+<script src="./js/storage/paths.js?v=5.13.6"></script>
+<script src="./js/storage/images.js?v=5.13.6"></script>
+<script src="./js/storage/index.js?v=5.13.6"></script>
+<script src="./js/auth/index.js?v=5.13.6"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.6"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.5"></script>
+<script src="./js/fuel.js?v=5.13.6"></script>
 </body>
 </html>
