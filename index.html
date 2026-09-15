@@ -3362,7 +3362,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.10.2';
+const APP_VERSION = '5.10.4';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -7444,9 +7444,10 @@ function lgSyncLedgerCloud(){
    ─────────────────────────────────────────────────────────────────────
    数据：state.todos.records[] = {
      id, type:'daily'|'temporary', content,
-     businessDate:'YYYY-MM-DD'|null,      // 仅每日待办：业务日期（每天 02:00 为切换点）
+     businessDate:'YYYY-MM-DD'|null,      // 每日待办实例=业务日期（每天 02:00 切换）；模板 businessDate=null
+     templateId:UUID|null,               // 每日待办实例指向模板 id；模板自身为 null（v5.10.3 打卡机制）
      done:bool, doneAt:ISO|null,          // 完成状态 / 实际完成时间（取实际操作时刻）
-     reminderAt:ISO|null,                 // 提醒时间（本机时区）
+     reminderAt:ISO|null,                 // 提醒时间（本机时区；实例不自动重复提醒）
      reminderStatus:'none'|'pending'|'sent'|'failed'|'cancelled',
      reminderSentAt:ISO|null,             // 服务端回写的实际投递时间（前端只读）
      createdAt:ISO, _sbSaved:bool }
@@ -7534,6 +7535,7 @@ function todoEmptyHTML(){ return '<div class="todo-empty">还没有待办，点�
 /* 渲染两区（每次渲染后重绑事件，避免重复绑定） */
 function todoRender(){
   try{
+    todoEnsureDaily();              // v5.10.4：每日待办「打卡」——每次渲染前确保当天实例已生成
     const biz = todoBizDate();
     /* ---- ① 每日待办：今日业务日在前，历史按业务日期倒序分组（历史永久保留） ---- */
     const dl = $('todoDailyList');
@@ -7575,27 +7577,56 @@ function todoRender(){
     });
   }catch(e){ console.error('todoRender 异常：', e); }
 }
-/* 新建：每日待办自动挂当前业务日期；提醒时间可选 */
+/* 新建：每日待办改为「模板」（businessDate=null），由 todoEnsureDaily 每天生成未完成实例；临时待办无日期 */
 function todoCreate(type, content, remindIso){
   const isTemp = (type === 'temporary');
   const t = {
     id: wbUuid(),
     type: isTemp ? 'temporary' : 'daily',
     content: content,
-    businessDate: isTemp ? null : todoBizDate(),
+    businessDate: null,          // 每日待办=模板（无业务日期）；实例由 todoEnsureDaily 按业务日生成
     done: false, doneAt: null,
     reminderAt: remindIso || null,
     reminderStatus: remindIso ? 'pending' : 'none',
     reminderSentAt: null,
+    templateId: null,            // 每日待办模板自身 templateId 为空；生成的实例填模板 id
     createdAt: new Date().toISOString(),
     _sbSaved: false
   };
   todoRecs().push(t);
   sbSaveObj('todos', t, {
     type: t.type, content: t.content, business_date: t.businessDate,
-    done: false, done_at: null, reminder_at: t.reminderAt, reminder_status: t.reminderStatus
+    done: false, done_at: null, reminder_at: t.reminderAt, reminder_status: t.reminderStatus,
+    template_id: t.templateId
   });
   return t;
+}
+/* 每日待办「打卡」机制（v5.10.3）：每条每日待办是一条模板（businessDate=null），
+   在每天业务日首次渲染时，为「当前业务日」自动生成一份新的未完成实例（businessDate=今日、templateId=模板 id）。
+   旧业务日的实例保留为历史归档。幂等：已存在则跳过，不会重复生成。 */
+function todoEnsureDaily(){
+  try{
+    const biz = todoBizDate();
+    const recs = todoRecs();
+    recs.filter(function (tp) { return tp.type === 'daily' && !tp.businessDate; }).forEach(function (tp) {
+      const exists = recs.some(function (r) {
+        return r.type === 'daily' && r.businessDate === biz && String(r.templateId) === String(tp.id);
+      });
+      if(exists) return;
+      const inst = {
+        id: wbUuid(), type: 'daily', content: tp.content,
+        businessDate: biz, done: false, doneAt: null,
+        reminderAt: null, reminderStatus: 'none', reminderSentAt: null,   // 提醒不自动重复（Phase 1 未真正投递）
+        templateId: tp.id, createdAt: new Date().toISOString(), _sbSaved: false
+      };
+      recs.push(inst);
+      sbSaveObj('todos', inst, {
+        type: 'daily', content: inst.content, business_date: inst.businessDate,
+        done: false, done_at: null, reminder_at: null, reminder_status: 'none',
+        template_id: tp.id
+      });
+    });
+  }catch(e){ console.error('todoEnsureDaily 异常：', e); }
 }
 /* 完成 / 取消完成（均二次确认）；完成时间取实际操作时刻 */
 function todoToggle(id){
@@ -7626,7 +7657,7 @@ function todoShowBox(view){
 function todoEditMetaHint(){
   const el = $('todoEditMeta'); if(!el) return;
   if(todoEditType === 'daily'){
-    el.textContent = '归入「每日待办」· 业务日期 ' + todoBizDate() + '（每天 02:00 切换，02:00 前算前一天）';
+    el.textContent = '「每日待办」· 每天自动生成一份新的未完成待办（打卡），历史按业务日期归档（每天 02:00 切换，02:00 前算前一天）';
   }else{
     el.textContent = '归入「临时待办」· 不随每日初始化清空，长期保留';
   }
@@ -7701,6 +7732,19 @@ function todoSaveEdit(){
       t.reminderSentAt = null;
     }
     sbSaveObj('todos', t, { content: t.content, reminder_at: t.reminderAt, reminder_status: t.reminderStatus });
+    /* 每日待办实例 → 同步更新其「模板」（业务定义），使之后续日期沿用新内容/提醒 */
+    if(t.type === 'daily' && t.templateId){
+      const tp = todoById(t.templateId);
+      if(tp){
+        tp.content = v;
+        if(String(tp.reminderAt || '') !== String(remind || '')){
+          tp.reminderAt = remind || null;
+          tp.reminderStatus = remind ? 'pending' : 'none';
+          tp.reminderSentAt = null;
+        }
+        sbSaveObj('todos', tp, { content: tp.content, reminder_at: tp.reminderAt, reminder_status: tp.reminderStatus });
+      }
+    }
   }else{
     todoCreate(todoEditType, v, remind);
   }
@@ -7710,9 +7754,21 @@ function todoDelete(id, skipConfirm){
   const st = todoStore();
   const t = st.records.find(x => String(x.id) === String(id));
   if(!t){ todoRender(); return; }
-  if(!skipConfirm && !confirm('删除这条待办？')) return;
-  st.records = st.records.filter(x => String(x.id) !== String(id));
-  sbRemoveObj('todos', t);                                     /* DAL 软删除 */
+  /* 每日待办实例 → 级联删除整条「模板」（含全部历史实例）；普通/临时待办只删自身 */
+  const recurring = (t.type === 'daily' && t.templateId);
+  if(!skipConfirm && !confirm(recurring ? '删除这条每日待办（含全部历史）？' : '删除这条待办？')) return;
+  if(recurring){
+    const victimIds = {};
+    victimIds[String(t.id)] = 1; victimIds[String(t.templateId)] = 1;
+    st.records.forEach(function (x) {
+      if(x.type === 'daily' && x.templateId && String(x.templateId) === String(t.templateId)) victimIds[String(x.id)] = 1;
+    });
+    st.records.forEach(function (x) { if(victimIds[String(x.id)]) sbRemoveObj('todos', x); });
+    st.records = st.records.filter(function (x) { return !victimIds[String(x.id)]; });
+  }else{
+    st.records = st.records.filter(x => String(x.id) !== String(id));
+    sbRemoveObj('todos', t);                                     /* DAL 软删除 */
+  }
   if(todoEditId && String(todoEditId) === String(id)) todoCloseEdit();
   todoRender(); toast('已删除');
 }
@@ -8971,21 +9027,21 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.10.1"></script>
-<script src="./js/data/supabase.js?v=5.10.1"></script>
+<script src="./js/config.js?v=5.10.4"></script>
+<script src="./js/data/supabase.js?v=5.10.4"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.10.1"></script>
-<script src="./js/data/query.js?v=5.10.1"></script>
-<script src="./js/auth/session.js?v=5.10.1"></script>
-<script src="./js/data/groups.js?v=5.10.1"></script>
-<script src="./js/data/clothgroups.js?v=5.10.1"></script>
-<script src="./js/data/clothes.js?v=5.10.1"></script>
-<script src="./js/data/modules.js?v=5.10.1"></script>
-<script src="./js/data/index.js?v=5.10.1"></script>
-<script src="./js/storage/paths.js?v=5.10.1"></script>
-<script src="./js/storage/images.js?v=5.10.1"></script>
-<script src="./js/storage/index.js?v=5.10.1"></script>
-<script src="./js/auth/index.js?v=5.10.1"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.10.1"></script>
+<script src="./js/data/errors.js?v=5.10.4"></script>
+<script src="./js/data/query.js?v=5.10.4"></script>
+<script src="./js/auth/session.js?v=5.10.4"></script>
+<script src="./js/data/groups.js?v=5.10.4"></script>
+<script src="./js/data/clothgroups.js?v=5.10.4"></script>
+<script src="./js/data/clothes.js?v=5.10.4"></script>
+<script src="./js/data/modules.js?v=5.10.4"></script>
+<script src="./js/data/index.js?v=5.10.4"></script>
+<script src="./js/storage/paths.js?v=5.10.4"></script>
+<script src="./js/storage/images.js?v=5.10.4"></script>
+<script src="./js/storage/index.js?v=5.10.4"></script>
+<script src="./js/auth/index.js?v=5.10.4"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.10.4"></script>
 </body>
 </html>

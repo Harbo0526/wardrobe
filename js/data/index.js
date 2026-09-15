@@ -109,9 +109,9 @@
   const todos = F({
     table: 'todos',
     createFields: ['type', 'content', 'business_date', 'done', 'done_at',
-                   'reminder_at', 'reminder_status', 'sort_order', 'legacy_id'],
+                   'reminder_at', 'reminder_status', 'sort_order', 'legacy_id', 'template_id'],
     updateFields: ['type', 'content', 'business_date', 'done', 'done_at',
-                   'reminder_at', 'reminder_status', 'sort_order'],
+                   'reminder_at', 'reminder_status', 'sort_order', 'template_id'],
     orderWhitelist: ['business_date', 'created_at', 'updated_at', 'sort_order'],
     defaultOrder: 'created_at',
     requiredCreate: ['type', 'content']

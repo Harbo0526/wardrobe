@@ -239,6 +239,7 @@
           type: x.type || 'temporary',
           content: x.content || '',
           businessDate: x.business_date || null,
+          templateId: x.template_id || null,
           done: !!x.done,
           doneAt: x.done_at || null,
           reminderAt: x.reminder_at || null,
