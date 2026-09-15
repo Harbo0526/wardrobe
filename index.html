@@ -1926,6 +1926,31 @@ input[type="datetime-local"]::-webkit-datetime-edit{min-width:0;overflow:hidden;
 input[type="date"]::-webkit-datetime-edit-fields-wrapper,
 input[type="time"]::-webkit-datetime-edit-fields-wrapper,
 input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
+
+/* ===== v5.13.5：启动遮罩（消除「先闪登录页、再跳首页」）=====
+   根因：静态 HTML 里 #screen-auth 默认带 .active，而登录态要等 window.load 后异步判定，
+   这段时间登录页会被真实渲染出来。现用一层遮罩盖住，任一屏被激活时再撤掉 →
+   打开时只会看到「启动页 → 目标页」，不会再闪一次登录页。
+   兜底：即使 JS 异常未执行，CSS 动画也会在 6s 后自动淡出，不会永久遮挡。 */
+.boot-splash{
+  position:absolute;inset:0;z-index:300;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:var(--bg);
+  animation:bootAutoHide .01s linear 6s forwards;
+}
+.boot-splash.hide{opacity:0;visibility:hidden;transition:opacity .18s ease;}
+.boot-logo{
+  width:64px;height:64px;border-radius:20px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card);
+}
+.boot-logo svg{width:34px;height:34px;}
+.boot-title{font-size:15px;font-weight:600;color:var(--ink-sub);letter-spacing:.5px;}
+.boot-dots{display:flex;gap:5px;margin-top:2px;}
+.boot-dots i{width:6px;height:6px;border-radius:50%;background:var(--primary);opacity:.3;animation:bootDot 1s ease-in-out infinite;}
+.boot-dots i:nth-child(2){animation-delay:.15s;}
+.boot-dots i:nth-child(3){animation-delay:.3s;}
+@keyframes bootDot{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:.9;transform:translateY(-3px);}}
+@keyframes bootAutoHide{to{opacity:0;visibility:hidden;}}
 </style>
 </head>
 <body>
@@ -1940,6 +1965,18 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
 })();
 </script>
 <div class="phone-shell" id="phone">
+
+  <!-- v5.13.5：启动遮罩 —— 登录态判定完成前盖住所有屏，避免「先闪登录页、再跳首页」；
+       由 showScreen() 在任一屏被激活时撤掉（CSS 6s 兜底自动淡出） -->
+  <div class="boot-splash" id="bootSplash" aria-hidden="true">
+    <div class="boot-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3c-1.5 2.5-4 4-7 4 0 4 2 7 5 8.5V21h4v-5.5c3-1.5 5-4.5 5-8.5-3 0-5.5-1.5-7-4z"/>
+      </svg>
+    </div>
+    <div class="boot-title">生活象限</div>
+    <div class="boot-dots"><i></i><i></i><i></i></div>
+  </div>
 
   <!-- ============ 屏 1：登录 / 注册 ============ -->
   <section class="screen screen-auth active" id="screen-auth">
@@ -3578,7 +3615,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.4';
+const APP_VERSION = '5.13.5';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -4262,6 +4299,9 @@ const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','scre
 let wbScreen = '';   // 当前屏 id（供安卓物理返回键判断）
 
 function showScreen(id){
+  /* v5.13.5：任一屏被激活 → 登录态判定已完成，撤掉启动遮罩（只做一次） */
+  const _bs = $('bootSplash');
+  if(_bs && !_bs.classList.contains('hide')) _bs.classList.add('hide');
   if(wbScreen === id){
     /* v5.7.1：已在目标屏 → 不重复切换 class（避免重放 .screen.active 的 fadeIn 动画造成闪屏） */
     const cur = $(id);
@@ -9554,23 +9594,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.4"></script>
-<script src="./js/data/supabase.js?v=5.13.4"></script>
+<script src="./js/config.js?v=5.13.5"></script>
+<script src="./js/data/supabase.js?v=5.13.5"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.4"></script>
-<script src="./js/data/query.js?v=5.13.4"></script>
-<script src="./js/auth/session.js?v=5.13.4"></script>
-<script src="./js/data/groups.js?v=5.13.4"></script>
-<script src="./js/data/clothgroups.js?v=5.13.4"></script>
-<script src="./js/data/clothes.js?v=5.13.4"></script>
-<script src="./js/data/modules.js?v=5.13.4"></script>
-<script src="./js/data/index.js?v=5.13.4"></script>
-<script src="./js/storage/paths.js?v=5.13.4"></script>
-<script src="./js/storage/images.js?v=5.13.4"></script>
-<script src="./js/storage/index.js?v=5.13.4"></script>
-<script src="./js/auth/index.js?v=5.13.4"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.4"></script>
+<script src="./js/data/errors.js?v=5.13.5"></script>
+<script src="./js/data/query.js?v=5.13.5"></script>
+<script src="./js/auth/session.js?v=5.13.5"></script>
+<script src="./js/data/groups.js?v=5.13.5"></script>
+<script src="./js/data/clothgroups.js?v=5.13.5"></script>
+<script src="./js/data/clothes.js?v=5.13.5"></script>
+<script src="./js/data/modules.js?v=5.13.5"></script>
+<script src="./js/data/index.js?v=5.13.5"></script>
+<script src="./js/storage/paths.js?v=5.13.5"></script>
+<script src="./js/storage/images.js?v=5.13.5"></script>
+<script src="./js/storage/index.js?v=5.13.5"></script>
+<script src="./js/auth/index.js?v=5.13.5"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.5"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.4"></script>
+<script src="./js/fuel.js?v=5.13.5"></script>
 </body>
 </html>
