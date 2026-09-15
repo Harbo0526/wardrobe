@@ -519,7 +519,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .todo-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .todo-title{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;}
 .todo-cnt{font-size:11.5px;font-weight:700;color:var(--ink-faint);white-space:nowrap;}
-.todo-add{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:17px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
+.todo-add{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:17px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
 .todo-add:active{filter:brightness(.94);}
 .todo-list{max-height:132px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .todo-item{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--t-divider);}
@@ -535,6 +535,11 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .todo-ed:active{background:var(--primary-soft);}
 .todo-day{font-size:11px;font-weight:700;color:var(--ink-faint);padding:6px 0 1px;}
 .todo-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:10px 0;}
+.todo-collapse{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:16px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
+.todo-collapse:active{filter:brightness(.94);}
+.todo-head-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.todo-pre{font-size:10.5px;font-weight:700;color:var(--ink-faint);background:var(--t-divider);border-radius:6px;padding:1px 6px;white-space:nowrap;flex:0 0 auto;}
+
 .memo-search-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:14px 0;}
 .cloth-card{
   background:var(--card);
@@ -1807,6 +1812,36 @@ html[data-theme="minimal"] .lg-recent-item,
 html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
 
 </style>
+<style id="fuel-style">
+/* 油费趋势（v5.12.0） */
+#screen-fuel-trend .lg-shell{display:block;max-width:680px;margin:0 auto;padding:12px 12px 28px;}
+#screen-fuel-trend .fuel-price-grid{display:flex;gap:12px;}
+#screen-fuel-trend .fuel-price-cell{flex:1;background:var(--bg-soft,#f4f8f4);border:1px solid var(--line,#e3ece3);border-radius:14px;padding:12px;text-align:center;}
+#screen-fuel-trend .fuel-price-cell .k{font-size:13px;color:var(--text-2,#5b6b5b);}
+#screen-fuel-trend .fuel-price-cell .v{font-size:26px;font-weight:700;color:var(--text,#223);line-height:1.2;}
+#screen-fuel-trend .fuel-price-cell .u{font-size:12px;color:var(--text-2,#5b6b5b);}
+#screen-fuel-trend .fuel-next{font-size:16px;font-weight:600;color:var(--text,#223);}
+#screen-fuel-trend .fuel-next .up{color:#E86A5E;}
+#screen-fuel-trend .fuel-next .down{color:#58B368;}
+#screen-fuel-trend .fuel-pred{font-size:16px;font-weight:600;color:var(--text,#223);}
+#screen-fuel-trend .fuel-pred .up{color:#E86A5E;}
+#screen-fuel-trend .fuel-pred .down{color:#58B368;}
+#screen-fuel-trend .fuel-disclaimer{margin-top:8px;font-size:12px;color:var(--text-2,#7a8a7a);}
+#screen-fuel-trend .fuel-tabs{display:flex;gap:8px;margin-bottom:8px;}
+#screen-fuel-trend .fuel-tab{border:1px solid var(--line,#e3ece3);background:var(--bg-soft,#f4f8f4);color:var(--text-2,#5b6b5b);border-radius:20px;padding:6px 14px;font-size:13px;cursor:pointer;}
+#screen-fuel-trend .fuel-tab.active{background:var(--accent,#3a9d6e);color:#fff;border-color:var(--accent,#3a9d6e);}
+#screen-fuel-trend .fuel-status{font-size:12px;color:var(--text-2,#7a8a7a);text-align:center;margin-top:4px;}
+#screen-fuel-trend .lg-chart{width:100%;overflow:hidden;}
+html[data-theme="minimal"] #screen-fuel-trend{background:linear-gradient(180deg,#f3faf4 0%,#eef7ef 100%);}
+html[data-theme="minimal"] #screen-fuel-trend .lg-head{background:#ffffff;border-bottom:1px solid #d8e8da;}
+html[data-theme="minimal"] #screen-fuel-trend .lg-head h2{color:#1f7a4d;}
+html[data-theme="minimal"] #screen-fuel-trend .lg-head .back{background:#e9f5ec;color:#1f7a4d;}
+html[data-theme="minimal"] #screen-fuel-trend .card{background:#ffffff;border:1px solid #d8e8da;box-shadow:0 1px 3px rgba(31,122,77,.06);}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell{background:#f3faf4;border-color:#d8e8da;}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell .v{color:#1f3a2a;}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-tab{background:#f3faf4;border-color:#d8e8da;color:#3a7a52;}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
+</style>
 </head>
 <body>
 <script>
@@ -1945,7 +1980,10 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
         <div class="todo-head">
           <span class="todo-title">📋 每日待办</span>
           <span class="todo-cnt" id="todoDailyCnt"></span>
-          <button class="todo-add press" type="button" onclick="todoOpenNew('daily')" title="新增每日待办">＋</button>
+          <span class="todo-head-actions">
+            <button class="todo-collapse press" type="button" id="todoCollapseBtn" onclick="todoToggleCollapse()" title="折叠/展开">⌄</button>
+            <button class="todo-add press" type="button" onclick="todoOpenNew('daily')" title="新增每日待办">＋</button>
+          </span>
         </div>
         <div class="todo-list" id="todoDailyList"></div>
       </div>
@@ -1953,7 +1991,9 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
         <div class="todo-head">
           <span class="todo-title">📌 临时待办</span>
           <span class="todo-cnt" id="todoTempCnt"></span>
-          <button class="todo-add press" type="button" onclick="todoOpenNew('temporary')" title="新增临时待办">＋</button>
+          <span class="todo-head-actions">
+            <button class="todo-add press" type="button" onclick="todoOpenNew('temporary')" title="新增临时待办">＋</button>
+          </span>
         </div>
         <div class="todo-list" id="todoTempList"></div>
       </div>
@@ -1978,7 +2018,16 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
         <span class="gc-emoji">🌙</span>
         <span class="gc-info"><span class="gc-name">睡眠</span><span class="gc-count">记录你的睡眠</span></span>
       </button>
-      <button class="group-card press" onclick="navTo(4)" style="grid-column:1/-1;">
+      <!-- v5.12.1：油费趋势入口【暂不上线，不在页面展示】。
+           后端接口（DB 五表 + daily-fuel-update Edge Function + fuel-price-cron.sql）与前端
+           js/fuel.js / #screen-fuel-trend 全部保留；上线时取消本段注释即可。 -->
+      <!--
+      <button class="group-card press" onclick="gotoFuelTrend()">
+        <span class="gc-emoji">⛽</span>
+        <span class="gc-info"><span class="gc-name">油费趋势</span><span class="gc-count">地区油价 · 调价预测</span></span>
+      </button>
+      -->
+      <button class="group-card press" onclick="navTo(4)">
         <span class="gc-emoji">👤</span>
         <span class="gc-info"><span class="gc-name">我的</span><span class="gc-count">账号 · 令牌 · 数据管理</span></span>
       </button>
@@ -2940,6 +2989,74 @@ html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
 
   </section>
 
+  <!-- ============ 油费趋势详情页（v5.12.0） ============ -->
+  <section class="screen" id="screen-fuel-trend">
+    <div class="lg-head">
+      <button class="back press" onclick="goHome()" title="返回首页" style="color:#fff;font-size:22px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-right:6px;">‹</button>
+      <h2>⛽ 油费趋势</h2>
+      <button class="lg-sync press" id="fuelRefresh" title="刷新" onclick="renderFuelTrend(true)">⟳</button>
+    </div>
+    <div class="lg-shell" style="display:block;max-width:680px;margin:0 auto;padding:12px 12px 28px;">
+
+      <!-- 地区选择 -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ck-sec"><h3>📍 我的地区</h3></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <select class="input" id="fuelProvince" style="flex:1;min-width:120px;" onchange="onFuelProvinceChange()"></select>
+          <select class="input" id="fuelCity" style="flex:1;min-width:120px;" onchange="onFuelCityChange()"></select>
+        </div>
+        <div id="fuelRegionLabel" class="ck-hint" style="margin-top:8px;">—</div>
+      </div>
+
+      <!-- 当前油价 -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ck-sec"><h3>⛽ 当前油价</h3></div>
+        <div class="fuel-price-grid">
+          <div class="fuel-price-cell"><div class="k">92号</div><div class="v" id="fuel92">--</div><div class="u">元/L</div></div>
+          <div class="fuel-price-cell"><div class="k">95号</div><div class="v" id="fuel95">--</div><div class="u">元/L</div></div>
+        </div>
+        <div id="fuelCurrentMeta" class="ck-hint" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- 下一次调价 -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ck-sec"><h3>🗓️ 下一次调价</h3></div>
+        <div id="fuelNextAdjust" class="fuel-next">—</div>
+        <div id="fuelNextMeta" class="ck-hint" style="margin-top:6px;"></div>
+      </div>
+
+      <!-- AI 预测 -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ck-sec"><h3>🤖 AI 预测（下一轮）</h3></div>
+        <div id="fuelPrediction" class="fuel-pred">—</div>
+        <div id="fuelPredReason" class="ck-hint" style="margin-top:6px;"></div>
+        <div class="fuel-disclaimer">预测值，仅供参考，最终以官方调价公告为准。</div>
+      </div>
+
+      <!-- 历史趋势 -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ck-sec"><h3>📈 油价趋势</h3></div>
+        <div class="fuel-tabs" id="fuelTabs">
+          <button class="fuel-tab" data-d="7" onclick="setFuelRange(7)">7天</button>
+          <button class="fuel-tab active" data-d="30" onclick="setFuelRange(30)">30天</button>
+          <button class="fuel-tab" data-d="90" onclick="setFuelRange(90)">90天</button>
+        </div>
+        <div id="fuelChart" class="lg-chart"></div>
+        <div id="fuelChartNote" class="ck-hint" style="margin-top:6px;"></div>
+      </div>
+
+      <!-- 车主建议 -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="ck-sec"><h3>💡 车主建议</h3></div>
+        <div id="fuelAdvice" class="ck-hint">—</div>
+      </div>
+
+      <!-- 数据状态 -->
+      <div id="fuelStatus" class="fuel-status"></div>
+
+    </div>
+  </section>
+
   <!-- ============ 底部导航（登录态展示） ============ -->
   <!-- 底部导航栏已移除（v4.1.0）：功能入口统一收口到总首页，navTo() 函数保留供既有调用点使用 -->
 
@@ -3362,7 +3479,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.10.4';
+const APP_VERSION = '5.12.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -4041,7 +4158,7 @@ function openThemeSheet(){ renderThemeUI(); openSheet('sheet-theme'); }
 function initTheme(){ applyTheme(getTheme(), false); }
 
 /* ---------- 3. 屏幕导航 ---------- */
-const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep'];
+const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep','screen-fuel-trend'];
 
 let wbScreen = '';   // 当前屏 id（供安卓物理返回键判断）
 
@@ -7505,6 +7622,49 @@ function todoStore(){
 }
 function todoRecs(){ return todoStore().records; }
 function todoById(id){ return todoRecs().find(t => String(t.id) === String(id)) || null; }
+/* ── 待办实体判定（单一事实来源，v5.12.2）─────────────────────────────────
+   模板(template)  = type='daily' && businessDate 为空 && templateId 为空
+                    → 仅作「每日重复」的生成来源，**绝不作为列表项展示**
+   实例(instance)  = type='daily' && businessDate 非空 && templateId 非空
+                    → 某模板在某业务日的一次打卡；须「模板存活 且 businessDate >= 模板生效日」才有效
+   一次性(one-off) = 临时待办，或 type='daily' && businessDate 非空 && templateId 为空
+                    → 只在所属业务日出现一次，永不重复
+   修复要点：模板不再进列表 → 不再出现「模板+实例」重复；模板也不再能被误删，从而不再产生孤儿实例。 */
+function todoIsTemplate(t){ return !!t && t.type === 'daily' && !t.businessDate && !t.templateId; }
+function todoIsInstance(t){ return !!t && t.type === 'daily' && !!t.businessDate && !!t.templateId; }
+function todoIsOneOff(t){ return !!t && (t.type === 'temporary' || (t.type === 'daily' && !!t.businessDate && !t.templateId)); }
+/* 有效「每日待办」列表项：排除模板；实例须模板存活且在生效日之后；一次性按业务日展示 */
+function todoDailyItems(){
+  const recs = todoRecs();
+  const tpl = {};
+  recs.filter(todoIsTemplate).forEach(t => { tpl[String(t.id)] = t; });
+  const out = [];
+  recs.forEach(t => {
+    if(!t || t.type !== 'daily' || todoIsTemplate(t)) return;
+    if(todoIsInstance(t)){
+      const tp = tpl[String(t.templateId)];
+      if(!tp) return;                                  /* 模板已不存在（孤儿实例）→ 非法，不展示 */
+      const eff = todoTemplateEffDate(tp);
+      if(eff && t.businessDate < eff) return;          /* 生效日之前的非法实例 → 不展示 */
+      out.push(t); return;
+    }
+    if(t.businessDate) out.push(t);                    /* 一次性每日待办（templateId=null） */
+  });
+  return out;
+}
+/* 无效的每日实例（孤儿 / 生效日之前）→ 供清理软删：删除脏数据，而非在 UI 上隐藏旧日期 */
+function todoDailyInvalid(){
+  const recs = todoRecs();
+  const tpl = {};
+  recs.filter(todoIsTemplate).forEach(t => { tpl[String(t.id)] = t; });
+  return recs.filter(t => {
+    if(!todoIsInstance(t)) return false;
+    const tp = tpl[String(t.templateId)];
+    if(!tp) return true;
+    const eff = todoTemplateEffDate(tp);
+    return !!(eff && t.businessDate < eff);
+  });
+}
 /* 展示态提醒状态：reminderSentAt 由服务端回写；已完成且未发送 → 视为已取消 */
 function todoRemindState(t){
   if(!t || !t.reminderAt) return 'none';
@@ -7519,44 +7679,106 @@ function todoCmp(a, b){
   if(d) return d;
   return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
 }
-function todoItemHTML(t){
+/* 折叠态（v5.11.0）：整卡一键折叠，状态记本机 localStorage（不随账号）；折叠后每板块只露一条，可上下滑动逐条切换 */
+let todoCollapsed = false;
+try { todoCollapsed = (localStorage.getItem('wb_todo_collapsed') === '1'); } catch(e){}
+let todoDailyCursor = 0, todoTempCursor = 0;   // 折叠后各板块当前显示的明细序号（不持久化）
+let todoDailyLen = 0, todoTempLen = 0;
+let todoPagersBound = false;
+function todoToggleCollapse(){
+  todoCollapsed = !todoCollapsed;
+  try { localStorage.setItem('wb_todo_collapsed', todoCollapsed ? '1' : '0'); } catch(e){}
+  todoRender();
+}
+function todoPagerStep(sect, delta){
+  if(!todoCollapsed) return;
+  const len = (sect === 'daily') ? todoDailyLen : todoTempLen;
+  if(len <= 1) return;
+  let i = (sect === 'daily') ? todoDailyCursor : todoTempCursor;
+  i = Math.min(len - 1, Math.max(0, i + delta));
+  if(sect === 'daily') todoDailyCursor = i; else todoTempCursor = i;
+  todoRender();
+}
+function bindTodoPagers(){
+  ['daily','temp'].forEach(function(sect){
+    const box = (sect === 'daily') ? $('todoDailyList') : $('todoTempList');
+    if(!box) return;
+    let sy = null;
+    box.addEventListener('touchstart', function(e){ sy = e.touches[0].clientY; }, { passive:true });
+    box.addEventListener('touchend', function(e){
+      if(sy === null || !todoCollapsed) return;
+      const dy = e.changedTouches[0].clientY - sy; sy = null;
+      if(Math.abs(dy) > 28) todoPagerStep(sect, dy < 0 ? 1 : -1);
+    }, { passive:true });
+    box.addEventListener('wheel', function(e){
+      if(!todoCollapsed || Math.abs(e.deltaY) < 6) return;
+      todoPagerStep(sect, e.deltaY > 0 ? 1 : -1);
+    }, { passive:true });
+  });
+}
+function todoItemHTML(t, pre){
   const done = !!t.done;
   const rs = todoRemindState(t);
   const bell = (rs === 'none') ? '' :
     '<span class="todo-bell' + (rs === 'pending' ? ' on' : '') + '" title="' +
     spEsc('提醒 ' + todoStamp(t.reminderAt) + (TODO_REMIND_TEXT[rs] ? ' · ' + TODO_REMIND_TEXT[rs] : '')) + '">🔔</span>';
   return '<div class="todo-item' + (done ? ' done' : '') + '" data-id="' + spEsc(String(t.id)) + '">' +
+    (pre ? '<span class="todo-pre">' + pre + '</span>' : '') +
     '<button class="todo-ck" type="button" data-ck="' + spEsc(String(t.id)) + '">' + (done ? '✓' : '') + '</button>' +
     '<span class="todo-tx">' + spEsc(t.content || '') + '</span>' + bell +
     '<button class="todo-ed" type="button" data-ed="' + spEsc(String(t.id)) + '">✏</button>' +
   '</div>';
 }
 function todoEmptyHTML(){ return '<div class="todo-empty">还没有待办，点右上角 ＋ 添加</div>'; }
+/* 折叠态：每板块只显示排序后第一条（触摸上下滑 / 桌面滚轮可逐条切换，无可见翻页箭头） */
+function todoCollapsedOne(items, sect, dateOf){
+  if(!items.length) return todoEmptyHTML();
+  let i = (sect === 'daily') ? todoDailyCursor : todoTempCursor;
+  if(i >= items.length) i = 0;
+  if(i < 0) i = 0;
+  const t = items[i];
+  const pre = (sect === 'daily' && dateOf) ? spEsc(dateOf(t)) : '';
+  return todoItemHTML(t, pre);
+}
 /* 渲染两区（每次渲染后重绑事件，避免重复绑定） */
 function todoRender(){
   try{
+    if(!todoPagersBound){ bindTodoPagers(); todoPagersBound = true; }
+    const cb = $('todoCollapseBtn');
+    if(cb) cb.textContent = todoCollapsed ? '⌄' : '⌃';
     todoEnsureDaily();              // v5.10.4：每日待办「打卡」——每次渲染前确保当天实例已生成
     const biz = todoBizDate();
-    /* ---- ① 每日待办：今日业务日在前，历史按业务日期倒序分组（历史永久保留） ---- */
+    /* ---- ① 每日待办：只展示「有效实例 + 一次性」；模板(template)永不进列表（历史按业务日期倒序） ---- */
     const dl = $('todoDailyList');
     if(dl){
       const byDate = {};
-      todoRecs().filter(t => t.type === 'daily').forEach(t => {
+      todoDailyItems().forEach(t => {
         const k = t.businessDate || '';
+        if(!k) return;                                   /* 防御：无业务日期的记录不进每日区 */
         (byDate[k] = byDate[k] || []).push(t);
       });
       const dates = Object.keys(byDate).sort((a, b) => String(b).localeCompare(String(a)));   /* 新日期在前 */
-      let html = '';
       if(!dates.length){
-        html = todoEmptyHTML();
+        dl.innerHTML = todoEmptyHTML();
+        todoDailyLen = 0;
+      }else if(todoCollapsed){
+        const flat = [];
+        dates.forEach(dt => byDate[dt].slice().sort(todoCmp).forEach(t => flat.push(t)));
+        todoDailyLen = flat.length;
+        dl.innerHTML = todoCollapsedOne(flat, 'daily', function(t){
+          const dt = t.businessDate || '';
+          return dt + (dt === biz ? ' · 今天' : '');
+        });
       }else{
+        let html = '';
         if(!byDate[biz]) html += '<div class="todo-empty">今日暂无待办，点 ＋ 添加</div>';
         dates.forEach(dt => {
-          if(dt) html += '<div class="todo-day">' + spEsc(dt + (dt === biz ? ' · 今天' : '')) + '</div>';
+          html += '<div class="todo-day">' + spEsc(dt + (dt === biz ? ' · 今天' : '')) + '</div>';
           html += byDate[dt].slice().sort(todoCmp).map(todoItemHTML).join('');
         });
+        dl.innerHTML = html;
+        todoDailyLen = 0;
       }
-      dl.innerHTML = html;
       const today = byDate[biz] || [];
       const c = $('todoDailyCnt');
       if(c) c.textContent = today.length ? '（' + today.filter(t => t.done).length + '/' + today.length + '）' : '';
@@ -7565,7 +7787,16 @@ function todoRender(){
     const tl = $('todoTempList');
     if(tl){
       const all = todoRecs().filter(t => t.type === 'temporary');
-      tl.innerHTML = all.length ? all.slice().sort(todoCmp).map(todoItemHTML).join('') : todoEmptyHTML();
+      if(!all.length){
+        tl.innerHTML = todoEmptyHTML();
+        todoTempLen = 0;
+      }else if(todoCollapsed){
+        todoTempLen = all.length;
+        tl.innerHTML = todoCollapsedOne(all.slice().sort(todoCmp), 'temp', null);
+      }else{
+        tl.innerHTML = all.slice().sort(todoCmp).map(todoItemHTML).join('');
+        todoTempLen = 0;
+      }
       const c2 = $('todoTempCnt');
       if(c2) c2.textContent = all.length ? '（' + all.filter(t => t.done).length + '/' + all.length + '）' : '';
     }
@@ -7601,16 +7832,44 @@ function todoCreate(type, content, remindIso){
   });
   return t;
 }
-/* 每日待办「打卡」机制（v5.10.3）：每条每日待办是一条模板（businessDate=null），
-   在每天业务日首次渲染时，为「当前业务日」自动生成一份新的未完成实例（businessDate=今日、templateId=模板 id）。
-   旧业务日的实例保留为历史归档。幂等：已存在则跳过，不会重复生成。 */
+/* 模板生效日期 = 创建时刻的「本地日历日」（YYYY-MM-DD）；模板只能从生效日期起生成实例（v5.11.1）。
+   v5.11.3：createdAt/created_at 是 UTC 时间戳，原先直接 slice(0,10) 取 UTC 日期——
+   东八区 00:00–07:59 创建会被算成前一天生效（15日创建→14日生效→14日出现实例）。改为转本地日期。 */
+function todoTemplateEffDate(tp){
+  const c = tp.createdAt || '';
+  if(!c) return '';
+  const d = new Date(c);
+  if(!isNaN(d.getTime())) return d.getFullYear() + '-' + todoPad2(d.getMonth() + 1) + '-' + todoPad2(d.getDate());
+  return (c.length >= 10) ? c.slice(0, 10) : '';   /* 解析失败退回字符串截断（兼容旧数据） */
+}
+/* 清理「无效每日实例」：① 孤儿（模板已不存在）② 生效日之前被错误生成。
+   仅处理 type='daily' 且 templateId 非空的行；一次性/临时待办（templateId=null）一律不受影响。
+   v5.12.2：改为「每次渲染都校验并软删」，不再用「会话内只跑一次」标记（否则登录/刷新后不再清理）。 */
+function todoCleanLegacyDaily(){
+  try{
+    const recs = todoRecs();
+    todoDailyInvalid().forEach(function (t) {
+      try { sbRemoveObj('todos', t); } catch (e) {}
+      const i = recs.indexOf(t); if(i >= 0) recs.splice(i, 1);   // 本地立即移除
+    });
+  }catch(e){ console.error('todoCleanLegacyDaily 异常：', e); }
+}
+/* 每日待办「打卡」机制（v5.10.3）：
+   每条每日待办 = 一条模板(template：type='daily'、businessDate 空、templateId 空)。
+   每次渲染前，为「当前业务日」生成一份未完成实例（businessDate=今日业务日、templateId=模板 id）。
+   铁律：模板「生效日」（= 模板创建时刻的本地日历日）之前，绝不生成任何实例。
+   幂等：同一模板同一业务日已存在实例则跳过，不会重复生成。旧业务日实例保留为历史。
+   v5.12.2：只认「模板」实体生成（谓词 todoIsTemplate），一次性/临时/实例都不参与生成。 */
 function todoEnsureDaily(){
   try{
+    todoCleanLegacyDaily();          // 先清理无效实例（孤儿 / 生效日之前）
     const biz = todoBizDate();
     const recs = todoRecs();
-    recs.filter(function (tp) { return tp.type === 'daily' && !tp.businessDate; }).forEach(function (tp) {
+    recs.filter(todoIsTemplate).forEach(function (tp) {
+      const eff = todoTemplateEffDate(tp);
+      if(eff && biz < eff) return;   // 生效日之前绝不生成实例（含 02:00 业务日边界回溯）
       const exists = recs.some(function (r) {
-        return r.type === 'daily' && r.businessDate === biz && String(r.templateId) === String(tp.id);
+        return todoIsInstance(r) && r.businessDate === biz && String(r.templateId) === String(tp.id);
       });
       if(exists) return;
       const inst = {
@@ -7754,14 +8013,16 @@ function todoDelete(id, skipConfirm){
   const st = todoStore();
   const t = st.records.find(x => String(x.id) === String(id));
   if(!t){ todoRender(); return; }
-  /* 每日待办实例 → 级联删除整条「模板」（含全部历史实例）；普通/临时待办只删自身 */
-  const recurring = (t.type === 'daily' && t.templateId);
+  /* 每日待办（实例或模板）→ 级联删除整条「模板」（含全部历史实例）；一次性/临时待办只删自身。
+     v5.12.2：删「模板」本身也级联其全部实例，杜绝产生孤儿实例。 */
+  const tplId = (t.type === 'daily') ? (t.templateId || (todoIsTemplate(t) ? t.id : null)) : null;
+  const recurring = !!tplId;
   if(!skipConfirm && !confirm(recurring ? '删除这条每日待办（含全部历史）？' : '删除这条待办？')) return;
   if(recurring){
     const victimIds = {};
-    victimIds[String(t.id)] = 1; victimIds[String(t.templateId)] = 1;
+    victimIds[String(t.id)] = 1; victimIds[String(tplId)] = 1;
     st.records.forEach(function (x) {
-      if(x.type === 'daily' && x.templateId && String(x.templateId) === String(t.templateId)) victimIds[String(x.id)] = 1;
+      if(x.type === 'daily' && x.templateId && String(x.templateId) === String(tplId)) victimIds[String(x.id)] = 1;
     });
     st.records.forEach(function (x) { if(victimIds[String(x.id)]) sbRemoveObj('todos', x); });
     st.records = st.records.filter(function (x) { return !victimIds[String(x.id)]; });
@@ -8475,9 +8736,9 @@ function lgGroupBarSVG(labels, arrA, arrB, colorA, colorB){
   svg += '</svg>';
   return svg;
 }
-function lgLineSVG(labels, arrA, arrB, colorA, colorB){
+function lgLineSVG(labels, arrA, arrB, colorA, colorB, capW){
   const n = labels.length;
-  const W = Math.max(280, n * 46), H = 190, padL = 40, padB = 34, padT = 30, padR = 10;
+  const W = Math.min(Math.max(280, n * 46), (capW && capW > 0) ? capW : 99999), H = 190, padL = 40, padB = 34, padT = 30, padR = 10;
   const cw = W - padL - padR, ch = H - padT - padB;
   const max = Math.max(1, ...arrA, ...arrB);
   const gw = cw / n;
@@ -9027,21 +9288,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.10.4"></script>
-<script src="./js/data/supabase.js?v=5.10.4"></script>
+<script src="./js/config.js?v=5.12.2"></script>
+<script src="./js/data/supabase.js?v=5.12.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.10.4"></script>
-<script src="./js/data/query.js?v=5.10.4"></script>
-<script src="./js/auth/session.js?v=5.10.4"></script>
-<script src="./js/data/groups.js?v=5.10.4"></script>
-<script src="./js/data/clothgroups.js?v=5.10.4"></script>
-<script src="./js/data/clothes.js?v=5.10.4"></script>
-<script src="./js/data/modules.js?v=5.10.4"></script>
-<script src="./js/data/index.js?v=5.10.4"></script>
-<script src="./js/storage/paths.js?v=5.10.4"></script>
-<script src="./js/storage/images.js?v=5.10.4"></script>
-<script src="./js/storage/index.js?v=5.10.4"></script>
-<script src="./js/auth/index.js?v=5.10.4"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.10.4"></script>
+<script src="./js/data/errors.js?v=5.12.2"></script>
+<script src="./js/data/query.js?v=5.12.2"></script>
+<script src="./js/auth/session.js?v=5.12.2"></script>
+<script src="./js/data/groups.js?v=5.12.2"></script>
+<script src="./js/data/clothgroups.js?v=5.12.2"></script>
+<script src="./js/data/clothes.js?v=5.12.2"></script>
+<script src="./js/data/modules.js?v=5.12.2"></script>
+<script src="./js/data/index.js?v=5.12.2"></script>
+<script src="./js/storage/paths.js?v=5.12.2"></script>
+<script src="./js/storage/images.js?v=5.12.2"></script>
+<script src="./js/storage/index.js?v=5.12.2"></script>
+<script src="./js/auth/index.js?v=5.12.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.12.2"></script>
+<!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
+<script src="./js/fuel.js?v=5.12.2"></script>
 </body>
 </html>
