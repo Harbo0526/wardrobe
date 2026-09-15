@@ -1905,6 +1905,27 @@ select{font-size:16px;}
    显式允许其收缩到容器宽度内（不改外观，仅解除 UA 的固有宽限制）。 */
 input[type="date"],input[type="time"],input[type="datetime-local"],
 input[type="month"],input[type="week"]{min-width:0;max-width:100%;}
+
+/* ===== v5.13.4：iOS 日期 / 时间控件「撑宽卡片 → 整页超长」结构性修复 =====
+   WebKit 的 input[type=date|time|datetime-local] 内含原生日期编辑区（-webkit-datetime-edit），
+   固有宽度较大；在窄容器里会顶破卡片、把整页撑宽（右侧被裁）—— 纯文字输入框没有这个问题，
+   所以现象是「只有日期/时间框出错」。仅给控件本身 min-width:0 不足以让 WebKit 收窄，这里做两件事：
+   ① 把承载表单的 .field 变成 flex 列容器：flex 项的交叉轴尺寸由容器决定（width:100% 即容器宽），
+      控件自身固有宽度不再参与布局 —— 这是 WebKit 上稳定生效的做法；
+   ② 直接给内部原生日期编辑区 min-width:0 / overflow:hidden，从源头缩小其固有宽度。 */
+.field{display:flex;flex-direction:column;}
+.field > *{min-width:0;}
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"]{min-width:0;max-width:100%;width:100%;box-sizing:border-box;}
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit{min-width:0;overflow:hidden;}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
 </style>
 </head>
 <body>
@@ -3557,7 +3578,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.3';
+const APP_VERSION = '5.13.4';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -9533,23 +9554,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.3"></script>
-<script src="./js/data/supabase.js?v=5.13.3"></script>
+<script src="./js/config.js?v=5.13.4"></script>
+<script src="./js/data/supabase.js?v=5.13.4"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.3"></script>
-<script src="./js/data/query.js?v=5.13.3"></script>
-<script src="./js/auth/session.js?v=5.13.3"></script>
-<script src="./js/data/groups.js?v=5.13.3"></script>
-<script src="./js/data/clothgroups.js?v=5.13.3"></script>
-<script src="./js/data/clothes.js?v=5.13.3"></script>
-<script src="./js/data/modules.js?v=5.13.3"></script>
-<script src="./js/data/index.js?v=5.13.3"></script>
-<script src="./js/storage/paths.js?v=5.13.3"></script>
-<script src="./js/storage/images.js?v=5.13.3"></script>
-<script src="./js/storage/index.js?v=5.13.3"></script>
-<script src="./js/auth/index.js?v=5.13.3"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.3"></script>
+<script src="./js/data/errors.js?v=5.13.4"></script>
+<script src="./js/data/query.js?v=5.13.4"></script>
+<script src="./js/auth/session.js?v=5.13.4"></script>
+<script src="./js/data/groups.js?v=5.13.4"></script>
+<script src="./js/data/clothgroups.js?v=5.13.4"></script>
+<script src="./js/data/clothes.js?v=5.13.4"></script>
+<script src="./js/data/modules.js?v=5.13.4"></script>
+<script src="./js/data/index.js?v=5.13.4"></script>
+<script src="./js/storage/paths.js?v=5.13.4"></script>
+<script src="./js/storage/images.js?v=5.13.4"></script>
+<script src="./js/storage/index.js?v=5.13.4"></script>
+<script src="./js/auth/index.js?v=5.13.4"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.4"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.3"></script>
+<script src="./js/fuel.js?v=5.13.4"></script>
 </body>
 </html>
