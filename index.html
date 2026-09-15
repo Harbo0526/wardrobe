@@ -408,6 +408,7 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   background:linear-gradient(135deg,rgba(255,236,214,.4),rgba(255,224,178,.4));   /* v5.1.20：卡片背景透明 40%（文字不变） */
   box-shadow:0 4px 14px rgba(255,167,38,.18);overflow:hidden;min-height:104px;
   border:1px solid rgba(255,255,255,.65);display:flex;align-items:center;gap:12px;
+  flex-shrink:0;   /* v5.12.8：首页是 flex 列容器；本卡带 overflow:hidden（自动最小高度退化为 0）会被压扁→语录被裁切，禁止压缩 */
 }
 #screen-home .home-hero .cat{
   width:82px;height:82px;border-radius:50%;border:3px solid #fff;flex-shrink:0;
@@ -416,8 +417,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   box-shadow:0 2px 10px rgba(255,140,0,.28);
 }
 #screen-home .home-hero .qt{flex:1;min-width:0;z-index:2;}
-#screen-home .home-hero .qt .zh{font-size:14px;font-weight:800;color:#8a4b00;line-height:1.45;}
-#screen-home .home-hero .qt .en{font-size:11.5px;color:#b0762e;margin-top:5px;font-style:italic;line-height:1.4;}
+/* v5.12.8：语录字号按屏宽自适配（窄屏自动略收、宽屏维持原样）+ 允许长词换行 → 任何机型都能完整显示 */
+#screen-home .home-hero .qt .zh{font-size:clamp(13px,3.7vw,14px);font-weight:800;color:#8a4b00;line-height:1.45;overflow-wrap:anywhere;}
+#screen-home .home-hero .qt .en{font-size:clamp(10.5px,3.1vw,11.5px);color:#b0762e;margin-top:5px;font-style:italic;line-height:1.4;overflow-wrap:anywhere;}
 #screen-home .home-hero .scat{position:absolute;inset:0;z-index:1;pointer-events:none;}
 #screen-home .home-hero .scat span{position:absolute;line-height:1;filter:saturate(1.1);}
 #screen-home .memo-card{
@@ -757,6 +759,33 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .avatar-btns{display:flex;flex-direction:column;gap:10px;width:100%;}
 .avatar-btns .btn{height:46px;}
 .avatar-remove{background:none;border:none;color:var(--danger);font-size:14px;padding:12px 0 4px;cursor:pointer;}
+/* ===== v5.13.2：头像「原图」全屏查看（直接弹出图片本身，不再裁切进圆形框；双指缩放 / 单指拖动；含「我的」入口） ===== */
+#sheet-avatar-view{background:rgba(12,16,14,.92);align-items:stretch;justify-content:center;padding:0;}
+#sheet-avatar-view .av-view-x{
+  position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:3;
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;
+  font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;
+}
+.av-view-body{
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(56px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));
+}
+.av-view-stage{
+  flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;touch-action:none;   /* 手势交给 JS，禁用浏览器默认缩放 / 页面滚动 */
+}
+/* 原图：contain 完整显示（不裁切、不变形）；缩放/平移由 JS 加 transform */
+.av-view-stage img{
+  width:100%;height:100%;object-fit:contain;display:block;
+  transform-origin:center center;will-change:transform;user-select:none;-webkit-user-drag:none;
+}
+.av-view-letter{
+  width:min(52vw,200px);height:min(52vw,200px);border-radius:50%;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;font-size:72px;font-weight:700;
+}
+.av-view-name{margin-top:14px;font-size:15px;font-weight:700;color:#fff;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.av-view-hint{margin:6px 0 14px;font-size:11.5px;color:rgba(255,255,255,.62);text-align:center;line-height:1.5;}
 /* 衣物卡等高（网格内同行等高；配合固定缩略高+单行文本，全卡视觉等高） */
 .cloth-card{height:100%;}
 
@@ -923,6 +952,16 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
   display:flex;align-items:center;justify-content:center;font-size:14px;
 }
 .sheet-close:active{background:var(--line);}
+/* ===== v5.12.8：iOS 弹层适配（软键盘遮挡 + 输入框聚焦自动放大）=====
+   ① 键盘：iOS Safari 打开软键盘时**不缩小布局视口**（dvh / 百分比不变），底部对齐的 .sheet 会被键盘盖住底部按钮；
+      JS 用 visualViewport 把键盘高度写进 --kb，这里把 .overlay 的 bottom 抬起（键盘收起 / 安卓恒为 0 → 与原行为一致）。
+   ② 键盘弹起时允许弹层使用键盘上方的全部高度（否则 72% 上限会让表单只剩很小一块）。 */
+.overlay{bottom:var(--kb,0px);transition:opacity .22s ease, visibility .22s ease, bottom .18s ease;}
+html[data-kb="1"] .sheet{max-height:calc(100% - 8px);}
+/* ③ 输入框 font-size < 16px 时 iOS Safari 聚焦会自动放大页面（安卓不会）→ 输入框看起来比屏幕还长，统一 16px。
+   ④ 关闭 iOS 文本自动放大（text autosize），避免系统把字号放大导致溢出。 */
+.overlay .input,.wb-modal .input,.wb-modal textarea{font-size:16px;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 
 /* 删除衣物确认 */
 .del-item{
@@ -1652,7 +1691,10 @@ html[data-theme="minimal"] #screen-home #home-entries .group-card{
   background:var(--card);border:1px solid var(--line);box-shadow:none;
 }
 html[data-theme="minimal"] #screen-home .home-hero{
-  border:none;background:transparent;border-radius:0;min-height:0;
+  /* v5.12.8：原 min-height:0 会让本卡在高度不足时被 flex 压缩（其它卡片有内容最小高度保护，只有它被压），
+     叠加基础样式的 overflow:hidden → 简约模式下语录被裁掉、显示不全。
+     改为 auto：不再保留 104px 地板，但恢复「不低于内容高度」的保护；高度不足时整屏滚动而非压扁卡片。 */
+  border:none;background:transparent;border-radius:0;min-height:auto;
   margin:6px 16px 2px;padding:6px 0 10px;
 }
 html[data-theme="minimal"] #screen-home .memo-card,
@@ -1676,8 +1718,8 @@ html[data-theme="minimal"] #screen-home{color:#48705A;--ink:#48705A;--ink-sub:#7
 /* ---- 3. 首页：重建字体层级 / 留白 / 信息密度 ---- */
 html[data-theme="minimal"] .home-greet{font-size:20px;font-weight:600;line-height:26px;letter-spacing:-.2px;}
 html[data-theme="minimal"] .home-date{font-size:11.5px;margin-top:3px;}
-html[data-theme="minimal"] #screen-home .home-hero .qt .zh{font-size:14px;font-weight:500;color:var(--ink-sub);line-height:1.55;}
-html[data-theme="minimal"] #screen-home .home-hero .qt .en{font-size:11px;color:var(--ink-faint);font-style:normal;margin-top:2px;}
+html[data-theme="minimal"] #screen-home .home-hero .qt .zh{font-size:clamp(13px,3.7vw,14px);font-weight:500;color:var(--ink-sub);line-height:1.55;}
+html[data-theme="minimal"] #screen-home .home-hero .qt .en{font-size:clamp(10.5px,3.1vw,11px);color:var(--ink-faint);font-style:normal;margin-top:2px;}
 html[data-theme="minimal"] #screen-home .home-reload{background:var(--card);border:1px solid var(--line);color:var(--ink-sub);}
 html[data-theme="minimal"] #screen-home .home-reload:active{background:var(--group-bg);}
 html[data-theme="minimal"] .sec-title{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.2px;padding:2px 16px 6px;}
@@ -1944,7 +1986,7 @@ html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
         <div class="home-date" id="home-date">2026年8月25日 · 星期二</div>
       </div>
       <button class="home-reload press" onclick="hardReload()" title="重启程序 · 清理缓存 · 检查更新">⟲</button>
-      <div class="avatar" id="home-avatar" onclick="navTo(4)" title="我的">绿</div>
+      <div class="avatar" id="home-avatar" onclick="openAvatarView()" title="查看头像">绿</div>
     </div>
 
     <!-- 励志卡（v4.2.0：加菲猫橘猫点缀 + 中英双语励志语；v4.2.5 起每次启动只随机一次） -->
@@ -2835,8 +2877,8 @@ html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
           <div class="lg-ov-cards">
             <div class="lg-ov-card inc"><div class="k">昨夜睡眠</div><div class="v" id="spOvToday">0</div></div>
             <div class="lg-ov-card exp"><div class="k">近7天日均</div><div class="v" id="spOv7">0</div></div>
-            <div class="lg-ov-card net"><div class="k">本月总时长</div><div class="v" id="spOvMonth">0</div></div>
-            <div class="lg-ov-card save"><div class="k">平均入睡</div><div class="v" id="spOvBed">--:--</div></div>
+            <div class="lg-ov-card net"><div class="k">平均入睡</div><div class="v" id="spOvBed">--:--</div></div>
+            <div class="lg-ov-card save"><div class="k">平均起床</div><div class="v" id="spOvWake">--:--</div></div>
           </div>
           <div class="card" style="margin-top:12px;">
             <div class="ck-sec"><h3 id="spOvTitle">最近记录</h3></div>
@@ -3086,6 +3128,20 @@ html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
         </div>
         <button class="avatar-remove" id="avatar-remove" onclick="removeAvatar()" style="display:none;">移除头像</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ 全屏：头像原图查看（v5.13.2：直接弹出图片本身，不裁切进圆形框；双指缩放 / 单指拖动；含「我的」入口） ============ -->
+  <div class="overlay" id="sheet-avatar-view" onclick="closeSheetOnBg(event,'sheet-avatar-view')">
+    <button class="av-view-x press" onclick="closeSheet('sheet-avatar-view')" title="关闭">✕</button>
+    <div class="av-view-body" onclick="event.stopPropagation()">
+      <div class="av-view-stage" id="avatar-view-stage">
+        <img id="avatar-view-img" alt="头像" style="display:none;">
+        <div class="av-view-letter" id="avatar-view-letter">绿</div>
+      </div>
+      <div class="av-view-name" id="avatar-view-name">小绿</div>
+      <div class="av-view-hint">双指捏合缩放 · 单指拖动查看细节 · 双击放大/复位</div>
+      <button class="btn btn-primary press" onclick="avatarViewGoMine()">👤 进入「我的」</button>
     </div>
   </div>
 
@@ -3479,7 +3535,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.12.2';
+const APP_VERSION = '5.13.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -5091,6 +5147,13 @@ function renderClothList(){
     '</button>';
   }).join('');
 }
+/* v5.12.7：分组「增 / 改 / 删」后立即刷新衣物屏与分组详情的分组相关视图，
+   否则必须切页（重新进入衣物屏）才能看到新分组。 */
+function refreshClothGroups(){
+  if($('cl-stats')) renderClothOverview();   /* 衣物·概览：衣物数 / 分组数 */
+  if($('cl-groups')) renderClothList();      /* 衣物·衣物：分组卡片列表 */
+  if($('group-chips')) renderGroupChips();   /* 分组详情：左侧分组导航 */
+}
 async function clRefresh(){
   if(!state.user){ toast('请先登录'); return; }
   try{
@@ -5714,6 +5777,27 @@ function openSheet(id){
 function closeSheet(id){ $(id).classList.remove('show'); }
 function closeSheetOnBg(e,id){ if(e.target===$(id)) closeSheet(id); }
 
+/* v5.12.8：iOS 软键盘遮挡修复。
+   iOS Safari 打开键盘时不缩小布局视口（dvh / 百分比全部不变），底部对齐的 Sheet 会被键盘盖住底部按钮；
+   安卓会自适应布局视口，所以此前只有 iPhone 会出现。这里把「键盘高度」实时写进 --kb / data-kb，
+   由 CSS（.overlay{bottom:var(--kb,0px)}）把弹层抬到键盘之上；键盘收起时为 0，与原行为完全一致。 */
+(function(){
+  const vv = window.visualViewport;
+  if(!vv) return;
+  let last = -1;
+  function sync(){
+    const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+    if(kb === last) return;
+    last = kb;
+    document.documentElement.style.setProperty('--kb', kb + 'px');
+    document.documentElement.setAttribute('data-kb', kb > 24 ? '1' : '0');
+  }
+  vv.addEventListener('resize', sync);
+  vv.addEventListener('scroll', sync);
+  window.addEventListener('orientationchange', sync);
+  sync();
+})();
+
 function renderGroupManage(){
   renamingId = null;
   gmEmoji = '👕';
@@ -5755,6 +5839,7 @@ function addGroup(){
   state.groups.push(gNew);
   sbSaveObj('groups', gNew, {name: name, emoji: gmEmoji, sort_order: state.groups.length});
   renderGroupManage();
+  refreshClothGroups();   /* v5.12.7：立即刷新衣物屏分组视图，无需切页 */
   renderHome();
   toast('已添加分组「' + name + '」✓');
 }
@@ -5772,6 +5857,7 @@ function saveRename(gid){
   const g = state.groups.find(x=>x.id===gid);
   if(g){ g.name = name; sbSaveObj('groups', g, {name: name}); }
   renderGroupManage();
+  refreshClothGroups();   /* v5.12.7：立即刷新衣物屏分组视图，无需切页 */
   renderHome();
   toast('已重命名 ✓');
 }
@@ -5800,6 +5886,7 @@ function confirmDelete(gid){
   });
   if(currentGroupId===gid) currentGroupId = state.groups.length ? state.groups[0].id : 0;
   renderGroupManage();
+  refreshClothGroups();   /* v5.12.7：立即刷新衣物屏分组视图，无需切页 */
   renderHome();
   toast('已删除分组');
 }
@@ -6049,6 +6136,127 @@ function openAvatarEditor(){
   const rm = $('avatar-remove');
   if(rm) rm.style.display = av ? '' : 'none';
   openSheet('sheet-avatar');
+}
+/* v5.13.0：首页右上角头像 → 头像放大弹窗（仅查看；「我的」入口在弹窗内，不涉及头像设置流程） */
+function openAvatarView(){
+  const av = currentAvatar();
+  const img = $('avatar-view-img');
+  if(img){
+    if(av){
+      img.src = av;
+      img.style.display = 'block';
+      img.onload = function(){ if(avViewCtl) avViewCtl.reset(); };   /* 图片尺寸就绪后重新按实际大小限制平移 */
+    }else{
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+  }
+  const letter = $('avatar-view-letter');
+  if(letter){
+    letter.textContent = (state.user ? state.user.name : '绿').charAt(0);
+    letter.style.display = av ? 'none' : 'flex';
+  }
+  const nm = $('avatar-view-name');
+  if(nm) nm.textContent = (state.user && state.user.name) ? state.user.name : '未登录';
+  const ctl = bindAvatarView();
+  if(ctl) ctl.reset();          /* v5.13.1：每次打开复位为 1x 居中 */
+  openSheet('sheet-avatar-view');
+}
+function avatarViewGoMine(){
+  closeSheet('sheet-avatar-view');
+  navTo(4);
+}
+/* v5.13.2：头像「原图」全屏查看的手势 —— 双指捏合缩放 / 单指拖动平移，查看局部细节。
+   触摸：双指缩放（1x~4x，以两指中点为锚点，手指下的位置不跑）+ 单指拖动 + 双击 1x↔2.5x 切换；
+   桌面：滚轮缩放 + 双击缩放。平移范围按「图片实际显示尺寸 vs 视口」计算：
+   图片（已缩放）比视口小的方向不允许拖动，保证不会把图片拖出屏幕。
+   手势只在 #avatar-view-stage 上监听（打开时懒绑定一次），不影响其它元素与页面滚动。 */
+let avViewCtl = null;
+function bindAvatarView(){
+  if(avViewCtl) return avViewCtl;
+  const box = $('avatar-view-stage'); if(!box) return null;
+  const st = { s:1, tx:0, ty:0, ds:0, s0:1, tx0:0, ty0:0, x0:0, y0:0, drag:false, tap:0 };
+  function im(){ const el = $('avatar-view-img'); return (el && el.style.display !== 'none') ? el : null; }
+  function paint(){ const el = im(); if(el) el.style.transform = 'translate(' + st.tx + 'px,' + st.ty + 'px) scale(' + st.s + ')'; }
+  function clampPan(){
+    const el = im();
+    if(!el){ st.tx = 0; st.ty = 0; return; }
+    const bw = el.clientWidth || 1, bh = el.clientHeight || 1;          /* img 盒子 = stage 尺寸 */
+    const nw = el.naturalWidth || bw, nh = el.naturalHeight || bh;
+    const k = Math.min(bw / nw, bh / nh);                              /* contain 的实际显示比例 */
+    const mx = Math.max(0, (nw * k * st.s - bw) / 2);
+    const my = Math.max(0, (nh * k * st.s - bh) / 2);
+    st.tx = Math.max(-mx, Math.min(mx, st.tx));
+    st.ty = Math.max(-my, Math.min(my, st.ty));
+  }
+  /* 触点相对容器中心的坐标（用于「以手指为锚点缩放」与滚轮缩放） */
+  function localXY(t){
+    const r = box.getBoundingClientRect();
+    return { x: (t.clientX - r.left) - r.width / 2, y: (t.clientY - r.top) - r.height / 2 };
+  }
+  function zoomAt(ns, cx, cy){
+    ns = Math.max(1, Math.min(4, ns));
+    const k = ns / st.s;
+    st.tx = cx - k * (cx - st.tx);
+    st.ty = cy - k * (cy - st.ty);
+    st.s = ns;
+    if(st.s <= 1.001){ st.s = 1; st.tx = 0; st.ty = 0; }
+    clampPan(); paint();
+  }
+  function reset(){ st.s = 1; st.tx = 0; st.ty = 0; st.ds = 0; st.drag = false; paint(); }
+  function toggle(){ if(st.s > 1.02) reset(); else zoomAt(2.5, 0, 0); }
+
+  box.addEventListener('touchstart', function(e){
+    const ts = e.touches;
+    if(ts.length === 1){
+      st.drag = true; st.x0 = ts[0].clientX; st.y0 = ts[0].clientY; st.tx0 = st.tx; st.ty0 = st.ty;
+      const now = Date.now();
+      if(now - st.tap < 280){ st.tap = 0; st.drag = false; toggle(); } else { st.tap = now; }
+    }else if(ts.length === 2){
+      st.drag = false;
+      st.ds = Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY) || 1;
+      st.s0 = st.s; st.tx0 = st.tx; st.ty0 = st.ty;
+    }
+  }, { passive:true });
+
+  box.addEventListener('touchmove', function(e){
+    const ts = e.touches;
+    if(ts.length === 2 && st.ds > 0){
+      e.preventDefault();                                 /* 阻止浏览器自身的双指缩放 */
+      const d = Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY) || 1;
+      const c = localXY({ clientX: (ts[0].clientX + ts[1].clientX) / 2, clientY: (ts[0].clientY + ts[1].clientY) / 2 });
+      st.s = st.s0; st.tx = st.tx0; st.ty = st.ty0;        /* 以本次手势起点为基准，避免累积误差 */
+      zoomAt(st.s0 * d / st.ds, c.x, c.y);
+    }else if(st.drag && ts.length === 1 && st.s > 1.001){
+      e.preventDefault();
+      st.tx = st.tx0 + (ts[0].clientX - st.x0);
+      st.ty = st.ty0 + (ts[0].clientY - st.y0);
+      clampPan(); paint();
+    }
+  }, { passive:false });
+
+  box.addEventListener('touchend', function(e){
+    if(e.touches.length === 0){ st.drag = false; st.ds = 0; }
+    else if(e.touches.length === 1){                      /* 双指松开剩一指 → 接着拖动 */
+      st.drag = true; st.x0 = e.touches[0].clientX; st.y0 = e.touches[0].clientY;
+      st.tx0 = st.tx; st.ty0 = st.ty; st.ds = 0;
+    }
+  }, { passive:true });
+
+  box.addEventListener('wheel', function(e){
+    e.preventDefault();
+    const c = localXY(e);
+    zoomAt(st.s * (e.deltaY < 0 ? 1.12 : 1 / 1.12), c.x, c.y);
+  }, { passive:false });
+
+  box.addEventListener('dblclick', function(e){
+    e.preventDefault();
+    const c = localXY(e);
+    if(st.s > 1.02) reset(); else zoomAt(2.5, c.x, c.y);
+  });
+
+  avViewCtl = { reset: reset };
+  return avViewCtl;
 }
 /* 登录后加载头像：profiles.avatar_path → authenticated download → 内存显示（失败静默，占位不阻断）。
  * 会话隔离：开始前记录 gen + uid；DB 查询后、下载完成后均二次校验，不匹配则丢弃结果，
@@ -7774,7 +7982,7 @@ function todoRender(){
         if(!byDate[biz]) html += '<div class="todo-empty">今日暂无待办，点 ＋ 添加</div>';
         dates.forEach(dt => {
           html += '<div class="todo-day">' + spEsc(dt + (dt === biz ? ' · 今天' : '')) + '</div>';
-          html += byDate[dt].slice().sort(todoCmp).map(todoItemHTML).join('');
+          html += byDate[dt].slice().sort(todoCmp).map(t => todoItemHTML(t)).join('');
         });
         dl.innerHTML = html;
         todoDailyLen = 0;
@@ -7794,7 +8002,7 @@ function todoRender(){
         todoTempLen = all.length;
         tl.innerHTML = todoCollapsedOne(all.slice().sort(todoCmp), 'temp', null);
       }else{
-        tl.innerHTML = all.slice().sort(todoCmp).map(todoItemHTML).join('');
+        tl.innerHTML = all.slice().sort(todoCmp).map(t => todoItemHTML(t)).join('');
         todoTempLen = 0;
       }
       const c2 = $('todoTempCnt');
@@ -8857,7 +9065,13 @@ function spFmtDur(min){
 function spFmtShort(min){ return (Math.round(min/6)/10) + 'h'; }   // 日历格：如 8.0h
 function spAvgTime(arr){
   if(!arr.length) return '--:--';
-  let tot = 0; arr.forEach(m => tot += m);
+  /* v5.12.5：跨午夜均值修正 —— 入睡/起床时刻常跨午夜（如 23:30 与次日 00:30）。
+     若直接按「当天分钟数」取平均，00:30(=30) 会把 23:30(=1410) 拉到中午附近（错误的 12:00）；
+     起床同理（07:30 记 450，与已 +24h 的 1890 混算 → 约 22:00）。
+     现统一把「12:00 之前」的时刻视为次日（+24h）后再求平均，最后折回 0~24h。
+     仅对已记录的时刻求平均：没有记录的日子不会以 0 参与计算。 */
+  let tot = 0;
+  arr.forEach(m => { tot += (m < 12*60 ? m + 24*60 : m); });
   let avg = Math.round(tot / arr.length);
   avg = ((avg % (24*60)) + 24*60) % (24*60);
   return spPad(Math.floor(avg/60)) + ':' + spPad(avg % 60);
@@ -8937,12 +9151,22 @@ function spRenderOverview(){
   for(let i = 6; i >= 0; i--){ const d = new Date(); d.setDate(d.getDate() - i); const m = spDayTotal(spIso(d)); if(m > 0){ sum7 += m; cnt7++; } }
   const avg7 = cnt7 ? sum7 / cnt7 : 0;
   const prefix = t.slice(0,7);
-  let monthMin = 0; spMonthRecs(prefix).forEach(r => monthMin += (r.minutes||0));
-  const bed = []; spMonthRecs(prefix).forEach(r => { const a = r.start.split(':').map(Number); bed.push(a[0]*60 + a[1]); });
+  /* v5.12.6：概览 4 卡 = 昨夜睡眠 / 近7天日均 / 平均入睡 / 平均起床；
+     「本月总时长」已替换为「平均起床」；入睡与起床均值只统计「已记录」的本月记录。 */
+  const bed = [], wake = [];
+  spMonthRecs(prefix).forEach(r => {
+    if(!r.start) return;
+    const b = r.start.split(':').map(Number), bs = b[0]*60 + b[1];
+    bed.push(bs);
+    if(!r.end) return;
+    const e = r.end.split(':').map(Number); let wm = e[0]*60 + e[1];
+    if(wm <= bs) wm += 24*60;
+    wake.push(wm);
+  });
   $('spOvToday').textContent = spFmtDur(lastNightMin);
   $('spOv7').textContent = spFmtDur(avg7);
-  $('spOvMonth').textContent = spFmtDur(monthMin);
   $('spOvBed').textContent = spAvgTime(bed);
+  $('spOvWake').textContent = spAvgTime(wake);
 }
 function spDeleteRec(id){
   const rec = (state.sleep.records||[]).find(r => r.id === id);
@@ -9069,7 +9293,6 @@ function spRenderStats(){
   const ym = spState.statYM;
   $('spStatTitle').textContent = ym.y + '年' + ym.m + '月';
   const prefix = ym.y + '-' + spPad(ym.m);
-  const totalDays = new Date(ym.y, ym.m, 0).getDate();
   const byDay = {};
   let totalMin = 0; const bedMin = [], wakeMin = [];
   spMonthRecs(prefix).forEach(r => {
@@ -9288,23 +9511,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.12.2"></script>
-<script src="./js/data/supabase.js?v=5.12.2"></script>
+<script src="./js/config.js?v=5.13.2"></script>
+<script src="./js/data/supabase.js?v=5.13.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.12.2"></script>
-<script src="./js/data/query.js?v=5.12.2"></script>
-<script src="./js/auth/session.js?v=5.12.2"></script>
-<script src="./js/data/groups.js?v=5.12.2"></script>
-<script src="./js/data/clothgroups.js?v=5.12.2"></script>
-<script src="./js/data/clothes.js?v=5.12.2"></script>
-<script src="./js/data/modules.js?v=5.12.2"></script>
-<script src="./js/data/index.js?v=5.12.2"></script>
-<script src="./js/storage/paths.js?v=5.12.2"></script>
-<script src="./js/storage/images.js?v=5.12.2"></script>
-<script src="./js/storage/index.js?v=5.12.2"></script>
-<script src="./js/auth/index.js?v=5.12.2"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.12.2"></script>
+<script src="./js/data/errors.js?v=5.13.2"></script>
+<script src="./js/data/query.js?v=5.13.2"></script>
+<script src="./js/auth/session.js?v=5.13.2"></script>
+<script src="./js/data/groups.js?v=5.13.2"></script>
+<script src="./js/data/clothgroups.js?v=5.13.2"></script>
+<script src="./js/data/clothes.js?v=5.13.2"></script>
+<script src="./js/data/modules.js?v=5.13.2"></script>
+<script src="./js/data/index.js?v=5.13.2"></script>
+<script src="./js/storage/paths.js?v=5.13.2"></script>
+<script src="./js/storage/images.js?v=5.13.2"></script>
+<script src="./js/storage/index.js?v=5.13.2"></script>
+<script src="./js/auth/index.js?v=5.13.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.2"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.12.2"></script>
+<script src="./js/fuel.js?v=5.13.2"></script>
 </body>
 </html>
