@@ -3267,18 +3267,31 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
           <button class="btn btn-secondary press" id="pushOffBtn" onclick="pushDisable()">关闭提醒</button>
         </div>
 
-        <!-- v5.13.8：微信推送（PushPlus）—— 到点由服务端直接发微信消息；大陆可用、免装新 App -->
+        <!-- v5.13.9：手机提醒通道（服务端直发 webhook）
+             Web Push 依赖 Google FCM（大陆网络被墙 + 国产 ROM 无 GMS → 必然失败），
+             故改用国内可达的 IM 群机器人：企业微信 / 钉钉 / 飞书（均免费、无需实名）。 -->
         <div class="push-sep"></div>
-        <div class="push-sub-title">微信推送（PushPlus）</div>
-        <div class="push-hint" id="wxHint">未配置。</div>
+        <div class="push-sub-title">手机提醒通道</div>
+        <div class="push-hint" id="chHint">未配置。</div>
         <div class="field">
-          <input class="input" id="wxTokenInput" type="text" placeholder="粘贴 PushPlus token（32 位）" autocomplete="off" spellcheck="false">
+          <label>通道类型</label>
+          <select class="input" id="chChannelSel" onchange="chOnChannelChange()">
+            <option value="wecom">企业微信群机器人（推荐 · 免费）</option>
+            <option value="dingtalk">钉钉群机器人（免费）</option>
+            <option value="feishu">飞书群机器人（免费）</option>
+            <option value="pushplus">PushPlus 微信推送（需实名）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="chTargetLabel">Webhook 地址</label>
+          <input class="input" id="chTargetInput" type="text" placeholder="粘贴 Webhook 地址" autocomplete="off" spellcheck="false">
         </div>
         <div class="push-btns three">
-          <button class="btn btn-accent press" id="wxSaveBtn" onclick="wxChannelSave()">保存</button>
-          <button class="btn btn-secondary press" id="wxTestBtn" onclick="wxChannelTest()">发送测试</button>
-          <button class="btn btn-secondary press" id="wxDelBtn" onclick="wxChannelDelete()">删除</button>
+          <button class="btn btn-accent press" id="chSaveBtn" onclick="chSave()">保存</button>
+          <button class="btn btn-secondary press" id="chTestBtn" onclick="chTest()">发送测试</button>
+          <button class="btn btn-secondary press" id="chDelBtn" onclick="chDelete()">删除</button>
         </div>
+        <div class="push-hint" id="chHelp"></div>
       </div>
     </div>
   </div>
@@ -3673,7 +3686,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.8';
+const APP_VERSION = '5.13.9';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -8576,7 +8589,7 @@ async function renderPushSheet(){
   const st = $('pushStatus'), hint = $('pushHint'), on = $('pushOnBtn'), off = $('pushOffBtn');
   const enabled = WBReminders.enabled();
   await refreshPushState();
-  await wxChannelLoad();          /* v5.13.8：同步「微信推送（PushPlus）」通道状态 */
+  await chLoad();                 /* v5.13.8+：同步「手机提醒通道」状态 */
   const hasSub = !!pushCachedSub;
   const denied = WBReminders.permission() === 'denied';
   if(st){
@@ -8632,62 +8645,119 @@ async function pushAutoHeal(){
 }
 
 /* =====================================================================
-   v5.13.8：微信推送（PushPlus）通道
+   v5.13.9：手机提醒通道（服务端直发 webhook）
    ─────────────────────────────────────────────────────────────────────
    为什么需要它：Web Push 依赖 Google FCM —— 大陆网络不可达、国产 ROM（如 OPPO 国行）
    不预装 GMS，实测 Android Chrome 报 `Registration failed - push service error`。
-   故改用「服务端直发」：到点由 Edge Function 直接 POST 到 PushPlus，再以微信消息到达手机
-   （可响铃），不依赖页面存活。
-   token 存 reminder_channels.target（RLS 仅本人可读）；前端**不回显**已保存的 token。
+   故改用「服务端直发」：到点由 Edge Function 直接 POST 到国内可达的 IM 群机器人
+   （企业微信 / 钉钉 / 飞书，均免费、无需实名；PushPlus 微信渠道需实名），
+   以 App 通知的形式到达手机（可响铃），不依赖页面存活。
+   凭证存 reminder_channels.target（RLS 仅本人可读）；前端**不回显**已保存的凭证。
+   本应用只保留**一条**通道：保存新通道时会清掉其他通道行，避免重复提醒。
    ===================================================================== */
-const WX_CHANNEL = 'pushplus';
-let wxChannelRow = null;      /* 当前用户的 pushplus 通道行（null = 未配置） */
+const CH_SPECS = {
+  wecom: {
+    name: '企业微信群机器人',
+    label: 'Webhook 地址',
+    ph: '粘贴 Webhook 地址（https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=…）',
+    help: '企业微信 →「消息」右上角 ＋ → 发起群聊（只勾自己）→ 进该群 → 右上角 … → 群机器人 → 添加机器人 → 复制 Webhook 地址。免费、无需企业认证，限 20 条/分钟。'
+  },
+  dingtalk: {
+    name: '钉钉群机器人',
+    label: 'Webhook 地址',
+    ph: '粘贴 Webhook 地址（https://oapi.dingtalk.com/robot/send?access_token=…）',
+    help: '钉钉 → 建一个只有自己的群 → 群设置 → 智能群助手 → 添加机器人 → 自定义 → 复制 Webhook。⚠️「安全设置」必须勾「自定义关键词」并填「提醒」（本应用消息含「【待办提醒】」）。'
+  },
+  feishu: {
+    name: '飞书群机器人',
+    label: 'Webhook 地址',
+    ph: '粘贴 Webhook 地址（https://open.feishu.cn/open-apis/bot/v2/hook/…）',
+    help: '飞书 → 建一个只有自己的群 → 设置 → 群机器人 → 添加机器人 → 自定义机器人 → 复制 Webhook 地址。若要求安全设置，选「自定义关键词」填「提醒」。'
+  },
+  pushplus: {
+    name: 'PushPlus 微信推送',
+    label: 'PushPlus token',
+    ph: '粘贴 PushPlus token（32 位）',
+    help: 'PushPlus 的微信渠道目前需实名认证。若你已开通：微信关注 PushPlus 公众号 → 复制 token → 粘贴到上方保存。'
+  }
+};
+let chRow = null;      /* 当前已配置的通道行（null = 未配置；本应用只保留一条通道） */
 
-async function wxChannelLoad(){
-  const hint = $('wxHint'), del = $('wxDelBtn'), test = $('wxTestBtn'), inp = $('wxTokenInput');
+function chSelected(){ const el = $('chChannelSel'); return el ? el.value : 'wecom'; }
+function chSpec(){ return CH_SPECS[chSelected()] || CH_SPECS.wecom; }
+function chApplySpec(prefillPlaceholder){
+  const sp = chSpec();
+  const lb = $('chTargetLabel'), inp = $('chTargetInput'), help = $('chHelp');
+  if(lb) lb.textContent = sp.label;
+  if(inp) inp.placeholder = prefillPlaceholder ? '已保存（粘贴新值可覆盖）' : sp.ph;
+  if(help) help.textContent = sp.help;
+}
+function chOnChannelChange(){
+  const inp = $('chTargetInput'); if(inp) inp.value = '';
+  chApplySpec(false);
+  chRefreshState();
+}
+function chRefreshState(){
+  const hint = $('chHint'), del = $('chDelBtn'), test = $('chTestBtn');
+  const on = !!(chRow && chRow.enabled !== false);
+  const nm = (chRow && CH_SPECS[chRow.channel]) ? CH_SPECS[chRow.channel].name : (chRow ? chRow.channel : '');
+  if(hint) hint.textContent = on
+    ? ('已配置「' + nm + '」：到点由服务端直接推送，不依赖本页面是否打开。\n换通道＝选好后粘贴新值保存；停用＝点「删除」。')
+    : '未配置。配置后到点由服务端直接推送到手机，不需要打开本页面。';
+  if(del) del.disabled = !chRow;
+  if(test) test.disabled = !chRow;
+}
+async function chLoad(){
   try{
     const rows = await window.WBData.reminderChannels.list({ limit: 20 });
-    wxChannelRow = (rows || []).filter(function(r){ return r.channel === WX_CHANNEL; })[0] || null;
-  }catch(e){ wxChannelRow = null; }
-  const on = !!(wxChannelRow && wxChannelRow.enabled !== false);
-  if(hint) hint.textContent = on
-    ? '已配置：到点会给你发微信消息（服务端直发，不依赖本页面是否打开）。\n重新粘贴可覆盖；点「发送测试」可立即验证。'
-    : '未配置。到点由服务端直接发微信消息，不需要打开本页面（免费额度约 200 条/天）。';
-  if(inp) inp.placeholder = on ? '已保存（粘贴新 token 可覆盖）' : '粘贴 PushPlus token（32 位）';
-  if(del) del.disabled = !wxChannelRow;
-  if(test) test.disabled = !wxChannelRow;
-  return wxChannelRow;
+    chRow = (rows || [])[0] || null;
+  }catch(e){ chRow = null; }
+  if(chRow){
+    const sel = $('chChannelSel');
+    if(sel && CH_SPECS[chRow.channel]) sel.value = chRow.channel;
+    const inp = $('chTargetInput'); if(inp) inp.value = '';     /* 安全：不回显已保存凭证 */
+    chApplySpec(true);
+  }else{
+    chApplySpec(false);
+  }
+  chRefreshState();
+  return chRow;
 }
-async function wxChannelSave(){
-  const inp = $('wxTokenInput'), btn = $('wxSaveBtn');
-  const token = inp ? String(inp.value || '').trim() : '';
-  if(!token){ toast('请先粘贴 PushPlus token'); return; }
-  if(token.length < 8){ toast('token 看起来不对（太短）'); return; }
+async function chSave(){
+  const inp = $('chTargetInput'), btn = $('chSaveBtn');
+  const ch = chSelected();
+  const sp = chSpec();
+  const target = inp ? String(inp.value || '').trim() : '';
+  if(!target){ toast('请先粘贴' + sp.label); return; }
+  if(ch !== 'pushplus' && !/^https:\/\//i.test(target)){ toast('Webhook 地址应以 https:// 开头'); return; }
   if(btn) btn.disabled = true;
   try{
-    if(wxChannelRow){
-      await window.WBData.reminderChannels.update(wxChannelRow.id, { target: token, label: '微信', enabled: true });
-    }else{
-      await window.WBData.reminderChannels.create({ channel: WX_CHANNEL, target: token, label: '微信', enabled: true });
+    /* 只保留一条通道：清掉其他通道行，避免一条提醒被多个通道重复推送 */
+    const rows = (await window.WBData.reminderChannels.list({ limit: 20 })) || [];
+    for(let i = 0; i < rows.length; i++){
+      if(rows[i].channel !== ch) await window.WBData.reminderChannels.remove(rows[i].id, { hardDelete: true });
     }
-    if(inp) inp.value = '';                      /* 安全：不回显已保存的 token */
-    await wxChannelLoad();
+    const same = rows.filter(function(r){ return r.channel === ch; })[0];
+    if(same) await window.WBData.reminderChannels.update(same.id, { target: target, label: sp.name, enabled: true });
+    else await window.WBData.reminderChannels.create({ channel: ch, target: target, label: sp.name, enabled: true });
+    if(inp) inp.value = '';                      /* 安全：不回显已保存的凭证 */
+    await chLoad();
     toast('已保存，点「发送测试」验证一下');
   }catch(e){
     toast('保存失败：' + ((e && (e.message || e.details)) || e));
   }finally{ if(btn) btn.disabled = false; }
 }
-async function wxChannelDelete(){
-  if(!wxChannelRow){ toast('尚未配置'); return; }
+async function chDelete(){
+  if(!chRow){ toast('尚未配置'); return; }
   try{
-    await window.WBData.reminderChannels.remove(wxChannelRow.id, { hardDelete: true });
-    const inp = $('wxTokenInput'); if(inp) inp.value = '';
-    await wxChannelLoad();
-    toast('已删除微信推送通道');
+    await window.WBData.reminderChannels.remove(chRow.id, { hardDelete: true });
+    const inp = $('chTargetInput'); if(inp) inp.value = '';
+    await chLoad();
+    toast('已删除提醒通道');
   }catch(e){ toast('删除失败：' + ((e && (e.message || e.details)) || e)); }
 }
-async function wxChannelTest(){
-  const btn = $('wxTestBtn'), old = btn ? btn.textContent : '';
+async function chTest(){
+  const btn = $('chTestBtn'), old = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = '发送中…'; }
   try{
     const sess = await getSupabaseClient().auth.getSession();
@@ -8699,7 +8769,7 @@ async function wxChannelTest(){
       body: JSON.stringify({ mode: 'test' })
     });
     const j = await r.json().catch(function(){ return {}; });
-    if(j && j.ok){ toast('测试已发送，请查看微信 ✓'); }
+    if(j && j.ok){ toast('测试已发送，请查看手机通知 ✓'); }
     else{
       const first = (j && j.results && j.results[0]) || {};
       const det = first.error || (j && j.error) || ('HTTP ' + r.status);
@@ -9890,23 +9960,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.8"></script>
-<script src="./js/data/supabase.js?v=5.13.8"></script>
+<script src="./js/config.js?v=5.13.9"></script>
+<script src="./js/data/supabase.js?v=5.13.9"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.8"></script>
-<script src="./js/data/query.js?v=5.13.8"></script>
-<script src="./js/auth/session.js?v=5.13.8"></script>
-<script src="./js/data/groups.js?v=5.13.8"></script>
-<script src="./js/data/clothgroups.js?v=5.13.8"></script>
-<script src="./js/data/clothes.js?v=5.13.8"></script>
-<script src="./js/data/modules.js?v=5.13.8"></script>
-<script src="./js/data/index.js?v=5.13.8"></script>
-<script src="./js/storage/paths.js?v=5.13.8"></script>
-<script src="./js/storage/images.js?v=5.13.8"></script>
-<script src="./js/storage/index.js?v=5.13.8"></script>
-<script src="./js/auth/index.js?v=5.13.8"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.8"></script>
+<script src="./js/data/errors.js?v=5.13.9"></script>
+<script src="./js/data/query.js?v=5.13.9"></script>
+<script src="./js/auth/session.js?v=5.13.9"></script>
+<script src="./js/data/groups.js?v=5.13.9"></script>
+<script src="./js/data/clothgroups.js?v=5.13.9"></script>
+<script src="./js/data/clothes.js?v=5.13.9"></script>
+<script src="./js/data/modules.js?v=5.13.9"></script>
+<script src="./js/data/index.js?v=5.13.9"></script>
+<script src="./js/storage/paths.js?v=5.13.9"></script>
+<script src="./js/storage/images.js?v=5.13.9"></script>
+<script src="./js/storage/index.js?v=5.13.9"></script>
+<script src="./js/auth/index.js?v=5.13.9"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.9"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.8"></script>
+<script src="./js/fuel.js?v=5.13.9"></script>
 </body>
 </html>
