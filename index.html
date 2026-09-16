@@ -3238,7 +3238,7 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
       <div class="sheet-head"><h3>我的头像</h3><button class="sheet-close" onclick="closeSheet('sheet-avatar')">✕</button></div>
       <div class="avatar-edit">
         <div class="avatar-big" id="avatar-big">绿</div>
-        <div class="avatar-tip">从图库选择或拍照，头像会自动裁剪为圆形</div>
+        <div class="avatar-tip">从图库选择或拍照：自动居中裁方、按原图画质保存（本机缓存，换头像才会重新下载）</div>
         <div class="avatar-btns">
           <button class="btn btn-secondary press" onclick="document.getElementById('avatarAlbumInput').click()">从图库选择</button>
           <button class="btn btn-accent press" onclick="document.getElementById('avatarCameraInput').click()">拍照</button>
@@ -3719,7 +3719,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.12';
+const APP_VERSION = '5.13.13';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -6485,44 +6485,118 @@ function bindAvatarView(){
   avViewCtl = { reset: reset };
   return avViewCtl;
 }
-/* 登录后加载头像：profiles.avatar_path → authenticated download → 内存显示（失败静默，占位不阻断）。
- * 会话隔离：开始前记录 gen + uid；DB 查询后、下载完成后均二次校验，不匹配则丢弃结果，
- * 杜绝「登出 → 切号」后旧用户的头像下载回写新用户 UI（会话串扰）。 */
+/* ===== v5.13.13：头像本地缓存（CacheStorage） =====
+   为什么：头像已按「原图画质」保存（单张 1–3MB），而它每次打开 App 都要下载一次；
+          本地缓存后开 App 直接命中本地 → 零流量、秒显示。
+   失效机制：缓存条目的 x-wb-ver 绑定 profiles.updated_at（trg_profiles_updated_at 保证
+            「换头像」必然改变该值）→ 换头像后自动失效并重新下载；缓存键含 uid → 换账号天然隔离。
+   实现用 CacheStorage（HTTPS 下可用；原生支持存 Blob，无需 base64。失败一律静默降级为不缓存）。 */
+const AVATAR_CACHE = 'wardrobe-avatar-v1';
+const AVATAR_CACHE_PREFIX = '/__wb_avatar/';
+async function avatarCacheMatch(uid, ver){
+  try{
+    if(!('caches' in window)) return null;
+    const c = await caches.open(AVATAR_CACHE);
+    const r = await c.match(AVATAR_CACHE_PREFIX + uid);
+    if(!r) return null;
+    if(String(r.headers.get('x-wb-ver') || '') !== String(ver || '')) return null;   /* 版本不符 → 视为未命中 */
+    return await r.blob();
+  }catch(e){ return null; }
+}
+async function avatarCachePut(uid, ver, blob){
+  try{
+    if(!('caches' in window) || !blob) return;
+    const c = await caches.open(AVATAR_CACHE);
+    await c.put(AVATAR_CACHE_PREFIX + uid,
+      new Response(blob, { headers: { 'Content-Type': 'image/jpeg', 'x-wb-ver': String(ver || '') } }));
+  }catch(e){}
+}
+async function avatarCacheDel(uid){
+  try{
+    if(!('caches' in window) || !uid) return;
+    const c = await caches.open(AVATAR_CACHE);
+    await c.delete(AVATAR_CACHE_PREFIX + uid);
+  }catch(e){}
+}
+/* 登录后加载头像：profiles.avatar_path →（优先本地缓存）→ authenticated download → 内存显示。
+ * 失败静默，占位不阻断。
+ * 会话隔离：开始前记录 gen + uid；DB 查询后、缓存/下载完成后均二次校验，不匹配则丢弃结果，
+ * 杜绝「登出 → 切号」后旧用户的头像回写新用户 UI（会话串扰）。 */
 async function loadMyAvatar(){
   const gen = WBSession.getSessionGeneration();
   const uid = (state.user && state.user.id) || null;
   const u = await WBAuth.getCurrentUser();
   if(!u || gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
   try{
-    const p = await getSupabaseClient().from('profiles').select('avatar_path').eq('id', u.id).maybeSingle();
+    const p = await getSupabaseClient().from('profiles').select('avatar_path,updated_at').eq('id', u.id).maybeSingle();
     if(gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid){ return; }
-    if(!(p.data && p.data.avatar_path)){ releaseAvatarUrl(); renderAvatarAll(); return; }
+    if(!(p.data && p.data.avatar_path)){ releaseAvatarUrl(); avatarCacheDel(u.id); renderAvatarAll(); return; }
+    const ver = String(p.data.updated_at || '');
+    /* ① 先查本地缓存：命中则零下载、零等待 */
+    const cached = await avatarCacheMatch(u.id, ver);
+    if(cached){
+      if(gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
+      releaseAvatarUrl();
+      _avatarObj.url = URL.createObjectURL(cached); _avatarObj.path = p.data.avatar_path;
+      renderAvatarAll();
+      return;
+    }
+    /* ② 未命中 → 下载，并写回缓存供下次使用 */
     const r = await WBImages.downloadAvatar();   // avatars/{uid}/avatar.jpg
     if(gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid){ try{ URL.revokeObjectURL(r.objectUrl); }catch(e){} return; }
+    avatarCachePut(u.id, ver, r.blob);
     releaseAvatarUrl();
     _avatarObj.url = r.objectUrl; _avatarObj.path = r.path;
     renderAvatarAll();
   }catch(e){ /* 无对象/网络失败 → 保持占位，不阻断主流程 */ }
 }
-/* 更新 profiles.avatar_path（仅路径；不含图片正文） */
+/* 更新 profiles.avatar_path（仅路径；不含图片正文）
+   返回新的 updated_at（供头像缓存版本号使用；trg_profiles_updated_at 会刷新它） */
 async function updateProfileAvatar(pathOrNull){
   const u = await WBAuth.getCurrentUser();
-  if(!u) return;
-  const r = await getSupabaseClient().from('profiles').update({ avatar_path: pathOrNull }).eq('id', u.id);
+  if(!u) return null;
+  const r = await getSupabaseClient().from('profiles')
+    .update({ avatar_path: pathOrNull }).eq('id', u.id).select('updated_at').maybeSingle();
   if(r.error) throw r.error;
+  return (r.data && r.data.updated_at) || null;
 }
-/* 头像图片处理：按人物中心裁成正方形 → 缩至 320×320（圆形由 CSS 裁，存储为方图） */
+/* ===== v5.13.13：头像按「原图画质」保存（不再缩到 320×320）=====
+   · 输出边长 = 原图最小边（居中裁方），仅当超过 AVATAR_MAX_EDGE 时截到上限 ——
+     上限是必要的：手机 canvas 有最大尺寸限制，超大图会分配失败 → 头像空白甚至崩标签页。
+   · JPEG 质量 0.95：0.95→1.0 体积近乎翻倍而肉眼无可辨差异。
+   · 为什么仍然「重新编码」而不是直接上传原文件：
+     ① iPhone 相册原图多为 HEIC，安卓 Chrome 无法显示 → 直传会导致头像空白；
+     ② 重新编码顺带规范化 EXIF 旋转（createImageBitmap 的 imageOrientation:'from-image'）。 */
+const AVATAR_MAX_EDGE = 2560;
+const AVATAR_QUALITY = 0.95;
+/* 输出边长：原图最小边，封顶 AVATAR_MAX_EDGE（1:1 方图，圆形由 CSS 裁） */
+function avatarOutSide(w, h){
+  const side = Math.min(w, h);
+  return Math.max(1, Math.min(side, AVATAR_MAX_EDGE));
+}
+/* canvas → JPEG Blob（优先 toBlob：避免大图 base64 往返的额外内存与耗时） */
+function canvasToBlob(c, quality){
+  return new Promise(function(resolve, reject){
+    if(typeof c.toBlob === 'function'){
+      c.toBlob(function(b){ b ? resolve(b) : reject(new Error('图片编码失败')); }, 'image/jpeg', quality);
+    }else{
+      try{ resolve(window.dataUrlToBlob(c.toDataURL('image/jpeg', quality))); }catch(e){ reject(e); }
+    }
+  });
+}
+/* 头像图片处理：按人物中心裁成正方形 → 输出原图边长（封顶 2560）、JPEG 0.95 → 返回 Blob */
 function avatarFromFile(file){
   return new Promise(function(resolve, reject){
     if(typeof createImageBitmap === 'function'){
       createImageBitmap(file, {imageOrientation:'from-image'}).then(
         function(bmp){
           const side = Math.min(bmp.width, bmp.height);
+          const out = avatarOutSide(bmp.width, bmp.height);
           const c = document.createElement('canvas');
-          c.width = c.height = 320;
-          c.getContext('2d').drawImage(bmp, (bmp.width-side)/2, (bmp.height-side)/2, side, side, 0, 0, 320, 320);
+          c.width = c.height = out;
+          c.getContext('2d').drawImage(bmp, (bmp.width-side)/2, (bmp.height-side)/2, side, side, 0, 0, out, out);
           bmp.close();
-          resolve(c.toDataURL('image/jpeg', 0.85));
+          canvasToBlob(c, AVATAR_QUALITY).then(resolve, reject);
         },
         function(){ resolve(avatarCropViaImage(URL.createObjectURL(file))); }
       ).catch(function(){ resolve(avatarCropViaImage(URL.createObjectURL(file))); });
@@ -6537,11 +6611,12 @@ function avatarCropViaImage(src){
     img.onload = function(){
       try{
         const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const out = avatarOutSide(img.naturalWidth, img.naturalHeight);
         const c = document.createElement('canvas');
-        c.width = c.height = 320;
-        c.getContext('2d').drawImage(img, (img.naturalWidth-side)/2, (img.naturalHeight-side)/2, side, side, 0, 0, 320, 320);
+        c.width = c.height = out;
+        c.getContext('2d').drawImage(img, (img.naturalWidth-side)/2, (img.naturalHeight-side)/2, side, side, 0, 0, out, out);
         URL.revokeObjectURL(src);
-        resolve(c.toDataURL('image/jpeg', 0.85));
+        canvasToBlob(c, AVATAR_QUALITY).then(resolve, reject);
       }catch(err){ URL.revokeObjectURL(src); reject(err); }
     };
     img.onerror = function(){ URL.revokeObjectURL(src); reject(new Error('图片读取失败')); };
@@ -6552,17 +6627,21 @@ function handleAvatarFile(file){
   if(!file) return;
   if(!file.type || file.type.indexOf('image/') !== 0){ toast('请选择图片文件'); return; }
   if(!state.user){ toast('请先登录'); return; }
-  avatarFromFile(file).then(function(dataURL){
+  const uid = state.user.id;
+  toast('正在处理头像…');                 /* 原图画质 + 上传需要一两秒，给个反馈 */
+  avatarFromFile(file).then(function(blob){
     (async function(){
       try{
-        const blob = window.dataUrlToBlob(dataURL);   // 压缩后 dataURL → Blob（纯内存）
-        const up = await WBImages.uploadAvatar(blob); // avatars/{uid}/avatar.jpg（upsert 覆盖）
-        await updateProfileAvatar(up.path);           // DB 仅存路径
+        const up = await WBImages.uploadAvatar(blob);      // avatars/{uid}/avatar.jpg（upsert 覆盖）
+        const ver = await updateProfileAvatar(up.path);    // DB 仅存路径；返回新的 updated_at
+        if(ver) avatarCachePut(uid, ver, blob);            // 立刻写本地缓存 → 下次开 App 零下载
         releaseAvatarUrl();
-        _avatarObj.url = dataURL; _avatarObj.path = up.path;  // 内存显示；登出即释放，不落盘
+        _avatarObj.url = URL.createObjectURL(blob);        // 内存显示；登出即释放，不落盘
+        _avatarObj.path = up.path;
         renderAvatarAll();
         openAvatarEditor();
-        toast('头像已更新 ✓');
+        const kb = blob.size / 1024;
+        toast('头像已更新 ✓（' + (kb >= 1024 ? (kb / 1024).toFixed(1) + ' MB' : Math.round(kb) + ' KB') + '）');
       }catch(err){
         const n = WBErrors.normalize(err);
         toast('头像上传失败：' + (n.message || '请重试'));
@@ -6574,10 +6653,12 @@ function handleAvatarFile(file){
 }
 function removeAvatar(){
   if(!state.user) return;
+  const uid = state.user.id;
   (async function(){
     try{
       await WBImages.removeAvatar();      // Storage 删除
       await updateProfileAvatar(null);    // 清 DB 路径
+      avatarCacheDel(uid);                // 清本地缓存
       releaseAvatarUrl();
       renderAvatarAll();
       openAvatarEditor();
@@ -10160,23 +10241,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.12"></script>
-<script src="./js/data/supabase.js?v=5.13.12"></script>
+<script src="./js/config.js?v=5.13.13"></script>
+<script src="./js/data/supabase.js?v=5.13.13"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.12"></script>
-<script src="./js/data/query.js?v=5.13.12"></script>
-<script src="./js/auth/session.js?v=5.13.12"></script>
-<script src="./js/data/groups.js?v=5.13.12"></script>
-<script src="./js/data/clothgroups.js?v=5.13.12"></script>
-<script src="./js/data/clothes.js?v=5.13.12"></script>
-<script src="./js/data/modules.js?v=5.13.12"></script>
-<script src="./js/data/index.js?v=5.13.12"></script>
-<script src="./js/storage/paths.js?v=5.13.12"></script>
-<script src="./js/storage/images.js?v=5.13.12"></script>
-<script src="./js/storage/index.js?v=5.13.12"></script>
-<script src="./js/auth/index.js?v=5.13.12"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.12"></script>
+<script src="./js/data/errors.js?v=5.13.13"></script>
+<script src="./js/data/query.js?v=5.13.13"></script>
+<script src="./js/auth/session.js?v=5.13.13"></script>
+<script src="./js/data/groups.js?v=5.13.13"></script>
+<script src="./js/data/clothgroups.js?v=5.13.13"></script>
+<script src="./js/data/clothes.js?v=5.13.13"></script>
+<script src="./js/data/modules.js?v=5.13.13"></script>
+<script src="./js/data/index.js?v=5.13.13"></script>
+<script src="./js/storage/paths.js?v=5.13.13"></script>
+<script src="./js/storage/images.js?v=5.13.13"></script>
+<script src="./js/storage/index.js?v=5.13.13"></script>
+<script src="./js/auth/index.js?v=5.13.13"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.13"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.12"></script>
+<script src="./js/fuel.js?v=5.13.13"></script>
 </body>
 </html>

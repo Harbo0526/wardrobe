@@ -6,7 +6,11 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v5.13.12';
+const CACHE_NAME = 'wardrobe-v5.13.13';
+/* v5.13.13：头像本地缓存（首页/我的页头像；由 index.html 通过 CacheStorage 写入）。
+   ⚠ 这是「用户数据缓存」，不是 app shell 的版本缓存 —— activate 清理旧版本时必须保留它，
+   否则每次版本更新都会把它清掉，头像又得重新下载（白白浪费流量）。名字须与 index.html 的 AVATAR_CACHE 一致。 */
+const AVATAR_CACHE = 'wardrobe-avatar-v1';
 // Phase 14：js/ 模块（DAL/Auth/Storage/bridge）纳入预缓存；Supabase API 跨域请求不缓存（fetch 拦截器对跨域直接放行）
 const APP_SHELL = [
   './',
@@ -53,12 +57,12 @@ self.addEventListener('install', function(e){
   );
 });
 
-/* 激活：清理旧版本缓存 */
+/* 激活：清理旧版本缓存（⚠ 必须保留 AVATAR_CACHE，见文件顶部说明） */
 self.addEventListener('activate', function(e){
   e.waitUntil(
     caches.keys()
       .then(function(keys){
-        return Promise.all(keys.filter(function(k){ return k !== CACHE_NAME; })
+        return Promise.all(keys.filter(function(k){ return k !== CACHE_NAME && k !== AVATAR_CACHE; })
           .map(function(k){ return caches.delete(k); }));
       })
       .then(function(){ return self.clients.claim(); })
