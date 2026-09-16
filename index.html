@@ -3655,7 +3655,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.6';
+const APP_VERSION = '5.13.7';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -6177,8 +6177,8 @@ function renderMine(){
   var av = $('about-ver');
   if(av) av.textContent = 'v' + APP_VERSION + ' · 轻量免费 PWA · 远程仓库 云同步';
 
-  // v5.13.6（Phase 1）：系统提醒推送行副标题（随通知权限变化）
-  try{ refreshPushSubtitle(); }catch(e){}
+  // v5.13.6（Phase 1）：系统提醒推送行副标题；v5.13.7：改为 pushAutoHeal（探测真实订阅 + 缺行自动补报）
+  try{ pushAutoHeal(); }catch(e){}
 
   // v5.6.0：公告发布卡片仅管理员可见（真正的写入权限由数据库 RLS 卡死，此处只是入口显隐）
   var annCard = $('mine-ann-card');
@@ -8433,44 +8433,66 @@ const WBReminders = {
     try{ const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); }
     catch(e){ return null; }
   },
-  /* 上报订阅（endpoint 唯一 → 已存在则更新密钥） */
+  /* 上报订阅（endpoint 唯一 → 已存在则更新密钥）
+     v5.13.7：返回 { ok, error } 而非 bool —— 原先 catch 直接吞掉异常，导致失败时只显示「未知原因」，无法定位。 */
   async syncSubscription(sub){
-    if(!sub) return false;
+    if(!sub) return { ok: false, error: 'no-subscription' };
     const j = (typeof sub.toJSON === 'function') ? sub.toJSON() : {};
     const keys = j.keys || {};
     const endpoint = j.endpoint || sub.endpoint || '';
     const payload = { endpoint: endpoint, p256dh: keys.p256dh || '', auth: keys.auth || '',
                       user_agent: (navigator.userAgent || '').slice(0, 200) };
-    if(!payload.endpoint || !payload.p256dh || !payload.auth) return false;
+    if(!payload.endpoint || !payload.p256dh || !payload.auth) return { ok: false, error: 'incomplete-subscription' };
+    const D = window.WBData;
+    if(!D || !D.pushSubscriptions) return { ok: false, error: 'dal-missing' };
     try{
-      const D = window.WBData;
-      if(!D || !D.pushSubscriptions) return false;
       const rows = await D.pushSubscriptions.list({ limit: 200 });
       const hit = (rows || []).filter(r => r.endpoint === payload.endpoint)[0];
       if(hit) await D.pushSubscriptions.update(hit.id, { p256dh: payload.p256dh, auth: payload.auth, user_agent: payload.user_agent });
       else await D.pushSubscriptions.create(payload);
-      return true;
-    }catch(e){ return false; }
+      return { ok: true };
+    }catch(e){
+      const msg = (e && (e.message || e.error_description || e.details)) || String(e) || 'unknown';
+      return { ok: false, error: msg };
+    }
   },
-  /* 订阅并上报（Phase 2 由用户在设置里主动触发） */
+  /* v5.13.7：删除本设备在服务端的订阅行（关闭提醒时清理；否则服务端仍向失效端点投递） */
+  async removeSubscription(sub){
+    if(!sub) return { ok: true };
+    const j = (typeof sub.toJSON === 'function') ? sub.toJSON() : {};
+    const endpoint = j.endpoint || sub.endpoint || '';
+    const D = window.WBData;
+    if(!endpoint || !D || !D.pushSubscriptions) return { ok: true };
+    try{
+      const rows = await D.pushSubscriptions.list({ limit: 200 });
+      const hit = (rows || []).filter(r => r.endpoint === endpoint)[0];
+      if(hit) await D.pushSubscriptions.remove(hit.id, { hardDelete: true });
+      return { ok: true };
+    }catch(e){ return { ok: false, error: (e && e.message) || String(e) }; }
+  },
+  /* 订阅并上报（Phase 2 由用户在设置里主动触发）；失败时把真实原因带回给 UI */
   async subscribe(){
     if(!this.enabled()) return { ok: false, reason: 'push-not-enabled' };
     const perm = await this.requestPermission();
-    if(perm !== 'granted') return { ok: false, reason: perm };
+    if(perm !== 'granted') return { ok: false, reason: perm || 'denied' };
     try{
       const reg = await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
       if(!sub){
         sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: this._urlB64ToUint8(this.vapidKey()) });
       }
-      const ok = await this.syncSubscription(sub);
-      return { ok: ok, subscription: sub };
+      const r = await this.syncSubscription(sub);
+      if(!r.ok) return { ok: false, reason: 'save-failed: ' + (r.error || 'unknown'), subscription: sub };
+      return { ok: true, subscription: sub };
     }catch(e){ return { ok: false, reason: (e && e.message) || 'subscribe-failed' }; }
   },
+  /* v5.13.7：关闭 = 取消浏览器订阅 + 删除服务端订阅行（先取 endpoint，再 unsubscribe） */
   async unsubscribe(){
     const sub = await this.currentSubscription();
+    let delErr = null;
+    if(sub){ const r = await this.removeSubscription(sub); if(!r.ok) delErr = r.error; }
     try{ if(sub) await sub.unsubscribe(); }catch(e){}
-    return true;
+    return { ok: !delErr, error: delErr };
   },
   statusText(){
     if(!this.supported()) return '当前浏览器不支持系统通知';
@@ -8513,16 +8535,31 @@ function pushEnvHint(){
     return '安卓：Chrome / Edge 均支持。\n若没有弹出授权，可到「系统设置 → 应用 → 通知」里允许本站通知。';
   return '桌面端：Chrome / Edge 支持；macOS 上的 Safari 16.4+ 亦支持。';
 }
+/* v5.13.7：本设备「是否真的存在浏览器订阅」才是可信状态。
+   Notification.permission 只是"权限"，权限 granted ≠ 已订阅 → 原逻辑导致
+   ①首次失败后再也无法重试（按钮被永久禁用）②点"关闭"后状态仍显示"已开启"。 */
+let pushCachedSub = null;        /* 当前浏览器订阅对象（null = 本设备未订阅） */
+let pushStateChecked = false;
+async function refreshPushState(){
+  try{ pushCachedSub = await WBReminders.currentSubscription(); }
+  catch(e){ pushCachedSub = null; }
+  pushStateChecked = true;
+  return pushCachedSub;
+}
 function pushStatusLabel(){
   if(!WBReminders.supported()) return '当前设备不支持';
   const p = WBReminders.permission();
-  if(p === 'granted') return '已开启';
   if(p === 'denied') return '已被系统拒绝';
+  if(pushCachedSub) return '已开启';
+  if(p === 'granted') return '权限已允许，但本设备尚未订阅';
   return '未开启';
 }
-function renderPushSheet(){
+async function renderPushSheet(){
   const st = $('pushStatus'), hint = $('pushHint'), on = $('pushOnBtn'), off = $('pushOffBtn');
   const enabled = WBReminders.enabled();
+  await refreshPushState();
+  const hasSub = !!pushCachedSub;
+  const denied = WBReminders.permission() === 'denied';
   if(st){
     st.textContent = '当前状态：' + pushStatusLabel() +
       (WBReminders.supported() ? '（通知权限：' + WBReminders.permission() + '）' : '') +
@@ -8532,28 +8569,47 @@ function renderPushSheet(){
     hint.textContent = (enabled ? '' :
       '说明：系统级提醒推送尚未在本版本启用（需先完成服务端配置）。\n你现在仍可正常设置待办提醒时间，功能启用后立即生效。\n\n') + pushEnvHint();
   }
-  if(on){ on.disabled = !enabled || WBReminders.permission() === 'granted'; on.style.opacity = on.disabled ? '.5' : ''; }
-  if(off){ off.disabled = !WBReminders.supported(); off.style.opacity = off.disabled ? '.5' : ''; }
+  /* 开启：仅在「通道可用 且 本设备未订阅 且 权限未被拒」时可用（修复"永久禁用"） */
+  if(on){ on.disabled = !enabled || hasSub || denied; on.style.opacity = on.disabled ? '.5' : ''; }
+  /* 关闭：仅在本设备确有订阅时可用 */
+  if(off){ off.disabled = !WBReminders.supported() || !hasSub; off.style.opacity = off.disabled ? '.5' : ''; }
 }
-function openPushSheet(){ renderPushSheet(); openSheet('sheet-push'); }
+async function openPushSheet(){ await renderPushSheet(); openSheet('sheet-push'); }
 async function pushEnable(){
   const r = await WBReminders.subscribe();
-  renderPushSheet(); refreshPushSubtitle();
+  await renderPushSheet(); refreshPushSubtitle();
   if(r.ok) toast('已开启系统提醒 ✓');
-  else if(r.reason === 'push-not-enabled') toast('推送通道尚未启用（Phase 2）');
+  else if(r.reason === 'push-not-enabled') toast('推送通道尚未启用');
   else if(r.reason === 'denied') toast('通知权限被拒绝，请到系统设置中允许');
   else if(r.reason === 'unsupported') toast('当前设备不支持系统通知');
   else toast('开启失败：' + (r.reason || '未知原因'));
 }
 async function pushDisable(){
-  await WBReminders.unsubscribe();
-  renderPushSheet(); refreshPushSubtitle();
-  toast('已关闭本设备的提醒推送');
+  const r = await WBReminders.unsubscribe();
+  await renderPushSheet(); refreshPushSubtitle();
+  toast(r.ok ? '已关闭本设备的提醒推送' : ('关闭失败：' + (r.error || '未知原因')));
 }
-/* 我的页「系统提醒推送」行副标题 */
+/* 我的页「系统提醒推送」行副标题（v5.13.7：以「是否已订阅」为准，而非仅看权限） */
 function refreshPushSubtitle(){
   const el = $('mine-push-sub'); if(!el) return;
-  el.textContent = pushStatusLabel() + (WBReminders.enabled() ? '' : ' · 待启用');
+  const p = WBReminders.permission();
+  let s;
+  if(pushCachedSub) s = '已开启';
+  else if(!WBReminders.supported()) s = '当前设备不支持';
+  else if(p === 'denied') s = '已被系统拒绝';
+  else if(p === 'granted') s = '未订阅（点此开启）';
+  else s = '未开启';
+  el.textContent = s + (WBReminders.enabled() ? '' : ' · 待启用');
+}
+/* v5.13.7 自愈：进入「我的」/启动时，若浏览器已有订阅但服务端没存（例如首次上报失败、或换账号），
+   自动补报（syncSubscription 幂等：已存在则仅更新密钥，不会重复插入）。 */
+async function pushAutoHeal(){
+  try{
+    if(!WBReminders.enabled()){ await refreshPushState(); refreshPushSubtitle(); return; }
+    const sub = await refreshPushState();
+    if(sub) await WBReminders.syncSubscription(sub);
+    refreshPushSubtitle();
+  }catch(e){}
 }
 
 /* =====================================================================
@@ -9737,23 +9793,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.6"></script>
-<script src="./js/data/supabase.js?v=5.13.6"></script>
+<script src="./js/config.js?v=5.13.7"></script>
+<script src="./js/data/supabase.js?v=5.13.7"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.6"></script>
-<script src="./js/data/query.js?v=5.13.6"></script>
-<script src="./js/auth/session.js?v=5.13.6"></script>
-<script src="./js/data/groups.js?v=5.13.6"></script>
-<script src="./js/data/clothgroups.js?v=5.13.6"></script>
-<script src="./js/data/clothes.js?v=5.13.6"></script>
-<script src="./js/data/modules.js?v=5.13.6"></script>
-<script src="./js/data/index.js?v=5.13.6"></script>
-<script src="./js/storage/paths.js?v=5.13.6"></script>
-<script src="./js/storage/images.js?v=5.13.6"></script>
-<script src="./js/storage/index.js?v=5.13.6"></script>
-<script src="./js/auth/index.js?v=5.13.6"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.6"></script>
+<script src="./js/data/errors.js?v=5.13.7"></script>
+<script src="./js/data/query.js?v=5.13.7"></script>
+<script src="./js/auth/session.js?v=5.13.7"></script>
+<script src="./js/data/groups.js?v=5.13.7"></script>
+<script src="./js/data/clothgroups.js?v=5.13.7"></script>
+<script src="./js/data/clothes.js?v=5.13.7"></script>
+<script src="./js/data/modules.js?v=5.13.7"></script>
+<script src="./js/data/index.js?v=5.13.7"></script>
+<script src="./js/storage/paths.js?v=5.13.7"></script>
+<script src="./js/storage/images.js?v=5.13.7"></script>
+<script src="./js/storage/index.js?v=5.13.7"></script>
+<script src="./js/auth/index.js?v=5.13.7"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.7"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.6"></script>
+<script src="./js/fuel.js?v=5.13.7"></script>
 </body>
 </html>
