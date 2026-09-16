@@ -129,6 +129,22 @@
     noSoftDelete: true
   });
 
+  /* 待办提醒投递通道（v5.13.8）：一行 = 某用户的一条直发通道。
+   * channel='pushplus' → target 填 PushPlus token（微信推送，大陆可用、免装 App）；
+   * channel='wecom'    → target 填企业微信群机器人 webhook URL。
+   * target 属**密钥类数据**（可用来给该用户发消息）→ RLS 仅本人可读写；
+   * 服务端 todo-reminder 用 service_role 读取并投递；DB 侧 unique(user_id, channel) 防重复投递。
+   * 无 deleted_at 列（停用改 enabled=false，删除即物理删除）→ noSoftDelete */
+  const reminderChannels = F({
+    table: 'reminder_channels',
+    createFields: ['channel', 'target', 'label', 'enabled'],
+    updateFields: ['target', 'label', 'enabled'],
+    orderWhitelist: ['created_at', 'updated_at'],
+    defaultOrder: 'created_at',
+    requiredCreate: ['channel', 'target'],
+    noSoftDelete: true
+  });
+
   window.WBData = {
     clothes: window.WBClothes,
     groups: window.WBGroupsApi,
@@ -143,7 +159,8 @@
     fuel: fuel,
     announcements: announcements,
     todos: todos,
-    pushSubscriptions: pushSubscriptions
+    pushSubscriptions: pushSubscriptions,
+    reminderChannels: reminderChannels
   };
 
   /* 便捷调用：WBData.call(asyncFn) → { data, error } 统一返回结构 */
