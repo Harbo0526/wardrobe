@@ -69,11 +69,13 @@
     requiredCreate: ['record_date', 'start_time', 'end_time', 'duration_minutes']
   });
 
-  /* 备忘：t→content、at→legacy_id（兼作备忘日期，v5.7.0 起允许编辑）；title=标题 */
+  /* 备忘：t→content、at→legacy_id（兼作备忘日期，v5.7.0 起允许编辑）；title=标题
+   * v5.13.12：提醒字段与 todos 同构 —— reminder_at / reminder_status 前端可写；
+   *           reminder_sent_at 归服务端回写 → 刻意排除在 create/update 白名单外，前端不可伪造。 */
   const memos = F({
     table: 'memos',
-    createFields: ['title', 'content', 'legacy_id'],
-    updateFields: ['title', 'content', 'legacy_id'],
+    createFields: ['title', 'content', 'legacy_id', 'reminder_at', 'reminder_status'],
+    updateFields: ['title', 'content', 'legacy_id', 'reminder_at', 'reminder_status'],
     orderWhitelist: ['created_at', 'updated_at'],
     defaultOrder: 'created_at',
     requiredCreate: ['content']

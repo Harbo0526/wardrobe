@@ -3541,6 +3541,8 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
       <textarea id="memoEditText" placeholder="备忘内容…"></textarea>
       <label class="wb-label">日期</label>
       <input class="input" type="date" id="memoEditDate">
+      <label class="wb-label">提醒时间（可选）</label>
+      <input class="input" type="datetime-local" id="memoEditRemind">
       <div class="wb-time" id="memoEditTime"></div>
       <div class="wb-btns">
         <button class="btn btn-primary press" onclick="memoSaveEdit()">保存</button>
@@ -3605,7 +3607,7 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
      故意不给遮罩绑定点击关闭 —— 必须从「关闭提醒 / 稍后提醒」中选一个 -->
 <div class="wb-mask" id="todoRemindPop" style="display:none;">
   <div class="wb-modal">
-    <div class="wb-h"><h3>🔔 待办提醒</h3></div>
+    <div class="wb-h"><h3 id="trTitle">🔔 提醒</h3></div>
     <div class="tr-body">
       <div class="tr-time" id="trTime">—</div>
       <div class="tr-text" id="trText">—</div>
@@ -3717,7 +3719,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.11';
+const APP_VERSION = '5.13.12';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -5028,21 +5030,42 @@ function renderMemos(){
   }
   list.innerHTML = memos.map(m=>{
     const id = String(m._id || '');
+    /* v5.13.12：已设提醒的备忘显示 🔔（纯展示，与待办同构） */
+    const bell = m.reminderAt
+      ? ('<span style="font-size:11px;margin-left:4px;" title="' + spEsc(memoRemindText(m)) + '">🔔</span>')
+      : '';
     return '<div class="memo-item" data-id="' + id + '"><span class="mt">' +
       (m.title ? '<span class="mtitle">' + spEsc(m.title) + '</span>' : '') +
-      spEsc(m.t) + '</span><span class="mtime">' + memoShortTime(m.at) + '</span>' +
+      spEsc(m.t) + bell + '</span><span class="mtime">' + memoShortTime(m.at) + '</span>' +
       '<button class="mdel press" data-id="' + id + '">✕</button></div>';
   }).join('');
   list.querySelectorAll('.memo-item').forEach(c => c.onclick = () => memoOpenDetail(c.dataset.id));
   list.querySelectorAll('.mdel').forEach(b => b.onclick = (e) => { e.stopPropagation(); delMemo(b.dataset.id); });
 }
-/* 新建备忘（dateStr 决定所属日期；不传则用当下时间）→ 上行 Supabase（title/content/legacy_id=at） */
-function memoCreate(content, title, at, dateStr){
+/* v5.13.12：备忘提醒状态与文案（与待办同构，纯展示用） */
+function memoRemindState(m){
+  if(!m || !m.reminderAt) return 'none';
+  if(m.reminderStatus === 'sent' || m.reminderSentAt) return 'sent';
+  if(m.reminderStatus === 'failed') return 'failed';
+  return 'pending';
+}
+function memoRemindText(m){
+  if(!m || !m.reminderAt) return '';
+  const txt = TODO_REMIND_TEXT[memoRemindState(m)];
+  return '提醒 ' + todoStamp(m.reminderAt) + (txt ? '（' + txt + '）' : '');
+}
+/* 新建备忘（dateStr 决定所属日期；不传则用当下时间）→ 上行 Supabase（title/content/legacy_id=at）
+   v5.13.12：remindIso = 提醒时间（ISO 字符串；空 = 不提醒） */
+function memoCreate(content, title, at, dateStr, remindIso){
   const ts = (dateStr ? memoDateToTs(dateStr, at || Date.now()) : null) || at || Date.now();
   const mid = wbUuid();                              // Phase 14：前端 UUID = Supabase 主键
-  const m = { t: content, title: title || '', at: ts, _id: mid, _sbSaved: false };
+  const m = { t: content, title: title || '', at: ts, _id: mid, _sbSaved: false,
+              reminderAt: remindIso || null, reminderStatus: remindIso ? 'pending' : 'none',
+              reminderSentAt: null };
   const st = loadMemoStore(); st.memos.push(m); saveMemoStore(st);
-  sbSaveObj('memos', {_id: mid, id: mid}, {title: m.title, content: content, legacy_id: String(ts)});
+  sbSaveObj('memos', {_id: mid, id: mid},
+    {title: m.title, content: content, legacy_id: String(ts),
+     reminder_at: m.reminderAt, reminder_status: m.reminderStatus});
   return m;
 }
 function addMemo(){
@@ -5130,8 +5153,9 @@ function wbDateToLocalTs(dateStr, hm){
 }
 
 /* ================= 备忘：详情 / 二次编辑（复用通用框架） =================
-   查看模式（放大展示全文）⇄ 编辑模式（标题 / 内容 / 日期）。
-   身份一律用 _id；日期改动 → 同步写 legacy_id（DB 侧即备忘的 at 语义）。 */
+   查看模式（放大展示全文）⇄ 编辑模式（标题 / 内容 / 日期 / 提醒时间）。
+   身份一律用 _id；日期改动 → 同步写 legacy_id（DB 侧即备忘的 at 语义）。
+   v5.13.12：新增「提醒时间」——与待办同构，到点由「页面内弹窗」提醒（见 todoRemind* 引擎）。 */
 const MEMO_MODAL = { mask:'memoEditMask', title:'memoModalTitle', viewBox:'memoViewBox', formBox:'memoFormBox' };
 let memoEditId = null;      // 当前弹窗对应的备忘 UUID
 function memoShowBox(view){
@@ -5143,7 +5167,8 @@ function memoOpenDetail(id){
   const tt = $('memoViewTitle'), bb = $('memoViewBody'), tm = $('memoViewTime');
   if(tt){ tt.textContent = m.title || ''; tt.style.display = m.title ? 'block' : 'none'; }
   if(bb) bb.textContent = m.t || '';
-  if(tm) tm.textContent = '记录于 ' + memoDateKey(m.at) + ' ' + memoTimeHM(m.at);
+  if(tm) tm.textContent = '记录于 ' + memoDateKey(m.at) + ' ' + memoTimeHM(m.at) +
+    (m.reminderAt ? ('　·　' + memoRemindText(m)) : '');
   memoShowBox(true);
 }
 /* 新建（可为指定日期）：dateStr = 'YYYY-MM-DD' */
@@ -5152,6 +5177,7 @@ function memoOpenNew(dateStr){
   if($('memoEditTitle')) $('memoEditTitle').value = '';
   if($('memoEditText')) $('memoEditText').value = '';
   if($('memoEditDate')) $('memoEditDate').value = dateStr || memoDateKey(Date.now());
+  if($('memoEditRemind')) $('memoEditRemind').value = '';
   if($('memoEditTime')) $('memoEditTime').textContent = '';
   memoShowBox(false);
   const f = $('memoEditText'); if(f) setTimeout(() => { try{ f.focus(); }catch(e){} }, 30);
@@ -5163,6 +5189,7 @@ function memoSwitchEdit(){
     if($('memoEditTitle')) $('memoEditTitle').value = m.title || '';
     if($('memoEditText')) $('memoEditText').value = m.t || '';
     if($('memoEditDate')) $('memoEditDate').value = memoDateKey(m.at);
+    if($('memoEditRemind')) $('memoEditRemind').value = todoIsoToLocal(m.reminderAt);
     if($('memoEditTime')) $('memoEditTime').textContent = '创建于 ' + memoDateKey(m.at) + ' ' + memoTimeHM(m.at);
   }
   memoShowBox(false);
@@ -5174,12 +5201,14 @@ function memoCloseEdit(){
   if($('memoEditTitle')) $('memoEditTitle').value = '';
   if($('memoEditText')) $('memoEditText').value = '';
   if($('memoEditDate')) $('memoEditDate').value = '';
+  if($('memoEditRemind')) $('memoEditRemind').value = '';
   if($('memoEditTime')) $('memoEditTime').textContent = '';
 }
 function memoSaveEdit(){
   const v = ($('memoEditText') ? $('memoEditText').value : '').trim();
   const title = ($('memoEditTitle') ? $('memoEditTitle').value : '').trim();
   const dateStr = ($('memoEditDate') ? $('memoEditDate').value : '') || memoDateKey(Date.now());
+  const remind = todoLocalToIso($('memoEditRemind') ? $('memoEditRemind').value : '');
   if(!v){ toast('内容不能为空'); return; }
   if(memoEditId){
     const st = loadMemoStore();
@@ -5187,10 +5216,18 @@ function memoSaveEdit(){
     if(!m){ memoCloseEdit(); memoRefreshAll(); return; }
     const newAt = memoDateToTs(dateStr, m.at) || m.at;
     m.title = title; m.t = v; m.at = newAt;
+    /* v5.13.12：提醒时间有变 → 状态重置为待提醒并清掉旧的投递时间（与待办同一口径） */
+    if(String(m.reminderAt || '') !== String(remind || '')){
+      m.reminderAt = remind || null;
+      m.reminderStatus = remind ? 'pending' : 'none';
+      m.reminderSentAt = null;
+    }
     saveMemoStore(st);
-    sbSaveObj('memos', {_id: m._id, id: m._id, _sbSaved: m._sbSaved}, {title: title, content: v, legacy_id: String(newAt)});
+    sbSaveObj('memos', {_id: m._id, id: m._id, _sbSaved: m._sbSaved},
+      {title: title, content: v, legacy_id: String(newAt),
+       reminder_at: m.reminderAt, reminder_status: m.reminderStatus});
   }else{
-    memoCreate(v, title, Date.now(), dateStr);
+    memoCreate(v, title, Date.now(), dateStr, remind);
   }
   memoCloseEdit(); memoRefreshAll(); toast('已保存 ✓');
 }
@@ -8078,7 +8115,8 @@ function todoRemindState(t){
 }
 
 /* =====================================================================
-   v5.13.11：待办提醒 —— 页面内弹窗（纯前端，不依赖任何推送服务）
+   v5.13.11 起：提醒 —— 页面内弹窗（纯前端，不依赖任何推送服务）
+   v5.13.12：同时覆盖「待办」与「备忘」（备忘的提醒字段与待办完全同构）
    ─────────────────────────────────────────────────────────────────────
    规则（用户定义）：
      · 提醒时间【未到】就打开页面 → 不弹（安静等到点）；
@@ -8092,23 +8130,48 @@ function todoRemindState(t){
    说明：v5.13.11 起提醒改为纯前端页面内弹窗，因此这里刻意使用定时器；
          服务端推送通道（Edge Function + pg_cron + reminder_channels）保留但暂不启用。
    ===================================================================== */
-var todoRemindShown = {};      /* 本次会话已弹过的待办 id（「稍后提醒」后本次不再弹） */
+var todoRemindShown = {};      /* 本次会话已弹过的项（key = kind:id；「稍后提醒」后本次不再弹） */
 var todoRemindQueue = [];      /* 待弹队列（多条到点时逐条弹） */
-var todoRemindCur = null;      /* 当前弹窗对应的待办对象 */
+var todoRemindCur = null;      /* 当前弹窗对应的项 {kind,id,title,text,reminderAt} */
 
-/* 「已到点且待提醒」的待办：未完成、非模板、reminder_status='pending'、reminder_at <= now */
-function todoRemindDueList(){
+/* v5.13.12：提醒统一抽象为「项」{kind:'todo'|'memo', id, title, text, reminderAt}
+   （函数名保留 todoRemind* 前缀，避免改动已有内联绑定；实际同时服务于「待办」与「备忘」） */
+function remindItemKey(it){ return it.kind + ':' + String(it.id); }
+function remindSourceTitle(kind){ return kind === 'memo' ? '备忘提醒' : '待办提醒'; }
+
+/* 待办侧：未完成、非模板、reminder_status='pending'、reminder_at <= now */
+function remindTodoItems(){
   var now = Date.now();
   return todoRecs().filter(function(t){
     if(!t || !t.reminderAt) return false;
     if(t.done) return false;
     if(todoIsTemplate(t)) return false;                        /* 模板不是可提醒实体 */
     if(String(t.reminderStatus || 'none') !== 'pending') return false;
-    if(todoRemindShown[String(t.id)]) return false;            /* 本次会话已弹过 */
     var ts = new Date(t.reminderAt).getTime();
-    if(isNaN(ts)) return false;
-    return ts <= now;                                          /* 已过点才提醒 */
-  }).sort(function(a, b){ return new Date(a.reminderAt) - new Date(b.reminderAt); });
+    return !isNaN(ts) && ts <= now;                            /* 已过点才提醒 */
+  }).map(function(t){
+    return { kind: 'todo', id: t.id, title: remindSourceTitle('todo'),
+             text: t.content || '', reminderAt: t.reminderAt };
+  });
+}
+/* 备忘侧：reminder_status='pending'、reminder_at <= now（标题 + 正文一起显示） */
+function remindMemoItems(){
+  var now = Date.now();
+  return loadMemos().filter(function(m){
+    if(!m || !m.reminderAt) return false;
+    if(String(m.reminderStatus || 'none') !== 'pending') return false;
+    var ts = new Date(m.reminderAt).getTime();
+    return !isNaN(ts) && ts <= now;
+  }).map(function(m){
+    return { kind: 'memo', id: m._id, title: remindSourceTitle('memo'),
+             text: (m.title ? m.title + '\n' : '') + (m.t || ''), reminderAt: m.reminderAt };
+  });
+}
+/* 「已到点且待提醒」的项：待办 + 备忘，按提醒时间升序（最早到点的先弹） */
+function todoRemindDueList(){
+  return remindTodoItems().concat(remindMemoItems())
+    .filter(function(it){ return !todoRemindShown[remindItemKey(it)]; })    /* 本次会话已弹过 → 跳过 */
+    .sort(function(a, b){ return new Date(a.reminderAt) - new Date(b.reminderAt); });
 }
 /* 入口：检查并弹出（未登录 / 已有弹窗在显示 / 无到点项 → 直接返回） */
 function todoRemindTick(){
@@ -8121,12 +8184,13 @@ function todoRemindTick(){
     todoRemindShow(due[0]);
   }catch(e){}
 }
-function todoRemindShow(t){
-  if(!t) return;
-  todoRemindCur = t;
-  todoRemindShown[String(t.id)] = true;      /* 本次会话只弹一次 */
-  var el = $('trText'); if(el) el.textContent = t.content || '';
-  var tm = $('trTime'); if(tm) tm.textContent = '提醒时间：' + todoStamp(t.reminderAt);
+function todoRemindShow(it){
+  if(!it) return;
+  todoRemindCur = it;
+  todoRemindShown[remindItemKey(it)] = true;      /* 本次会话只弹一次 */
+  var ti = $('trTitle'); if(ti) ti.textContent = '🔔 ' + it.title;
+  var el = $('trText'); if(el) el.textContent = it.text || '';
+  var tm = $('trTime'); if(tm) tm.textContent = '提醒时间：' + todoStamp(it.reminderAt);
   var more = $('trMore');
   if(more){
     var rest = todoRemindQueue.length;
@@ -8140,17 +8204,23 @@ function todoRemindNext(){
   var nt = todoRemindQueue.shift();
   setTimeout(function(){ todoRemindShow(nt); }, 200);         /* 稍作间隔，避免弹窗瞬切 */
 }
-/* 「关闭提醒」：这条不再提醒 */
+/* 「关闭提醒」：这条不再提醒（待办 / 备忘分别写回各自表的 reminder_status='sent'） */
 function todoRemindClose(){
-  var t = todoRemindCur;
-  var live = t ? todoById(t.id) : null;
-  if(live){
-    live.reminderStatus = 'sent';
-    sbSaveObj('todos', live, { reminder_status: 'sent' });
+  var it = todoRemindCur;
+  if(it && it.kind === 'memo'){
+    var m = memoById(it.id);
+    if(m){
+      m.reminderStatus = 'sent';
+      sbSaveObj('memos', {_id: m._id, id: m._id, _sbSaved: m._sbSaved}, { reminder_status: 'sent' });
+    }
+    try{ memoRefreshAll(); }catch(e){}
+  }else if(it){
+    var t = todoById(it.id);
+    if(t){ t.reminderStatus = 'sent'; sbSaveObj('todos', t, { reminder_status: 'sent' }); }
+    try{ todoRender(); }catch(e){}
   }
   todoRemindCur = null;
   var pop = $('todoRemindPop'); if(pop) pop.style.display = 'none';
-  todoRender();
   toast('已关闭该提醒');
   todoRemindNext();
 }
@@ -10090,23 +10160,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.11"></script>
-<script src="./js/data/supabase.js?v=5.13.11"></script>
+<script src="./js/config.js?v=5.13.12"></script>
+<script src="./js/data/supabase.js?v=5.13.12"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.11"></script>
-<script src="./js/data/query.js?v=5.13.11"></script>
-<script src="./js/auth/session.js?v=5.13.11"></script>
-<script src="./js/data/groups.js?v=5.13.11"></script>
-<script src="./js/data/clothgroups.js?v=5.13.11"></script>
-<script src="./js/data/clothes.js?v=5.13.11"></script>
-<script src="./js/data/modules.js?v=5.13.11"></script>
-<script src="./js/data/index.js?v=5.13.11"></script>
-<script src="./js/storage/paths.js?v=5.13.11"></script>
-<script src="./js/storage/images.js?v=5.13.11"></script>
-<script src="./js/storage/index.js?v=5.13.11"></script>
-<script src="./js/auth/index.js?v=5.13.11"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.11"></script>
+<script src="./js/data/errors.js?v=5.13.12"></script>
+<script src="./js/data/query.js?v=5.13.12"></script>
+<script src="./js/auth/session.js?v=5.13.12"></script>
+<script src="./js/data/groups.js?v=5.13.12"></script>
+<script src="./js/data/clothgroups.js?v=5.13.12"></script>
+<script src="./js/data/clothes.js?v=5.13.12"></script>
+<script src="./js/data/modules.js?v=5.13.12"></script>
+<script src="./js/data/index.js?v=5.13.12"></script>
+<script src="./js/storage/paths.js?v=5.13.12"></script>
+<script src="./js/storage/images.js?v=5.13.12"></script>
+<script src="./js/storage/index.js?v=5.13.12"></script>
+<script src="./js/auth/index.js?v=5.13.12"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.12"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.11"></script>
+<script src="./js/fuel.js?v=5.13.12"></script>
 </body>
 </html>

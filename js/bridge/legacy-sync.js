@@ -212,10 +212,17 @@
       }), deleted: []
     };
 
-    /* 备忘（at 语义保存在 legacy_id；title=标题；_id 供删除/编辑定位） */
+    /* 备忘（at 语义保存在 legacy_id；title=标题；_id 供删除/编辑定位）
+       v5.13.12：提醒字段与 todos 同构 —— reminderAt/reminderStatus 前端写，
+                 reminderSentAt 服务端回写（前端只读） */
     state.memos = {
       memos: mem.map(function (x) {
-        return { t: x.content || '', title: x.title || '', at: Number(x.legacy_id) || Date.parse(x.created_at) || Date.now(), _id: x.id, _sbSaved: true };
+        return { t: x.content || '', title: x.title || '',
+                 at: Number(x.legacy_id) || Date.parse(x.created_at) || Date.now(),
+                 reminderAt: x.reminder_at || null,
+                 reminderStatus: x.reminder_status || 'none',
+                 reminderSentAt: x.reminder_sent_at || null,
+                 _id: x.id, _sbSaved: true };
       }).filter(function (m) { return !isNaN(m.at); }).sort(function (a, b) { return b.at - a.at; }),
       deleted: []
     };
