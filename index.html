@@ -3686,7 +3686,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.9';
+const APP_VERSION = '5.13.10';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -8660,19 +8660,19 @@ const CH_SPECS = {
     name: '企业微信群机器人',
     label: 'Webhook 地址',
     ph: '粘贴 Webhook 地址（https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=…）',
-    help: '企业微信 →「消息」右上角 ＋ → 发起群聊（只勾自己）→ 进该群 → 右上角 … → 群机器人 → 添加机器人 → 复制 Webhook 地址。免费、无需企业认证，限 20 条/分钟。'
+    help: '企业微信 → 消息页右上角 ＋ → 发起群聊 → 随便选一个成员（建完把他移出即可，机器人会保留）→ 进入该群 → 右上角 … → 群机器人 → 添加机器人 → 复制 Webhook 地址。免费、无需企业认证，限 20 条/分钟。'
   },
   dingtalk: {
     name: '钉钉群机器人',
     label: 'Webhook 地址',
     ph: '粘贴 Webhook 地址（https://oapi.dingtalk.com/robot/send?access_token=…）',
-    help: '钉钉 → 建一个只有自己的群 → 群设置 → 智能群助手 → 添加机器人 → 自定义 → 复制 Webhook。⚠️「安全设置」必须勾「自定义关键词」并填「提醒」（本应用消息含「【待办提醒】」）。'
+    help: '钉钉 → 发起群聊 → 随便选一个成员（建完把他移出即可，机器人会保留）→ 进群 → 右上角 … → 群设置 → 智能群助手 → 添加机器人 → 自定义 → 复制 Webhook。⚠️「安全设置」必须勾「自定义关键词」并填「提醒」（本应用消息含「【待办提醒】」）。'
   },
   feishu: {
     name: '飞书群机器人',
     label: 'Webhook 地址',
     ph: '粘贴 Webhook 地址（https://open.feishu.cn/open-apis/bot/v2/hook/…）',
-    help: '飞书 → 建一个只有自己的群 → 设置 → 群机器人 → 添加机器人 → 自定义机器人 → 复制 Webhook 地址。若要求安全设置，选「自定义关键词」填「提醒」。'
+    help: '飞书 → 新建群组 → 随便选一个成员（建完把他移出即可，机器人会保留）→ 进群 → 右上角 … → 设置 → 群机器人 → 添加机器人 → 自定义机器人 → 复制 Webhook 地址。若要求安全设置，选「自定义关键词」填「提醒」。'
   },
   pushplus: {
     name: 'PushPlus 微信推送',
@@ -9960,23 +9960,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.9"></script>
-<script src="./js/data/supabase.js?v=5.13.9"></script>
+<script src="./js/config.js?v=5.13.10"></script>
+<script src="./js/data/supabase.js?v=5.13.10"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.9"></script>
-<script src="./js/data/query.js?v=5.13.9"></script>
-<script src="./js/auth/session.js?v=5.13.9"></script>
-<script src="./js/data/groups.js?v=5.13.9"></script>
-<script src="./js/data/clothgroups.js?v=5.13.9"></script>
-<script src="./js/data/clothes.js?v=5.13.9"></script>
-<script src="./js/data/modules.js?v=5.13.9"></script>
-<script src="./js/data/index.js?v=5.13.9"></script>
-<script src="./js/storage/paths.js?v=5.13.9"></script>
-<script src="./js/storage/images.js?v=5.13.9"></script>
-<script src="./js/storage/index.js?v=5.13.9"></script>
-<script src="./js/auth/index.js?v=5.13.9"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.9"></script>
+<script src="./js/data/errors.js?v=5.13.10"></script>
+<script src="./js/data/query.js?v=5.13.10"></script>
+<script src="./js/auth/session.js?v=5.13.10"></script>
+<script src="./js/data/groups.js?v=5.13.10"></script>
+<script src="./js/data/clothgroups.js?v=5.13.10"></script>
+<script src="./js/data/clothes.js?v=5.13.10"></script>
+<script src="./js/data/modules.js?v=5.13.10"></script>
+<script src="./js/data/index.js?v=5.13.10"></script>
+<script src="./js/storage/paths.js?v=5.13.10"></script>
+<script src="./js/storage/images.js?v=5.13.10"></script>
+<script src="./js/storage/index.js?v=5.13.10"></script>
+<script src="./js/auth/index.js?v=5.13.10"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.10"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.9"></script>
+<script src="./js/fuel.js?v=5.13.10"></script>
 </body>
 </html>
