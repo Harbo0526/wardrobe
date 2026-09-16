@@ -1969,6 +1969,11 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
 .push-sub-title{font-size:13.5px;font-weight:700;color:var(--ink);}
 .push-btns.three{gap:8px;}
 .push-btns.three .btn{font-size:13px;padding-left:4px;padding-right:4px;}
+/* ===== v5.13.11：待办提醒「页面内弹窗」（纯前端，不依赖任何推送服务） ===== */
+.tr-body{padding:2px 0 10px;}
+.tr-time{font-size:12.5px;color:var(--ink-sub);margin-bottom:8px;}
+.tr-text{font-size:17px;font-weight:600;color:var(--ink);line-height:1.55;white-space:pre-wrap;word-break:break-word;}
+.tr-more{margin-top:10px;font-size:12.5px;color:var(--ink-faint);}
 </style>
 </head>
 <body>
@@ -2385,7 +2390,12 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
         <div class="row-main"><div class="row-title">外观 · UI风格</div><div class="row-sub" id="mine-theme-sub">活力卡通</div></div>
         <span class="row-chev">›</span>
       </div>
-      <!-- v5.13.6（Phase 1·待办提醒）：系统提醒推送开关 -->
+      <!-- ====================================================================
+           v5.13.11：「系统提醒推送」入口 —— 暂不展示（预留接口，JS/表/Edge Function 全部保留）
+           原因：① Web Push 依赖 Google FCM（大陆网络被墙 + 国产 ROM 无 GMS → 必然失败）；
+                 ② 国内可达通道（企业微信/钉钉/飞书群机器人）要求「每个用户各自配置一次」，
+                    免费 + 零配置 + 稳定三者不可兼得。
+           找到零配置方案（如认证服务号模板消息）后，取消注释即可整段恢复：
       <div class="row press" onclick="openPushSheet()">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
           <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>
@@ -2393,6 +2403,7 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
         <div class="row-main"><div class="row-title">系统提醒推送</div><div class="row-sub" id="mine-push-sub">—</div></div>
         <span class="row-chev">›</span>
       </div>
+           ==================================================================== -->
       <div class="row press" onclick="navTo(3)">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--ink-sub)" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;"><path d="M5 4h14l-7 8z"/><path d="M12 12v6"/><path d="M8 21h8"/></svg>
         <div class="row-main"><div class="row-title">调酒小工具</div><div class="row-sub">材料库 · 配方 · 调酒计算</div></div>
@@ -3251,7 +3262,12 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
     </div>
   </div>
 
-  <!-- ============ Sheet：系统提醒推送（v5.13.6 Phase 1：申请权限 + 上报订阅端点；到点投递在服务端） ============ -->
+  <!-- ========================================================================
+       v5.13.11：「系统提醒推送」弹层 —— 暂不展示（预留接口，JS/表/Edge Function 全部保留）
+       内容 = ① Web Push 开关（依赖 Google FCM）+ ② 手机提醒通道（服务端直发 webhook：
+       企业微信 / 钉钉 / 飞书群机器人，均免费无需实名，但需每个用户各自配置一次）。
+       找到零配置方案后，取消注释即可整段恢复：
+       ========================================================================
   <div class="overlay" id="sheet-push" onclick="closeSheetOnBg(event,'sheet-push')">
     <div class="sheet" onclick="event.stopPropagation()">
       <div class="sheet-handle"></div>
@@ -3267,9 +3283,6 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
           <button class="btn btn-secondary press" id="pushOffBtn" onclick="pushDisable()">关闭提醒</button>
         </div>
 
-        <!-- v5.13.9：手机提醒通道（服务端直发 webhook）
-             Web Push 依赖 Google FCM（大陆网络被墙 + 国产 ROM 无 GMS → 必然失败），
-             故改用国内可达的 IM 群机器人：企业微信 / 钉钉 / 飞书（均免费、无需实名）。 -->
         <div class="push-sep"></div>
         <div class="push-sub-title">手机提醒通道</div>
         <div class="push-hint" id="chHint">未配置。</div>
@@ -3295,6 +3308,7 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
       </div>
     </div>
   </div>
+       ======================================================================== -->
 
   <!-- ============ Sheet：修改用户名 ============ -->
   <div class="overlay" id="sheet-displayname" onclick="closeSheetOnBg(event,'sheet-displayname')">
@@ -3587,6 +3601,23 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
   </div>
 </div>
 
+<!-- 待办提醒：到点「页面内弹窗」（v5.13.11；纯前端、不依赖任何推送服务）
+     故意不给遮罩绑定点击关闭 —— 必须从「关闭提醒 / 稍后提醒」中选一个 -->
+<div class="wb-mask" id="todoRemindPop" style="display:none;">
+  <div class="wb-modal">
+    <div class="wb-h"><h3>🔔 待办提醒</h3></div>
+    <div class="tr-body">
+      <div class="tr-time" id="trTime">—</div>
+      <div class="tr-text" id="trText">—</div>
+      <div class="tr-more" id="trMore" style="display:none;"></div>
+    </div>
+    <div class="wb-btns">
+      <button class="btn btn-primary press" onclick="todoRemindClose()">关闭提醒</button>
+      <button class="btn wb-btn-cancel press" onclick="todoRemindLater()">稍后提醒</button>
+    </div>
+  </div>
+</div>
+
 <!-- 油费：详情 / 二次编辑 -->
 <div class="wb-mask" id="fuEditMask" style="display:none;" onclick="if(event.target===this)fuCloseEdit()">
   <div class="wb-modal">
@@ -3686,7 +3717,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.13.10';
+const APP_VERSION = '5.13.11';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -4807,7 +4838,9 @@ function enterApp(){
   refreshUserName();   // 补全 display_name（用户名）；异步，不阻塞主流程
   renderHome();
   showScreen('screen-home');
-  sbLoadAll();   // DAL 并行加载 groups/clothes/materials/recipes/ledger/sleep/memos → state → 渲染
+  /* DAL 并行加载 groups/clothes/materials/recipes/ledger/sleep/memos → state → 渲染。
+     v5.13.11：数据到位后立刻检查「已到点但未提醒」的待办 → 弹「页面内提醒」弹窗 */
+  sbLoadAll().then(function(){ todoRemindTick(); }).catch(function(){});
   loadMyAvatar().catch(function(){});   // 登录后异步加载头像（失败静默，占位）
   loadNavOrder();   // v5.1.17：拉取云端「左侧导航自定义顺序」并重渲染四个侧栏
 }
@@ -7936,12 +7969,15 @@ function lgSyncLedgerCloud(){
    云端：public.todos（DAL 模块名 'todos'，见 js/data/index.js）
 
    业务日期：每天 02:00 为切换点（02:00 前仍属前一天）——与系统自然日解耦。
-   提醒（Phase 1 只落库 + 预留接口，不真正投递）：
-     · 投递由「Supabase Edge Function + pg_cron」在服务端完成（见
-       supabase/functions/todo-reminder/ 与 supabase/todo-reminder-cron.sql），
-       因此**不依赖用户打开页面**；前端**不使用 setTimeout 等仅靠页面存活的方案**。
-     · 前端只做两件事：① 把提醒时间写进 reminder_at（reminder_status='pending'）；
-       ② 用户授权后把 Web Push 订阅端点上报到 push_subscriptions（接口见 WBReminders）。
+   提醒（v5.13.11 起 =「页面内弹窗」，不再依赖任何推送服务）：
+     · 到点判定：打开页面（或从后台切回）时检查 reminder_at <= now 且 reminder_status='pending'
+       → 弹窗提醒（见下方 todoRemind* 函数）；页面打开期间另有 60 秒兜底检查。
+     · 弹窗选项：「关闭提醒」写 reminder_status='sent'（这条不再提醒）；
+                 「稍后提醒」保持 'pending' → 下次打开页面再弹（本次会话不再重复弹）。
+     · 服务端推送通道（Edge Function `todo-reminder` + pg_cron + reminder_channels +
+       Web Push）**代码全部保留，但用户端暂不展示、暂不启用**：
+       Web Push 依赖 Google FCM（大陆被墙 + 国产 ROM 无 GMS → 必然失败）；
+       国内可达通道（企业微信/钉钉/飞书群机器人）需每个用户各自配置一次。
    本模块不改动备忘录 / 油费 / 记账 / 睡眠 / 衣橱等任何既有数据与逻辑。
    ===================================================================== */
 const TODO_LABEL = { daily: '每日待办', temporary: '临时待办' };
@@ -8030,14 +8066,108 @@ function todoDailyInvalid(){
     return !!(eff && t.businessDate < eff);
   });
 }
-/* 展示态提醒状态：reminderSentAt 由服务端回写；已完成且未发送 → 视为已取消 */
+/* 展示态提醒状态：reminderSentAt 由服务端回写；已完成且未发送 → 视为已取消
+   v5.13.11：补上 reminderStatus==='sent' 的判定 —— 页面内弹窗点「关闭提醒」后即为 'sent'；
+   原实现只认服务端回写的 reminderSentAt，会把 'sent' 落回 'pending' 导致重复弹窗。 */
 function todoRemindState(t){
   if(!t || !t.reminderAt) return 'none';
-  if(t.reminderSentAt) return 'sent';
+  if(t.reminderStatus === 'sent' || t.reminderSentAt) return 'sent';
   if(t.reminderStatus === 'failed') return 'failed';
   if(t.done) return 'cancelled';
   return 'pending';
 }
+
+/* =====================================================================
+   v5.13.11：待办提醒 —— 页面内弹窗（纯前端，不依赖任何推送服务）
+   ─────────────────────────────────────────────────────────────────────
+   规则（用户定义）：
+     · 提醒时间【未到】就打开页面 → 不弹（安静等到点）；
+     · 提醒时间【已过】才打开页面 → 弹窗提醒；
+     · 弹窗两个选项：
+         「关闭提醒」= 这条不再提醒（写 reminder_status='sent'）；
+         「稍后提醒」= 保持 pending → 下次打开页面再弹（本次会话内不再重复弹）。
+   触发时机：① enterApp 数据加载完成后 ② 页面重新可见（切回前台）③ 页面打开时每 60 秒兜底。
+   持久化：只用既有字段 todos.reminder_status（'pending' → 'sent'），不新增表；
+           前端只写 reminder_status（reminder_sent_at 仍归服务端，前端不可写）。
+   说明：v5.13.11 起提醒改为纯前端页面内弹窗，因此这里刻意使用定时器；
+         服务端推送通道（Edge Function + pg_cron + reminder_channels）保留但暂不启用。
+   ===================================================================== */
+var todoRemindShown = {};      /* 本次会话已弹过的待办 id（「稍后提醒」后本次不再弹） */
+var todoRemindQueue = [];      /* 待弹队列（多条到点时逐条弹） */
+var todoRemindCur = null;      /* 当前弹窗对应的待办对象 */
+
+/* 「已到点且待提醒」的待办：未完成、非模板、reminder_status='pending'、reminder_at <= now */
+function todoRemindDueList(){
+  var now = Date.now();
+  return todoRecs().filter(function(t){
+    if(!t || !t.reminderAt) return false;
+    if(t.done) return false;
+    if(todoIsTemplate(t)) return false;                        /* 模板不是可提醒实体 */
+    if(String(t.reminderStatus || 'none') !== 'pending') return false;
+    if(todoRemindShown[String(t.id)]) return false;            /* 本次会话已弹过 */
+    var ts = new Date(t.reminderAt).getTime();
+    if(isNaN(ts)) return false;
+    return ts <= now;                                          /* 已过点才提醒 */
+  }).sort(function(a, b){ return new Date(a.reminderAt) - new Date(b.reminderAt); });
+}
+/* 入口：检查并弹出（未登录 / 已有弹窗在显示 / 无到点项 → 直接返回） */
+function todoRemindTick(){
+  try{
+    if(!state || !state.user) return;
+    if(todoRemindCur) return;
+    var due = todoRemindDueList();
+    if(!due.length) return;
+    todoRemindQueue = due.slice(1);
+    todoRemindShow(due[0]);
+  }catch(e){}
+}
+function todoRemindShow(t){
+  if(!t) return;
+  todoRemindCur = t;
+  todoRemindShown[String(t.id)] = true;      /* 本次会话只弹一次 */
+  var el = $('trText'); if(el) el.textContent = t.content || '';
+  var tm = $('trTime'); if(tm) tm.textContent = '提醒时间：' + todoStamp(t.reminderAt);
+  var more = $('trMore');
+  if(more){
+    var rest = todoRemindQueue.length;
+    more.style.display = rest > 0 ? 'block' : 'none';
+    more.textContent = rest > 0 ? ('还有 ' + rest + ' 条到点提醒') : '';
+  }
+  var pop = $('todoRemindPop'); if(pop) pop.style.display = 'flex';
+}
+function todoRemindNext(){
+  if(!todoRemindQueue.length) return;
+  var nt = todoRemindQueue.shift();
+  setTimeout(function(){ todoRemindShow(nt); }, 200);         /* 稍作间隔，避免弹窗瞬切 */
+}
+/* 「关闭提醒」：这条不再提醒 */
+function todoRemindClose(){
+  var t = todoRemindCur;
+  var live = t ? todoById(t.id) : null;
+  if(live){
+    live.reminderStatus = 'sent';
+    sbSaveObj('todos', live, { reminder_status: 'sent' });
+  }
+  todoRemindCur = null;
+  var pop = $('todoRemindPop'); if(pop) pop.style.display = 'none';
+  todoRender();
+  toast('已关闭该提醒');
+  todoRemindNext();
+}
+/* 「稍后提醒」：保持 pending → 下次打开页面（或从后台切回）会再次弹出 */
+function todoRemindLater(){
+  todoRemindCur = null;
+  var pop = $('todoRemindPop'); if(pop) pop.style.display = 'none';
+  toast('稍后提醒：下次打开页面再弹');
+  todoRemindNext();
+}
+/* 触发登记：切回前台 + 每 60 秒兜底（仅登录后生效；切后台不算「打开页面」，不会重复弹） */
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible') todoRemindTick();
+});
+setInterval(function(){
+  if(document.visibilityState === 'visible') todoRemindTick();
+}, 60000);
 /* 排序：未完成在前，同组按创建顺序（清单语义） */
 function todoCmp(a, b){
   const d = (a.done ? 1 : 0) - (b.done ? 1 : 0);
@@ -9960,23 +10090,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.13.10"></script>
-<script src="./js/data/supabase.js?v=5.13.10"></script>
+<script src="./js/config.js?v=5.13.11"></script>
+<script src="./js/data/supabase.js?v=5.13.11"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.13.10"></script>
-<script src="./js/data/query.js?v=5.13.10"></script>
-<script src="./js/auth/session.js?v=5.13.10"></script>
-<script src="./js/data/groups.js?v=5.13.10"></script>
-<script src="./js/data/clothgroups.js?v=5.13.10"></script>
-<script src="./js/data/clothes.js?v=5.13.10"></script>
-<script src="./js/data/modules.js?v=5.13.10"></script>
-<script src="./js/data/index.js?v=5.13.10"></script>
-<script src="./js/storage/paths.js?v=5.13.10"></script>
-<script src="./js/storage/images.js?v=5.13.10"></script>
-<script src="./js/storage/index.js?v=5.13.10"></script>
-<script src="./js/auth/index.js?v=5.13.10"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.13.10"></script>
+<script src="./js/data/errors.js?v=5.13.11"></script>
+<script src="./js/data/query.js?v=5.13.11"></script>
+<script src="./js/auth/session.js?v=5.13.11"></script>
+<script src="./js/data/groups.js?v=5.13.11"></script>
+<script src="./js/data/clothgroups.js?v=5.13.11"></script>
+<script src="./js/data/clothes.js?v=5.13.11"></script>
+<script src="./js/data/modules.js?v=5.13.11"></script>
+<script src="./js/data/index.js?v=5.13.11"></script>
+<script src="./js/storage/paths.js?v=5.13.11"></script>
+<script src="./js/storage/images.js?v=5.13.11"></script>
+<script src="./js/storage/index.js?v=5.13.11"></script>
+<script src="./js/auth/index.js?v=5.13.11"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.13.11"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.13.10"></script>
+<script src="./js/fuel.js?v=5.13.11"></script>
 </body>
 </html>
