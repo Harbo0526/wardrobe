@@ -59,14 +59,17 @@
   });
 
   /* 睡眠：date→record_date、start→start_time、end→end_time、endDate→end_date、
-   * minutes→duration_minutes；sleep_at/wake_at 暂 NULL（时区策略未定，见映射文档 §10） */
+   * minutes→duration_minutes；sleep_at/wake_at 暂 NULL（时区策略未定，见映射文档 §10）
+   * v5.14.3：end_time 不再是必填 —— 允许「只填入睡时间」（尚未起床）先入库，
+   *   睡醒后回明细补填起床时间（对同一行 UPDATE）。进行中记录 duration_minutes 写 0，
+   *   且不计入任何统计（应用层按 !r.end 跳过）。 */
   const sleep = F({
     table: 'sleep_records',
     createFields: ['record_date', 'start_time', 'end_time', 'end_date', 'duration_minutes', 'note', 'legacy_id'],
     updateFields: ['record_date', 'start_time', 'end_time', 'end_date', 'duration_minutes', 'note'],
     orderWhitelist: ['record_date', 'created_at'],
     defaultOrder: 'record_date',
-    requiredCreate: ['record_date', 'start_time', 'end_time', 'duration_minutes']
+    requiredCreate: ['record_date', 'start_time', 'duration_minutes']
   });
 
   /* 备忘：t→content、at→legacy_id（兼作备忘日期，v5.7.0 起允许编辑）；title=标题
