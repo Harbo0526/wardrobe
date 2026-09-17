@@ -3719,7 +3719,7 @@ const GITEE_API    = 'https://gitee.com/api/v5';
 const GITEE_SYNC_COOLDOWN = 3000;   // 同步按钮冷却，防连点触发 Gitee 免费版限流
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.14.1';
+const APP_VERSION = '5.14.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -10022,6 +10022,21 @@ function spBarSVG(labels, arr, color, withLine, fitW){
   svg += '</svg>';
   return svg;
 }
+/* v5.14.2：近 7 日统计窗口的最后一天 = 今天 or 昨天。
+   今天若已有「12:00 之后开始、且已填起床（时长 > 0）」的睡眠（典型是午觉）→ 用今天，让当天数据能显示；
+   否则（今天只有凌晨/上午记录、晚觉尚未发生）→ 用昨天，避免最后一根柱子恒为 0。
+   注：只认「已填起床且时长 > 0」的记录，否则会出现"今天有柱子但柱高为 0"的反效果。 */
+function spLast7End(){
+  const today = spTodayStr();
+  const hasDay = (state.sleep.records || []).some(function(r){
+    if(!r || !r.start || !r.end) return false;                        /* 未填起床（进行中）不计 */
+    if(!(r.minutes > 0)) return false;
+    if(String(spAttrDate(r.date, r.start)) !== today) return false;   /* 必须归属今天 */
+    return String(r.start).slice(0, 5) >= '12:00';                    /* 12:00 起（含）之后开始 */
+  });
+  const d = new Date();
+  return hasDay ? d : new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+}
 function spRenderStats(){
   const ym = spState.statYM;
   $('spStatTitle').textContent = ym.y + '年' + ym.m + '月';
@@ -10042,10 +10057,14 @@ function spRenderStats(){
   $('spStatAvg').textContent = spFmtDur(avg);
   $('spStatBed').textContent = spAvgTime(bedMin);
   $('spStatWake').textContent = spAvgTime(wakeMin);
-  /* v4.3.5：横轴改为近 7 日（含今天，可跨月），数据按天直接统计；柱状图叠加趋势折线 */
+  /* v4.3.5：横轴改为近 7 日（可跨月），数据按天直接统计；柱状图叠加趋势折线。
+     v5.14.2：窗口「最后一天」不再固定为今天 —— 今天晚觉尚未发生，最后一根柱子恒为 0（像 bug）。
+     规则（用户定义）：今天已有「12:00 之后开始且有完整时长」的睡眠记录（典型是午觉）→ 最后一天 = 今天；
+                     否则 → 最后一天 = 昨天（即最后一根柱子是昨晚的睡眠）。 */
   const labels = [], arr = [];
+  const endD = spLast7End();
   for(let i = 6; i >= 0; i--){
-    const d = new Date(); d.setDate(d.getDate() - i);
+    const d = new Date(endD.getFullYear(), endD.getMonth(), endD.getDate() - i);
     const ds = spIso(d);
     labels.push((d.getMonth()+1) + '/' + d.getDate());
     arr.push(Math.round(spDayTotal(ds)));
@@ -10244,23 +10263,23 @@ function renderSleep(){
 </script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.14.1"></script>
-<script src="./js/data/supabase.js?v=5.14.1"></script>
+<script src="./js/config.js?v=5.14.2"></script>
+<script src="./js/data/supabase.js?v=5.14.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.14.1"></script>
-<script src="./js/data/query.js?v=5.14.1"></script>
-<script src="./js/auth/session.js?v=5.14.1"></script>
-<script src="./js/data/groups.js?v=5.14.1"></script>
-<script src="./js/data/clothgroups.js?v=5.14.1"></script>
-<script src="./js/data/clothes.js?v=5.14.1"></script>
-<script src="./js/data/modules.js?v=5.14.1"></script>
-<script src="./js/data/index.js?v=5.14.1"></script>
-<script src="./js/storage/paths.js?v=5.14.1"></script>
-<script src="./js/storage/images.js?v=5.14.1"></script>
-<script src="./js/storage/index.js?v=5.14.1"></script>
-<script src="./js/auth/index.js?v=5.14.1"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.14.1"></script>
+<script src="./js/data/errors.js?v=5.14.2"></script>
+<script src="./js/data/query.js?v=5.14.2"></script>
+<script src="./js/auth/session.js?v=5.14.2"></script>
+<script src="./js/data/groups.js?v=5.14.2"></script>
+<script src="./js/data/clothgroups.js?v=5.14.2"></script>
+<script src="./js/data/clothes.js?v=5.14.2"></script>
+<script src="./js/data/modules.js?v=5.14.2"></script>
+<script src="./js/data/index.js?v=5.14.2"></script>
+<script src="./js/storage/paths.js?v=5.14.2"></script>
+<script src="./js/storage/images.js?v=5.14.2"></script>
+<script src="./js/storage/index.js?v=5.14.2"></script>
+<script src="./js/auth/index.js?v=5.14.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.14.2"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
-<script src="./js/fuel.js?v=5.14.1"></script>
+<script src="./js/fuel.js?v=5.14.2"></script>
 </body>
 </html>
