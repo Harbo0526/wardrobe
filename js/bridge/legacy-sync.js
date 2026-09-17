@@ -82,8 +82,18 @@
     return new Blob([u8], { type: mime });
   };
 
-  /* v5.6.7：新用户空分组 → 播种 5 个初始化分组（上衣/下装/球鞋/外套/连衣裙）。
-     用 localStorage 按账号标记只播种一次；用户删除后不再自动重建。 */
+  /* v5.6.7 新用户空分组 → 播种 5 个初始化分组；v5.14.1 修复「版本更新后莫名多出一批初始化分组」。
+     ------------------------------------------------------------------
+     旧实现为什么出错：唯一开关是「localStorage 标记 + 当前 state.groups 为空」——
+       ① 用户在浏览器里「清除站点数据」（更新版本时的常规操作）→ 标记就没了；
+       ② 更关键：sbLoadAll() 是**按模块容错**的，**分组模块加载失败/超时时 gl=[]**，
+          于是 state.groups 变成空数组，被误判成「新用户空分组」→ 直接往云端灌 5 个分组；
+       ③ localStorage 不跨设备，换手机/换浏览器同理。
+     现在改为三重闸门，任何一条不满足都**绝不播种**：
+       ① okEmpty：必须「分组模块本次加载成功」且服务端确实返回 0 条（由调用方显式传入）；
+       ② profiles.groups_seeded（v5.14.1 新增，服务端权威）：同账号全设备只播种一次；
+       ③ 本机 localStorage 标记（快路径，省一次网络往返）。
+     失败/读不到标记一律「不播种」——宁可让极少数真新用户看到空分组页，也绝不重复灌数据。 */
   var DEFAULT_GROUPS = [
     { name: '上衣', emoji: '👕' },
     { name: '下装', emoji: '👖' },
@@ -91,17 +101,35 @@
     { name: '外套', emoji: '🧥' },
     { name: '连衣裙', emoji: '👗' }
   ];
-  function seedDefaultGroups() {
-    if (state.groups.length) return;   /* 已有分组则跳过 */
-    var flagKey = 'wardrobe.v1.seededGroups.' + (state.user ? state.user.id : 'guest');
-    try { if (localStorage.getItem(flagKey)) return; } catch (e) {}
+  async function seedDefaultGroups(okEmpty) {
+    if (!okEmpty) return;                                          /* 闸门①：模块没加载成功 / 服务端非空 */
+    if (state.groups && state.groups.length) return;                /* 已有分组则跳过 */
+    var uid = (state.user && state.user.id) || null;
+    if (!uid) return;
+    var flagKey = 'wardrobe.v1.seededGroups.' + uid;
+    try { if (localStorage.getItem(flagKey)) return; } catch (e) {}  /* 闸门③：本机已播过 */
+    try {
+      var db = window.getSupabaseClient ? window.getSupabaseClient()
+             : (typeof getSupabaseClient === 'function' ? getSupabaseClient() : null);
+      if (!db) return;
+      /* 闸门②：服务端权威标记（读不到 → 宁可不播种） */
+      var p = await db.from('profiles').select('groups_seeded').eq('id', uid).maybeSingle();
+      if (!p || p.error) return;
+      if (p.data && p.data.groups_seeded) {
+        try { localStorage.setItem(flagKey, '1'); } catch (e) {}     /* 服务端已播过 → 只补本机标记 */
+        return;
+      }
+      /* 先把服务端标记写为 true 再播种：万一中途失败，也只是少几个分组，绝不会重复播种 */
+      var u = await db.from('profiles').update({ groups_seeded: true }).eq('id', uid);
+      if (!u || u.error) return;
+      try { localStorage.setItem(flagKey, '1'); } catch (e) {}
+    } catch (e) { return; }                                         /* 任何异常 → 不播种 */
     try {
       DEFAULT_GROUPS.forEach(function (d, i) {
         var g = { id: wbUuid(), name: d.name, emoji: d.emoji, _sbSaved: false };
         state.groups.push(g);
         sbSaveObj('groups', g, { name: d.name, emoji: d.emoji, sort_order: i });
       });
-      localStorage.setItem(flagKey, '1');
     } catch (e) { /* 容错 */ }
   }
 
@@ -122,6 +150,8 @@
       ['待办', 'todos']   /* v5.9.2：待办清单（独立模块；按模块容错，缺失/失败不影响其它模块） */
     ];
     const failedModules = [];
+    /* v5.14.1：只有「分组模块本次真的成功返回」才允许播种初始化分组（必须区别于「失败返回空数组」） */
+    let groupsOk = false;
     const res = await Promise.all(MODULE_LOAD.map(function (m) {
       const label = m[0], mod = m[1];
       const api = D && D[mod];
@@ -131,6 +161,10 @@
       }
       return Promise.resolve()
         .then(function () { return api.list({ limit: 500 }); })
+        .then(function (rows) {
+          if (mod === 'groups') groupsOk = true;    /* 成功拿到结果（哪怕是空数组） */
+          return rows;
+        })
         .catch(function (e) {
           failedModules.push(label);
           console.warn('[云端加载] ' + label + ' 失败：', e);
@@ -262,8 +296,9 @@
     /* 会话隔离：加载耗时较长，完成时若已切换用户则丢弃整批结果（不写 state / 不渲染 / 不补图） */
     if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
 
-    /* v5.6.7：新用户空分组 → 播种 5 个初始化分组（只一次） */
-    try { seedDefaultGroups(); } catch (e) { /* 容错 */ }
+    /* v5.6.7 / v5.14.1：仅当「分组模块本次加载成功」且「服务端确实 0 条」才播种初始化分组。
+       加载失败时 gl=[] 绝不能被当成「新用户空分组」（旧实现据此反复灌数据，是本 bug 根因）。 */
+    try { seedDefaultGroups(groupsOk && gl.length === 0).catch(function () { }); } catch (e) { /* 容错 */ }
 
     /* 渲染 */
     try {
