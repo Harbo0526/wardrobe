@@ -1,0 +1,124 @@
+/* ============ 3. 手机外壳容器 ============ */
+.phone-shell{
+  position:relative;
+  max-width:430px;
+  margin:0 auto;
+  height:100vh;  /* vh 兜底（老内核），dvh 动态视口增强 */
+  height:100dvh;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+@media (min-width:520px){
+  .phone-shell{
+    margin:24px auto;
+    height:calc(100vh - 48px);
+    height:calc(100dvh - 48px);
+    border-radius:36px;
+    box-shadow:var(--shadow-modal), 0 0 0 10px #F7FAF5;
+  }
+}
+
+/* ============ 5. 屏幕容器与切换 ============ */
+.screen{
+  flex:1;min-height:0;display:none; /* min-height:0 关键：防止内容把 flex 外壳撑爆、把底部 tab-bar 挤出视口被裁掉 */
+  flex-direction:column;
+  overflow-y:auto;
+  padding-bottom:0; /* 底部留白改由 ::after spacer 撑开 */
+  animation:none;
+}
+/* 滚动内容底部留白（tab-bar 已为 flex 布局项，不再覆盖内容，仅留少量呼吸空间；auth 居中页排除） */
+.screen:not(.screen-auth)::after{
+  content:'';display:block;flex-shrink:0;
+  height:calc(16px + var(--safe-b));
+}
+.screen.active{display:flex;animation:fadeIn .25s ease;}
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(4px);}
+  to{opacity:1;transform:none;}
+}
+.screen-head{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 10px;
+  background:rgba(250,252,247,.92);
+  backdrop-filter:blur(6px);
+}
+.screen-head .title{font-size:18px;font-weight:700;line-height:24px;}
+.screen-head .back{
+  width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;color:var(--ink);
+  font-size:20px;margin-left:-10px;
+}
+.screen-head .back:active{background:var(--primary-soft);}
+.head-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-card);
+}
+.head-btn:active{background:var(--accent-deep);}
+
+/* 顶部标题栏（登录态页面内小标题） */
+.sec-title{font-size:14px;font-weight:600;color:var(--ink-sub);padding:4px 16px 8px;}
+
+/* ============ 11. 底部导航 ============ */
+.tab-bar{
+  /* flex 布局项：作为 phone-shell 的最后一行，天然固定在底部，不随内容滚动消失 */
+  flex:0 0 auto;
+  width:100%;
+  height:calc(56px + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  background:#fff;
+  border-top:1px solid var(--line);
+  display:flex;align-items:stretch;
+  z-index:50;
+  box-shadow:0 -2px 8px rgba(46,74,58,.04);
+}
+.tab-item{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:2px;
+  color:var(--ink-sub);
+  font-size:11px;font-weight:500;
+}
+.tab-item svg{width:24px;height:24px;}
+.tab-item.active{color:var(--primary-deep);}
+
+/* ============ v5.1.16：屏内独立滚动区底部安全区 ============
+   记账/睡眠/衣橱(.lg-main)、调酒(.ck-main)、分组衣物网格(.cloth-grid) 都是「屏内独立滚动」容器，
+   原先底部内边距仅 12px，在安卓全面屏上会被系统导航条遮住最后一张卡片。
+   这里统一加大底部内边距（12px + 系统安全区 + 20px 呼吸），确保底部卡片可完整滚出。 */
+#screen-ledger .lg-main,
+#screen-sleep .lg-main,
+#screen-cloth .lg-main,
+.ck-main,
+#screen-group .cloth-grid{
+  padding-bottom:calc(12px + var(--safe-b) + 20px);
+}
+
+/* ===== v5.13.5：启动遮罩（消除「先闪登录页、再跳首页」）=====
+   根因：静态 HTML 里 #screen-auth 默认带 .active，而登录态要等 window.load 后异步判定，
+   这段时间登录页会被真实渲染出来。现用一层遮罩盖住，任一屏被激活时再撤掉 →
+   打开时只会看到「启动页 → 目标页」，不会再闪一次登录页。
+   兜底：即使 JS 异常未执行，CSS 动画也会在 6s 后自动淡出，不会永久遮挡。 */
+.boot-splash{
+  position:absolute;inset:0;z-index:300;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:var(--bg);
+  animation:bootAutoHide .01s linear 6s forwards;
+}
+.boot-splash.hide{opacity:0;visibility:hidden;transition:opacity .18s ease;}
+.boot-logo{
+  width:64px;height:64px;border-radius:20px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card);
+}
+.boot-logo svg{width:34px;height:34px;}
+.boot-title{font-size:15px;font-weight:600;color:var(--ink-sub);letter-spacing:.5px;}
+.boot-dots{display:flex;gap:5px;margin-top:2px;}
+.boot-dots i{width:6px;height:6px;border-radius:50%;background:var(--primary);opacity:.3;animation:bootDot 1s ease-in-out infinite;}
+.boot-dots i:nth-child(2){animation-delay:.15s;}
+.boot-dots i:nth-child(3){animation-delay:.3s;}
+@keyframes bootDot{0%,100%{opacity:.25;transform:translateY(0);}50%{opacity:.9;transform:translateY(-3px);}}
+@keyframes bootAutoHide{to{opacity:0;visibility:hidden;}}
+

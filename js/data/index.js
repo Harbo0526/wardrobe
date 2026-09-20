@@ -85,10 +85,13 @@
   });
 
   /* 油费（v5.3.0）：record_date=加油日期、amount=金额、unit_price=单价、volume=升数、note=备注 */
+  /* 油电费：v5.26.0 起同一张表承载「加油」与「充电」，用 kind 区分
+   *   （fuel = 加油：volume 升 / unit_price 元每升；charge = 充电：volume kWh / unit_price 元每度）。
+   *   历史行无 kind → 迁移时已回填 'fuel'，本层再兜底为 'fuel'。 */
   const fuel = F({
     table: 'fuel_records',
-    createFields: ['record_date', 'amount', 'unit_price', 'volume', 'note', 'legacy_id'],
-    updateFields: ['record_date', 'amount', 'unit_price', 'volume', 'note'],
+    createFields: ['record_date', 'amount', 'unit_price', 'volume', 'kind', 'note', 'legacy_id'],
+    updateFields: ['record_date', 'amount', 'unit_price', 'volume', 'kind', 'note'],
     orderWhitelist: ['record_date', 'created_at', 'updated_at'],
     defaultOrder: 'record_date',
     requiredCreate: ['record_date', 'amount']

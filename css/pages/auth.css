@@ -1,0 +1,24 @@
+/* ============ 6. 登录 / 注册页 ============ */
+.screen-auth{padding:0 16px;justify-content:center;padding-bottom:40px;}
+.auth-hero{position:relative;text-align:center;padding:36px 16px 28px;}
+.auth-logo{
+  width:64px;height:64px;margin:0 auto 16px;
+  border-radius:20px;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-card);
+}
+.auth-logo svg{width:34px;height:34px;}
+.auth-title{font-size:22px;font-weight:700;line-height:28px;}
+.auth-sub{font-size:13px;color:var(--ink-sub);margin-top:8px;line-height:18px;}
+.auth-card{padding:20px 16px;}
+.auth-switch{
+  display:flex;background:var(--group-bg);border-radius:var(--r-input);
+  padding:4px;margin-bottom:20px;
+}
+.auth-switch button{
+  flex:1;height:40px;border-radius:10px;font-size:14px;font-weight:500;color:var(--ink-sub);
+}
+.auth-switch button.active{background:#fff;color:var(--primary-deep);font-weight:600;box-shadow:var(--shadow-card);}
+.auth-tip{text-align:center;font-size:12px;color:var(--ink-faint);margin-top:16px;line-height:18px;}
+.auth-foot{margin-top:24px;text-align:center;font-size:12px;color:var(--ink-faint);}
+

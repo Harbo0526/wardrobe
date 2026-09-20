@@ -6,7 +6,7 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v5.14.3';
+const CACHE_NAME = 'wardrobe-v5.27.0';
 /* v5.13.13：头像本地缓存（首页/我的页头像；由 index.html 通过 CacheStorage 写入）。
    ⚠ 这是「用户数据缓存」，不是 app shell 的版本缓存 —— activate 清理旧版本时必须保留它，
    否则每次版本更新都会把它清掉，头像又得重新下载（白白浪费流量）。名字须与 index.html 的 AVATAR_CACHE 一致。 */
@@ -22,6 +22,54 @@ const APP_SHELL = [
   './icon-512.png',
   './icon-maskable-512.png',
   './apple-touch-icon.png',
+  /* Phase 2（v5.14.4）：CSS 已抽离为独立文件，纳入 app shell 预缓存
+     （顺序不影响缓存命中；与 index.html 的 <link> 顺序保持一致，便于人工核对） */
+  './css/variables.css',
+  './css/reset.css',
+  './css/layout.css',
+  './css/components.css',
+  './css/common.css',
+  './css/pages/auth.css',
+  './css/pages/home.css',
+  './css/pages/cloth.css',
+  './css/pages/group.css',
+  './css/pages/upload.css',
+  './css/pages/mine.css',
+  './css/pages/cocktail.css',
+  './css/pages/ledger.css',
+  './css/pages/sleep.css',
+  './css/pages/todo.css',
+  './css/pages/fuel.css',
+  './css/overrides.css',
+  './css/theme.css',
+  /* Phase 3（v5.14.5）：公共常量与工具函数抽出为 core 模块，一并预缓存
+     （两者必须在 index.html 主内联脚本之前加载，离线时缺任一都会让 App 起不来） */
+  './js/core/constants.js',
+  './js/core/utils.js',
+  './js/core/overlays.js',
+  './js/core/render.js',
+  /* Phase 3 续（v5.22.0）：UI 风格主题（core 组，早于主脚本；注意「防闪主题」inline script
+     仍留在 index.html <body> 起始处，必须先于本文件执行，二者读写同一个 localStorage key） */
+  './js/core/theme.js',
+  /* Phase 5（v5.14.7）：页面业务模块（调酒页），来自原主脚本；离线必须可加载 */
+  './js/pages/cocktail.js',
+  './js/pages/fuel.js',
+  './js/pages/memo.js',
+  './js/pages/todo.js',
+  './js/pages/sleep.js',
+  /* Phase 5 候选 E（v5.17.0）：记账/衣橱/分组/上传页面模块（来自原主脚本），离线必须可加载 */
+  './js/pages/ledger.js',
+  './js/pages/cloth.js',
+  './js/pages/group.js',
+  './js/pages/upload.js',
+  /* Phase 5 候选 F（v5.18.0）：「我的」页模块（来自原主脚本），离线必须可加载 */
+  './js/pages/mine.js',
+  /* Phase 5 收尾（v5.19.0）：公告页模块（来自原主脚本），离线必须可加载 */
+  './js/pages/announcement.js',
+  /* Phase 5 收尾（v5.20.0）：左侧导航排序模块（来自原主脚本，含 2 条加载期语句） */
+  './js/pages/nav.js',
+  /* Phase 5（v5.21.0）：总首页模块（来自原主脚本，含 base64 意境图常量） */
+  './js/pages/home.js',
   './js/config.js',
   './js/data/supabase.js',
   './js/data/errors.js',
@@ -36,7 +84,15 @@ const APP_SHELL = [
   './js/storage/paths.js',
   './js/storage/images.js',
   './js/storage/index.js',
-  './js/bridge/legacy-sync.js'
+  './js/bridge/legacy-sync.js',
+  /* Phase 7（v5.23.0）：Legacy Gitee Transport（配置常量 + token + giteeFetch + JSON 读写）从
+     index.html 主内联脚本隔离到此文件（ROLLBACK-ONLY，已被 giteeFetch 首行守卫硬阻断）。
+     注意：bridge 与页面模块仍会以裸标识符运行期调用它，故必须离线可加载 */
+  './js/legacy/gitee-sync.js',
+  /* Phase 8（v5.24.0）：Push / Reminder 服务（WBReminders + push* + CH_SPECS + ch*）从
+     index.html 主内联脚本隔离到此文件（Classic Script）。markup 的 7 个 onclick 与
+     js/pages/mine.js 的 pushAutoHeal 仍是运行期裸全局调用，故必须离线可加载 */
+  './js/services/push.js'
   /* 注：励志卡图片（8 张意境插画 + 基础橘猫）自 v4.3.3 起以 base64 内联在 index.html 内，
      不再作为独立文件预缓存——GitHub Pages 部署只保留根目录文件，子目录 avatars/ 不会被部署（手机 404）。 */
 ];

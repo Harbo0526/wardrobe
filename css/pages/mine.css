@@ -1,0 +1,142 @@
+/* ============ 10. 我的 / 设置页 ============ */
+.profile-card{
+  display:flex;align-items:center;gap:14px;
+  margin:16px 16px 12px;
+}
+.profile-avatar{
+  width:56px;height:56px;border-radius:50%;   /* 头像外框：自动裁剪为圆形 */
+  background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;flex-shrink:0;
+  overflow:hidden;cursor:pointer;
+}
+.avatar img,.profile-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.profile-name{font-size:18px;font-weight:700;}
+.profile-meta{font-size:12px;color:var(--ink-faint);margin-top:4px;}
+.mine-card{margin:0 16px 12px;padding:8px 16px;}
+.mine-card .card-title{padding:8px 0 4px;}
+
+/* 同步状态 */
+.sync-card{background:var(--group-bg);}
+.sync-status{font-size:12px;color:var(--ink-sub);margin-top:6px;line-height:18px;}
+.sync-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:6px;vertical-align:1px;}
+/* Gitee 令牌行 + 说明 */
+.token-row{display:flex;gap:8px;align-items:center;margin:0 0 6px;}
+.token-row .input{flex:1;height:40px;font-size:14px;padding:0 12px;}
+.sync-note{font-size:12px;color:var(--ink-faint);line-height:18px;padding:2px 0 8px;border-bottom:1px solid var(--line);margin-bottom:2px;}
+
+/* ============ 11.5 衣物详情大图 / 头像设置 ============ */
+/* 深色全屏遮罩（放大查看用） */
+.overlay-detail{background:rgba(24,30,26,.62);align-items:center;justify-content:center;padding:24px;}
+
+/* 调酒 iframe 全屏 overlay 样式已移除（V2.5.0 起调酒内嵌为底部导航常驻 tab，不再使用 iframe） */
+.cloth-detail{
+  position:relative;width:min(92vw,430px);max-height:88%;
+  background:var(--bg);border-radius:22px;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:var(--shadow-modal);
+}
+.cd-media{
+  width:100%;min-height:220px;max-height:52vh;background:#EDF3ED;
+  display:flex;align-items:center;justify-content:center;padding:10px;
+}
+.cd-media img{display:block;max-width:100%;max-height:50vh;object-fit:contain;border-radius:12px;}
+.cd-media .cd-emoji{font-size:92px;}
+.cd-body{padding:14px 16px 18px;overflow-y:auto;}
+.cd-name{font-size:17px;font-weight:700;}
+.cd-meta{font-size:13px;color:var(--ink-sub);margin-top:4px;}
+.cd-note{
+  margin-top:10px;font-size:14px;color:var(--ink);line-height:1.65;
+  background:var(--group-bg);border-radius:12px;padding:10px 12px;
+  white-space:pre-wrap;word-break:break-word;
+}
+.cd-note-label{font-size:12px;color:var(--ink-faint);margin-bottom:4px;}
+.cd-close{
+  position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.94);color:var(--ink);font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 5px rgba(0,0,0,.2);
+}
+/* 头像编辑 */
+.avatar-edit{display:flex;flex-direction:column;align-items:center;padding:2px 0 10px;}
+.avatar-big{
+  width:120px;height:120px;border-radius:50%;overflow:hidden;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:700;
+  box-shadow:0 2px 10px rgba(46,74,58,.15);margin:8px 0 12px;
+}
+.avatar-big img{width:100%;height:100%;object-fit:cover;display:block;}
+.avatar-tip{font-size:12px;color:var(--ink-faint);margin-bottom:12px;text-align:center;}
+.avatar-btns{display:flex;flex-direction:column;gap:10px;width:100%;}
+.avatar-btns .btn{height:46px;}
+.avatar-remove{background:none;border:none;color:var(--danger);font-size:14px;padding:12px 0 4px;cursor:pointer;}
+/* ===== v5.13.2：头像「原图」全屏查看（直接弹出图片本身，不再裁切进圆形框；双指缩放 / 单指拖动；含「我的」入口） ===== */
+#sheet-avatar-view{background:rgba(12,16,14,.92);align-items:stretch;justify-content:center;padding:0;}
+#sheet-avatar-view .av-view-x{
+  position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:3;
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;
+  font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;
+}
+.av-view-body{
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:calc(56px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));
+}
+.av-view-stage{
+  flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;touch-action:none;   /* 手势交给 JS，禁用浏览器默认缩放 / 页面滚动 */
+}
+/* 原图：contain 完整显示（不裁切、不变形）；缩放/平移由 JS 加 transform */
+.av-view-stage img{
+  width:100%;height:100%;object-fit:contain;display:block;
+  transform-origin:center center;will-change:transform;user-select:none;-webkit-user-drag:none;
+}
+.av-view-letter{
+  width:min(52vw,200px);height:min(52vw,200px);border-radius:50%;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;font-size:72px;font-weight:700;
+}
+.av-view-name{margin-top:14px;font-size:15px;font-weight:700;color:#fff;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.av-view-hint{margin:6px 0 14px;font-size:11.5px;color:rgba(255,255,255,.62);text-align:center;line-height:1.5;}
+/* 衣物卡等高（网格内同行等高；配合固定缩略高+单行文本，全卡视觉等高） */
+.cloth-card{height:100%;}
+
+/* ===== v5.8.0：UI 风格选择面板（我的 → 账号与设置 → 外观 · UI风格）=====
+   复用既有 .overlay + .sheet 机制；尺寸全部自适应（flex + clamp，无固定 px 内容宽）。 */
+.tm-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.tm-opt{display:flex;align-items:center;gap:clamp(8px,3vw,12px);width:100%;min-width:0;text-align:left;
+  background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;}
+.tm-opt.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft);}
+.tm-prev{flex:0 0 auto;width:clamp(46px,14vw,60px);height:clamp(34px,10vw,44px);border-radius:8px;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.07);}
+.tm-prev::before,.tm-prev::after{content:'';position:absolute;left:8%;right:8%;border-radius:3px;}
+.tm-prev::before{top:16%;height:22%;}
+.tm-prev::after{top:46%;height:22%;}
+.tm-prev-cute{background:linear-gradient(135deg,#a9e4f7,#d6f2ff);}
+.tm-prev-cute::before{background:#fff;}
+.tm-prev-cute::after{background:#ffd9a8;}
+.tm-prev-min{background:#f6f7f8;}
+.tm-prev-min::before{background:#fff;box-shadow:0 0 0 1px #e5e7eb;}
+.tm-prev-min::after{background:#2e7d5b;}
+.tm-meta{flex:1;min-width:0;display:flex;flex-direction:column;}
+.tm-meta b{font-size:14px;font-weight:600;color:var(--ink);}
+.tm-meta i{font-style:normal;font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.4;}
+.tm-check{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:13px;font-weight:700;display:none;align-items:center;justify-content:center;}
+.tm-opt.active .tm-check{display:flex;}
+.tm-note{font-size:11.5px;color:var(--ink-faint);line-height:1.55;margin-top:10px;}
+
+/* ===== v5.13.6（Phase 1·待办提醒）：我的页「系统提醒推送」弹层（复用全局令牌，两套主题自适应） ===== */
+.push-wrap{display:flex;flex-direction:column;gap:10px;}
+.push-status{
+  font-size:13.5px;font-weight:600;color:var(--ink);line-height:1.6;
+  background:var(--group-bg);border-radius:12px;padding:10px 12px;
+}
+.push-hint{
+  font-size:12px;color:var(--ink-sub);line-height:1.65;white-space:pre-line;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+}
+.push-btns{display:flex;gap:10px;margin-top:2px;}
+.push-btns .btn{flex:1;margin:0;}
+/* v5.13.8：微信推送（PushPlus）通道区块（Web Push 依赖 FCM，大陆不可用，改用服务端直发） */
+.push-sep{height:1px;background:var(--line);margin:4px 0 0;}
+.push-sub-title{font-size:13.5px;font-weight:700;color:var(--ink);}
+.push-btns.three{gap:8px;}
+.push-btns.three .btn{font-size:13px;padding-left:4px;padding-right:4px;}

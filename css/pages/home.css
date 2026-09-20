@@ -1,0 +1,198 @@
+/* 首页分组卡片网格 */
+.home-groups{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  padding:0 16px 6px;
+}
+.group-card{
+  display:flex;align-items:center;gap:10px;
+  background:var(--group-bg);
+  border:1px solid rgba(46,74,58,.04);
+  border-radius:16px;
+  padding:14px;
+  box-shadow:0 1px 3px rgba(46,74,58,.08);
+  text-align:left;width:100%;min-width:0;
+}
+.group-card:active{background:var(--primary-soft);}
+.gc-emoji{font-size:26px;flex-shrink:0;}
+.gc-info{display:flex;flex-direction:column;min-width:0;}
+.gc-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gc-count{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.home-stats{padding:4px 16px 12px;font-size:13px;color:var(--ink-sub);}
+.home-stats b{color:var(--ink);font-weight:600;}
+
+/* 衣物网格 */
+.cloth-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  padding:4px 16px 16px;
+}
+/* 首页页脚版本号（自然流内，滚动到底可见） */
+.home-version{
+  text-align:center;font-size:12px;color:var(--ink-faint);
+  padding:12px 0 4px;letter-spacing:.3px;
+}
+/* ============ 总首页 v4.2.0：加菲猫橘色主题 + 励志卡 + 备忘卡 ============ */
+/* v5.1.19：首页背景改为「海底卡通图」（海绵宝宝 + 派大星 + 菠萝屋），cover 铺满并居中裁切；底色用海水蓝兜底。
+   v5.6.2：同一张图（1535×2551）由 PNG 换成 JPEG（q82），体积 4.38MB → 345KB（约 8%），
+   文件名相应改为 home-bg.jpg；画质档位高、分辨率不变，手机首屏加载显著变快。
+   背景随元素固定（默认 attachment:scroll），内容在其上滚动。
+   ⚠️ v5.26.2 修：CSS 里的背景图地址是**相对当前 CSS 文件**解析的 —— 本文件位于 css/pages/，
+      而图片实际在仓库根目录（home-bg.jpg，与 deploy/wardrobe-app/ 根下同名同字节）。
+      旧写法按「同名同目录」找，实际会去请求 css/pages/home-bg.jpg（从未存在）→ 图 404，只剩海水蓝底色。
+      根因是 Phase 2 把 CSS 从 index.html 内联抽成外部文件时，相对路径没跟着调整，故从那次改动起就坏了。
+      现上溯两级到仓库根，本地 file://、本地静态服务、GitHub Pages 项目页（/wardrobe/css/pages/…）
+      三种情形都正确；**不要**改成以斜杠开头的绝对路径 —— 在 Pages 子路径下会 404。 */
+#screen-home{
+  background:#a9e4f7 url('../../home-bg.jpg') center center / cover no-repeat;
+}
+#screen-home .home-hero{
+  position:relative;border-radius:22px;padding:14px 16px;margin:10px 16px 12px;
+  background:linear-gradient(135deg,rgba(255,236,214,.4),rgba(255,224,178,.4));   /* v5.1.20：卡片背景透明 40%（文字不变） */
+  box-shadow:0 4px 14px rgba(255,167,38,.18);overflow:hidden;min-height:104px;
+  border:1px solid rgba(255,255,255,.65);display:flex;align-items:center;gap:12px;
+  flex-shrink:0;   /* v5.12.8：首页是 flex 列容器；本卡带 overflow:hidden（自动最小高度退化为 0）会被压扁→语录被裁切，禁止压缩 */
+}
+#screen-home .home-hero .cat{
+  width:82px;height:82px;border-radius:50%;border:3px solid #fff;flex-shrink:0;
+  /* 图片由 JS 用内联 base64 设置（GitHub Pages 不部署 avatars/ 子目录，见 QUOTE_MOOD_DATAURL） */
+  background-size:cover;background-position:center;background-color:#fff;
+  box-shadow:0 2px 10px rgba(255,140,0,.28);
+}
+#screen-home .home-hero .qt{flex:1;min-width:0;z-index:2;}
+/* v5.12.8：语录字号按屏宽自适配（窄屏自动略收、宽屏维持原样）+ 允许长词换行 → 任何机型都能完整显示 */
+#screen-home .home-hero .qt .zh{font-size:clamp(13px,3.7vw,14px);font-weight:800;color:#8a4b00;line-height:1.45;overflow-wrap:anywhere;}
+#screen-home .home-hero .qt .en{font-size:clamp(10.5px,3.1vw,11.5px);color:#b0762e;margin-top:5px;font-style:italic;line-height:1.4;overflow-wrap:anywhere;}
+#screen-home .home-hero .scat{position:absolute;inset:0;z-index:1;pointer-events:none;}
+#screen-home .home-hero .scat span{position:absolute;line-height:1;filter:saturate(1.1);}
+#screen-home .memo-card{
+  margin:0 16px 12px;background:rgba(255,255,255,.4);border-radius:20px;padding:12px 14px;
+  box-shadow:0 4px 14px rgba(255,167,38,.12);border:1px solid rgba(255,255,255,.6);
+}
+/* v5.1.20：首页卡片背景统一透明 40%（仅背景；文字/图标/头像不变）。
+   .group-card 是通用类，这里仅限定 #screen-home 内；:active 单列以保留按压反馈。 */
+#screen-home .group-card{background:rgba(255,255,255,.4);}
+#screen-home .group-card:active{background:rgba(143,211,168,.55);}
+#screen-home .memo-head{display:flex;align-items:center;gap:8px;}
+#screen-home .memo-head .memo-title{font-size:13px;font-weight:800;color:#8a4b00;}
+#screen-home .memo-head .memo-cnt{font-size:11px;color:#b0762e;}
+#screen-home .memo-row{display:flex;gap:8px;margin-top:8px;}
+#screen-home .memo-row .input{flex:1;min-width:0;background:#fff;}
+#screen-home .memo-list{margin-top:8px;display:flex;flex-direction:column;gap:6px;max-height:78px;overflow-y:auto;}
+#screen-home .memo-item{display:flex;align-items:flex-start;gap:8px;background:#fff7ec;border-radius:12px;padding:7px 10px;}
+#screen-home .memo-item .mt{flex:1;min-width:0;font-size:13px;color:var(--ink);word-break:break-all;line-height:1.45;}
+#screen-home .memo-item .mtime{flex-shrink:0;font-size:10.5px;color:var(--ink-faint);padding-top:2px;}
+#screen-home .memo-item .mdel{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#ffe3c2;color:#c0392b;display:flex;align-items:center;justify-content:center;font-size:13px;}
+/* 主页重启按钮（v4.2.5：区别于同步⟳，功能=重启程序/清缓存/检查更新） */
+#screen-home .home-reload{
+  width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.65);color:#8a4b00;
+  font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:8px;
+  border:1px solid rgba(255,255,255,.7);
+}
+#screen-home .home-reload:active{background:#ffd9a8;}
+/* ============ v5.4.1：首页卡片 = 海底悬浮气泡（位置固定，仅自身光泽流动） ============
+   气泡质感：淡蓝白半透明底(60%) + 背景模糊 + 白色内高光 + 水色内阴影 + 柔和外投影；
+   浮动感：卡片**位置完全固定**（不做任何位移/缩放），改为「内部高光光斑缓慢横向流动」
+          → 像水中气泡自身有流光感，不影响布局、不影响点击位置。 */
+@keyframes fuShineFlow{
+  0%   { background-position:0% 50%, 0 0; }
+  50%  { background-position:100% 50%, 0 0; }
+  100% { background-position:0% 50%, 0 0; }
+}
+#screen-home .home-hero,
+#screen-home .memo-card,
+#screen-home .group-card{
+  background:
+    radial-gradient(130% 90% at 18% 0%, rgba(255,255,255,.62), rgba(255,255,255,0) 62%) 0% 50% / 200% 200% no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,.6), rgba(214,242,255,.6)) 0 0 / 100% 100% no-repeat;
+  border:1.5px solid rgba(255,255,255,.9);
+  backdrop-filter:blur(9px) saturate(1.05);
+  -webkit-backdrop-filter:blur(9px) saturate(1.05);
+  box-shadow:0 10px 26px rgba(16,86,124,.20),
+             inset 0 3px 12px rgba(255,255,255,.85),
+             inset 0 -8px 18px rgba(120,200,235,.30);
+  animation:fuShineFlow 7.5s ease-in-out infinite;
+}
+#screen-home .home-hero{border-radius:26px; animation-delay:-.6s;}
+#screen-home .memo-card{border-radius:26px; animation-delay:-2.8s;}
+#screen-home .group-card{border-radius:22px;}
+#screen-home .group-card:nth-child(odd){animation-delay:-1.8s;}
+#screen-home .group-card:nth-child(even){animation-delay:-4.4s;}
+/* 按压：暂停光斑 + 气泡微压扁高亮（仅视觉反馈，卡片位置依然固定） */
+#screen-home .group-card:active{
+  animation-play-state:paused;
+  background:
+    radial-gradient(130% 90% at 18% 0%, rgba(255,255,255,.82), rgba(255,255,255,0) 62%) 0% 50% / 200% 200% no-repeat,
+    linear-gradient(135deg, rgba(255,255,255,.82), rgba(190,235,255,.82)) 0 0 / 100% 100% no-repeat;
+  transform:translateY(2px) scale(.96);
+}
+
+/* ============ v5.4.2：首页海底气泡层（前/后双层 → 前后穿插的景深） ============
+   后层(.back, z-index:0) 在卡片下方，只从卡片缝隙间透出；
+   前层(.front, z-index:3) 浮在卡片上方，少量气泡穿梭而过、遮住卡片一角。
+   气泡由 JS 随机生成：大小 7~41px（近大远小）、时长 10~24s、负延迟错落、
+   约 4 成加 blur 做「远景虚化」，整体缓慢向上漂浮、左右轻飘。 */
+#screen-home{position:relative;}
+.bubble-field{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.bubble-field.front{z-index:3;}
+.home-bubble{
+  position:absolute;display:block;border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 26%,
+      rgba(255,255,255,.98) 0%, rgba(255,255,255,.44) 16%,
+      rgba(205,240,255,.18) 44%, rgba(150,215,250,.10) 70%, rgba(120,200,240,.26) 100%);
+  border:1px solid rgba(255,255,255,.62);
+  box-shadow:
+    inset -2px -3px 7px rgba(255,255,255,.55),
+    inset 2px 3px 9px rgba(150,215,250,.26),
+    0 2px 9px rgba(120,200,235,.16);
+  animation-name:bubbleRise;
+  animation-timing-function:linear;
+  animation-iteration-count:infinite;
+  will-change:transform,opacity;
+}
+.home-bubble.hazy{filter:blur(1.9px);}   /* 远景气泡：微微虚化 */
+@keyframes bubbleRise{
+  0%   { transform:translate3d(0,0,0) scale(.86); opacity:0; }
+  6%   { opacity:1; }
+  55%  { transform:translate3d(var(--dx,8px),-56vh,0) scale(1.02); }
+  92%  { opacity:1; }
+  100% { transform:translate3d(0,-114vh,0) scale(1.1); opacity:0; }
+}
+
+/* ============ v5.4.3 / v5.4.4：首页「功能入口」卡片 → 轻量圆角磨砂玻璃 ============
+   仅作用于 #home-entries（不影响 hero / 备忘卡 / 衣橱分组卡）。
+   · 卡底：淡蓝白半透明磨砂，透明度约 30%（v5.4.4：由 42%~56% 调低），磨砂 blur(6px)（v5.4.5：由 10px 调弱）；
+   · 描边：1px 极浅蓝白 + 内侧 1px 淡蓝细线；阴影柔和，外发光很弱；
+   · 文字：主标题深蓝灰、副标题蓝灰，均带极轻微白色阴影（提升通透底上的可读性）；
+   · 间距：网格 gap 10px → 14px，卡片内边距同步放宽，整体更轻盈通透；
+   · 去掉旧版流动光斑动画（animation:none），磨砂更干净。 */
+#screen-home #home-entries{gap:14px;padding:0 16px 12px;}
+#screen-home #home-entries .group-card{
+  background:linear-gradient(135deg, rgba(255,255,255,.32), rgba(226,244,255,.28));
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:20px;
+  padding:16px 15px;
+  box-shadow:
+    0 6px 18px rgba(88,140,180,.10),
+    0 0 0 1px rgba(186,226,255,.34),
+    0 0 14px rgba(150,215,250,.13);
+  backdrop-filter:blur(6px) saturate(1.04);
+  -webkit-backdrop-filter:blur(6px) saturate(1.04);
+  animation:none;
+  transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+}
+#screen-home #home-entries .group-card:active{
+  background:linear-gradient(135deg, rgba(255,255,255,.44), rgba(214,240,255,.34));
+  box-shadow:
+    0 4px 12px rgba(88,140,180,.13),
+    0 0 0 1px rgba(186,226,255,.46),
+    0 0 18px rgba(150,215,250,.18);
+  transform:translateY(2px) scale(.97);
+}
+#screen-home #home-entries .gc-name{
+  color:#26425c;
+  text-shadow:0 1px 0 rgba(255,255,255,.7);
+}
+#screen-home #home-entries .gc-count{
+  color:#5c7e9c;
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+}

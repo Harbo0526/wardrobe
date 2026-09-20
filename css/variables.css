@@ -1,0 +1,68 @@
+/* ============ 1. 设计令牌 ============ */
+:root{
+  --primary:#8FD3A8;
+  --primary-deep:#6FB98A;
+  --primary-soft:#EAF5EC;
+  --accent:#7EC8E3;
+  --accent-deep:#5FAFCF;
+  --accent-soft:#E9F5FB;
+  --bg:#FAFCF7;
+  --card:#FFFFFF;
+  --group-bg:#F2F9F1;
+  --ink:#2E4A3A;
+  --ink-sub:#6B8A78;
+  --ink-faint:#7C9B8B; /* 弱文字：加深以保证 12px 小字达 WCAG AA */
+  --line:#E3EFE6;
+  --success:#58B368;
+  --danger:#E86A5E;
+  --warm:#FFD97A;
+  --cherry:#F4A6B8;
+  --shadow-card:0 1px 3px rgba(46,74,58,.08);
+  --shadow-sheet:0 4px 12px rgba(46,74,58,.10);
+  --shadow-modal:0 8px 24px rgba(46,74,58,.14);
+  --r-btn:20px;
+  --r-card:16px;
+  --r-input:12px;
+  --r-chip:999px;
+  --r-sheet:20px;
+  --font:-apple-system,"PingFang SC","Segoe UI",Roboto,sans-serif;
+  --space:16px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+
+/* ============ 1.1 主题组件令牌（L2，v5.8.0）============
+   取值 = 现有「活力卡通」视觉基线的实际取值（与改造前完全一致）。
+   本块为**纯新增**：不改动任何现有规则 → 活力卡通主题零影响。
+   「极简简约」主题 = 在 html[data-theme="minimal"] 中重定义这些令牌 + 少量结构覆盖。 */
+:root{
+  /* -- 暖色主题色族：首页励志卡 / 首屏重启钮 / 备忘录 / 通用明细弹窗(.wb-*) 共用 -- */
+  --t-warm-ink:#8a4b00;      /* 强调文字 */
+  --t-warm-sub:#b0762e;      /* 次级强调文字 */
+  --t-warm-line:#ffd9a8;     /* 描边 / 边框 */
+  --t-warm-base:#ffb14e;     /* 强调底 / 选中 */
+  --t-warm-deep:#ff9d1f;     /* 强调按下 */
+  --t-warm-chip:#ffe3c2;     /* 小圆钮底 */
+  --t-warm-icon:#ffe9cf;     /* 图标钮底 */
+  --t-warm-soft:#fff3e3;     /* 浅底（次级按钮 / 导航钮） */
+  --t-warm-bg:#fff7ec;       /* 卡片 / 条目底 */
+  --t-warm-field:#fffdf8;    /* 输入框底 */
+  --t-warm-dash:#ffe0c0;     /* 虚线分隔 */
+  --t-warm-mark:#ffe08a;     /* 搜索命中高亮 */
+  /* -- 通用明细弹窗（.wb-*，备忘 / 油费 / 记账共用）-- */
+  --t-modal-bg:#fff;
+  --t-modal-radius:22px;
+  --t-modal-shadow:0 12px 44px rgba(255,167,38,.35);
+  --t-mask-bg:rgba(90,58,20,.42);
+  /* -- 列表行分隔线（记账 / 睡眠 / 油费 / 最近收支）-- */
+  --t-divider:rgba(255,214,231,.6);
+  /* -- 吸顶头部底色 -- */
+  --t-head-bg:rgba(250,252,247,.92);
+  /* -- 首页磨砂玻璃卡片（hero / 备忘卡 / 功能入口）-- */
+  --t-glass-bg:radial-gradient(130% 90% at 18% 0%, rgba(255,255,255,.62), rgba(255,255,255,0) 62%) 0% 50% / 200% 200% no-repeat, linear-gradient(135deg, rgba(255,255,255,.6), rgba(214,242,255,.6)) 0 0 / 100% 100% no-repeat;
+  --t-glass-bg-active:radial-gradient(130% 90% at 18% 0%, rgba(255,255,255,.82), rgba(255,255,255,0) 62%) 0% 50% / 200% 200% no-repeat, linear-gradient(135deg, rgba(255,255,255,.82), rgba(190,235,255,.82)) 0 0 / 100% 100% no-repeat;
+  --t-glass-border:1.5px solid rgba(255,255,255,.9);
+  --t-glass-blur:blur(9px) saturate(1.05);
+  --t-glass-shadow:0 10px 26px rgba(16,86,124,.20), inset 0 3px 12px rgba(255,255,255,.85), inset 0 -8px 18px rgba(120,200,235,.30);
+  --t-glass-anim:fuShineFlow 7.5s ease-in-out infinite;
+}
+

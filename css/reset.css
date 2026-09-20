@@ -1,0 +1,13 @@
+/* ============ 2. 基础 ============ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;} /* body 禁滚：滚动只发生在 .screen 内部，底部 tab-bar 永不出视口 */
+body{
+  font-family:var(--font);
+  background:#E8EEE7; /* 桌面外框底色 */
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+input,textarea{font-family:inherit;border:none;outline:none;color:var(--ink);}
+::-webkit-scrollbar{width:0;height:0;}
+

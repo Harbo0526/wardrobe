@@ -1,0 +1,43 @@
+/* ============ 9. 上传页 ============ */
+.upload-wrap{padding:8px 16px 24px;}
+.dual-row{display:flex;gap:12px;margin-bottom:16px;}
+.dual-btn{
+  flex:1;height:88px;border-radius:var(--r-btn);
+  color:#fff;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  box-shadow:var(--shadow-card);
+}
+.dual-btn svg{width:32px;height:32px;}
+.dual-btn .dual-label{font-size:14px;font-weight:600;}
+.dual-btn .dual-sub{font-size:11px;opacity:.85;}
+.dual-btn.album{background:var(--primary);}
+.dual-btn.album:active{background:var(--primary-deep);}
+.dual-btn.camera{background:var(--accent);}
+.dual-btn.camera:active{background:var(--accent-deep);}
+
+/* 预览图区 */
+.upload-preview{
+  border:1.5px dashed var(--primary);
+  border-radius:var(--r-card);
+  min-height:120px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink-faint);font-size:13px;
+  margin-bottom:16px;overflow:hidden;
+  background:var(--group-bg);
+  transition:border-color .15s ease;
+}
+.preview-filled{
+  width:100%;min-height:120px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:16px;
+}
+.preview-emoji{font-size:44px;line-height:1;}
+.preview-file{font-size:12px;color:var(--ink-sub);}
+.preview-badge{
+  font-size:11px;color:#fff;padding:3px 10px;border-radius:var(--r-chip);
+}
+.preview-filled img{max-width:100%;max-height:280px;object-fit:contain;display:block;border-radius:12px;}
+
+/* 分组选择 chips（上传表单内） */
+.chips-wrap{margin:0 16px 16px;}
+

@@ -1,0 +1,73 @@
+/* ============ v5.1.17：左侧导航栏统一 60px ============ */
+.group-rail,
+.ck-side,
+#screen-ledger .lg-side,
+#screen-sleep .lg-side,
+#screen-cloth .lg-side{
+  flex:0 0 60px;
+  width:60px;
+}
+/* 60px 下收窄导航项左右外边距与内边距，保证图标/文字不被挤 */
+#screen-ledger .lg-nav,
+#screen-sleep .lg-nav,
+#screen-cloth .lg-nav{margin:0 4px;}
+.ck-side{padding:10px 6px;}
+.group-rail{padding:10px 4px 14px;}
+
+/* ============ v5.1.17：左侧导航「长按排序模式」（方案A：▲▼ 调整 + 云端保存） ============ */
+.lg-side.sorting .lg-nav,
+.ck-side.sorting .ck-scard{
+  animation:navShake .3s ease-in-out infinite alternate;
+}
+@keyframes navShake{ from{transform:translateX(-1.5px);} to{transform:translateX(1.5px);} }
+.nav-mv{display:flex;flex-direction:column;gap:2px;margin-top:3px;}
+.nav-mv b{
+  font-size:11px;line-height:1;padding:3px 8px;border-radius:8px;cursor:pointer;
+  background:rgba(255,255,255,.92);color:var(--lg-deep);box-shadow:0 1px 3px rgba(0,0,0,.14);
+  user-select:none;
+}
+.nav-mv b:active{background:var(--lg-soft);}
+
+/* ===== v5.13.3：iOS 输入框「聚焦自动放大页面」全局修复 =====
+   iOS Safari 只对 font-size < 16px 的输入框在聚焦时自动放大页面（安卓不会放大）→ 放大后整页比屏幕宽，
+   右侧内容被裁掉、看起来「超长」（越小的屏幕越明显）。此前只修了弹层（.overlay / .wb-modal），
+   页面内的表单与搜索框（睡眠/记账/油费/上传/分组搜索/令牌…）仍是 14~15px，依然会触发。
+   这里把所有表单控件统一到 16px 关闭自动放大；桌面端字号只差 1~2px，安卓视觉几乎无感。
+   注：记账「预算」输入框本身已是 18px（≥16），保持不动。 */
+.input,
+textarea.input,
+.group-search input,
+.up-gs-input,
+.token-row .input,
+.fu-query-row .input,
+.overlay .input,
+.sheet input,
+.wb-modal .input,
+.wb-modal textarea,
+select{font-size:16px;}
+/* iOS 的 date / time / datetime-local 控件自带较大固有宽度，会把卡片撑破、把页面挤出屏幕；
+   显式允许其收缩到容器宽度内（不改外观，仅解除 UA 的固有宽限制）。 */
+input[type="date"],input[type="time"],input[type="datetime-local"],
+input[type="month"],input[type="week"]{min-width:0;max-width:100%;}
+
+/* ===== v5.13.4：iOS 日期 / 时间控件「撑宽卡片 → 整页超长」结构性修复 =====
+   WebKit 的 input[type=date|time|datetime-local] 内含原生日期编辑区（-webkit-datetime-edit），
+   固有宽度较大；在窄容器里会顶破卡片、把整页撑宽（右侧被裁）—— 纯文字输入框没有这个问题，
+   所以现象是「只有日期/时间框出错」。仅给控件本身 min-width:0 不足以让 WebKit 收窄，这里做两件事：
+   ① 把承载表单的 .field 变成 flex 列容器：flex 项的交叉轴尺寸由容器决定（width:100% 即容器宽），
+      控件自身固有宽度不再参与布局 —— 这是 WebKit 上稳定生效的做法；
+   ② 直接给内部原生日期编辑区 min-width:0 / overflow:hidden，从源头缩小其固有宽度。 */
+.field{display:flex;flex-direction:column;}
+.field > *{min-width:0;}
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"]{min-width:0;max-width:100%;width:100%;box-sizing:border-box;}
+input[type="date"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit{min-width:0;overflow:hidden;}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
+

@@ -7,7 +7,7 @@
    防止「只更新 index.html / sw.js、js/ 目录停留在旧版」造成功能静默失效
    （历史故障：线上油费 UI 在但 DAL/bridge 无 fuel 模块，保存抛错被吞、记录重开即消失）。
    每次升版本须与 APP_VERSION / CACHE_NAME 同版更新。 */
-const WB_JS_VERSION = '5.14.3';
+const WB_JS_VERSION = '5.27.0';
 
 const SUPABASE_URL = 'https://frhcnjztlxevafmuapql.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_oH8-xK9R5LbWHoAfoyWigQ_6vfrjJnT';

@@ -1,0 +1,89 @@
+/* ============ 7. 衣橱主页 ============ */
+.home-head{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 16px 6px;
+}
+.home-greet{font-size:22px;font-weight:700;line-height:28px;}
+.home-date{font-size:12px;color:var(--ink-faint);margin-top:4px;}
+.avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--primary-soft);color:var(--primary-deep);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;flex-shrink:0;
+  overflow:hidden;
+}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.head-add{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:var(--group-bg);color:var(--primary-deep);
+  border:1px solid rgba(46,74,58,.04);
+  font-size:20px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.head-add:active{background:var(--primary-soft);}
+/* 长按删除：按住约 480ms 的轻微视觉反馈 */
+.cloth-card.longpressing{opacity:.72;transform:scale(.96);}
+.cloth-thumb{
+  height:96px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:42px;margin-bottom:10px;
+  border:1px solid rgba(46,74,58,.04);
+}
+.cloth-name{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px;}
+.cloth-note{font-size:12px;color:var(--ink-sub);margin-top:3px;padding-right:26px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;} /* 卡片正面仅备注：单行省略，无备注留空占位保持等高 */
+/* 真实照片卡：img 铺满缩略区 */
+.cloth-thumb.has-img{overflow:hidden;border:none;}
+.cloth-thumb.has-img img{width:100%;height:100%;object-fit:cover;display:block;}
+/* 衣物卡右下角「三个点」菜单按钮 */
+.cloth-more{
+  position:absolute;right:6px;bottom:6px;width:34px;height:34px;
+  border-radius:10px;background:rgba(255,255,255,.9);
+  border:1px solid rgba(46,74,58,.08);
+  box-shadow:0 1px 3px rgba(46,74,58,.15);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink-sub);font-size:16px;line-height:1;
+  -webkit-tap-highlight-color:transparent;
+}
+.cloth-more:active{background:var(--primary-soft);}
+/* 卡片定位容器（让右下角按钮能绝对定位） */
+.cloth-card{position:relative;}
+
+/* ============ 衣橱屏（v4.1.0：复用记账/睡眠粉色主题，作用域 #screen-cloth） ============ */
+#screen-cloth{
+  background:linear-gradient(160deg,#fff0f6,#ffe3ee 60%,#ffd9ea);
+  --lg-primary:#ff8fb3;   /* 少女粉主色 */
+  --lg-deep:#ff6b9d;      /* 深粉 */
+  --lg-soft:#ffd6e7;      /* 浅粉 */
+  --lg-exp:#FF6B8A;       /* 支出：樱花粉 */
+  --lg-red:#FF4D6D;       /* 超支/负：红 */
+  --lg-inc:#69D19D;       /* 收入/正：薄荷绿 */
+  --lg-ink:#5a3d4e;
+}
+#screen-cloth .btn-secondary{background:var(--lg-soft);color:var(--lg-deep);}
+#screen-cloth .btn-accent{background:var(--lg-deep);color:#fff;opacity:1;}
+#screen-cloth .lg-sync{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;}
+#screen-cloth .lg-sync:active{background:rgba(255,255,255,.45);}
+#screen-cloth .lg-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:rgba(255,143,179,.85);backdrop-filter:blur(10px);color:#fff;border-bottom:1px solid rgba(255,255,255,.25);}
+#screen-cloth .lg-head h2{font-size:18px;font-weight:800;display:flex;align-items:center;gap:6px;}
+#screen-cloth .lg-shell{flex:1;min-height:0;display:flex;}
+#screen-cloth .lg-side{flex:0 0 80px;width:80px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-right:1px solid rgba(255,214,231,.6);display:flex;flex-direction:column;padding:8px 0;gap:6px;overflow-y:auto;}
+#screen-cloth .lg-nav{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin:0 6px;padding:10px 2px;border-radius:16px;color:var(--lg-ink);background:transparent;font-size:11px;font-weight:700;}
+#screen-cloth .lg-nav .lg-emoji{font-size:22px;line-height:1;}
+#screen-cloth .lg-nav.active{background:var(--lg-soft);color:var(--lg-deep);box-shadow:inset 0 0 0 1.5px var(--lg-primary);}
+#screen-cloth .lg-main{flex:1;min-width:0;overflow-y:auto;padding:12px;position:relative;z-index:1;}
+#screen-cloth .lg-panel{display:none;}
+#screen-cloth .lg-panel.active{display:block;animation:fadeIn .25s ease;}
+
+#screen-cloth .lg-banner{position:relative;border-radius:22px;padding:14px 16px;margin-bottom:12px;background:linear-gradient(135deg,rgba(255,214,231,.88),rgba(255,239,246,.78));backdrop-filter:blur(10px);box-shadow:0 4px 14px rgba(255,143,179,.12);overflow:hidden;min-height:92px;border:1px solid rgba(255,255,255,.5);}
+#screen-cloth .lg-banner-avatar{width:76px;height:76px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 10px rgba(255,143,179,.28);background-size:cover;background-position:center;background-color:#fff;flex-shrink:0;}
+#screen-cloth .lg-banner-text{flex:1;min-width:0;margin-left:12px;z-index:2;}
+#screen-cloth .lg-banner-text h3{margin:0;font-size:16px;font-weight:800;color:var(--lg-deep);}
+#screen-cloth .lg-banner-text p{margin:3px 0 0;font-size:12px;color:var(--lg-ink);opacity:.82;}
+#screen-cloth .lg-banner-row{display:flex;align-items:center;position:relative;}
+#screen-cloth .lg-banner-emojis{position:absolute;inset:0;z-index:1;pointer-events:none;}
+#screen-cloth .lg-banner-emoji{position:absolute;font-size:18px;line-height:1;transform-origin:center;filter:saturate(1.1);}
+/* 首页遗留的全局内边距在衣橱面板内收紧 */
+#screen-cloth .cloth-grid{padding:6px 0 0;}
+#screen-cloth .home-groups{padding:0;}
+#screen-cloth .home-stats{padding:0 2px 12px;}
+

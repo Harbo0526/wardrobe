@@ -1,0 +1,106 @@
+/* ============ 11.6 调酒模块（底部导航常驻 tab：左侧功能卡片 + 右侧主区） ============
+   风格复用衣橱设计令牌与 .card/.btn/.field/.chip/.empty 组件，保证与主功能一致；
+   调酒专属类名统一 ck- 前缀，避免与衣橱既有样式互相污染。 */
+#screen-cocktail{overflow:hidden;}
+#screen-cocktail::after{display:none;}   /* 分栏页不需要底部留白 spacer */
+.ck-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);}
+.ck-head h2{font-size:17px;font-weight:700;margin:0;color:var(--ink);display:flex;align-items:center;gap:7px;}
+.ck-save{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-sub);
+  background:var(--primary-soft);padding:4px 9px;border-radius:var(--r-chip);}
+.ck-save .dot{width:7px;height:7px;border-radius:50%;background:var(--success);}
+/* 返回首页按钮（v4.1.1：底部导航移除后，调酒页需自带返回入口） */
+.ck-head .back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:var(--ink);font-size:20px;margin-left:-10px;}
+.ck-head .back:active{background:var(--primary-soft);}
+/* 顶栏刷新按钮（v4.1.2：统一「左返回 / 中标题 / 右刷新=先上传后下拉」格式） */
+.ck-head .ck-sync{width:34px;height:34px;border-radius:50%;background:var(--primary-soft);color:var(--ink);font-size:17px;display:flex;align-items:center;justify-content:center;}
+.ck-head .ck-sync:active{background:var(--primary-deep);color:#fff;}
+.screen-head .hrefresh{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;color:var(--ink);font-size:20px;}
+.screen-head .hrefresh:active{background:var(--primary-soft);}
+/* 刷新按钮同步转圈（v4.2.2：同步中旋转，结束恢复静止；同步期间禁止重复点击） */
+@keyframes syncSpin{to{transform:rotate(360deg);}}
+.spinning{animation:syncSpin .8s linear infinite;pointer-events:none;opacity:.75;}
+
+/* 左右分栏：左侧功能卡片栏 + 右侧主区（各自滚动，互不干扰） */
+.ck-body{flex:1;min-height:0;display:flex;align-items:stretch;}
+.ck-side{flex:0 0 auto;width:82px;overflow-y:auto;background:var(--group-bg);
+  border-right:1px solid var(--line);padding:10px 8px;display:flex;flex-direction:column;gap:8px;}
+.ck-scard{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  min-height:66px;padding:8px 4px;border-radius:14px;background:var(--card);
+  border:1px solid var(--line);color:var(--ink-sub);font-size:11px;font-weight:500;
+  cursor:pointer;box-shadow:var(--shadow-card);}
+.ck-scard svg{width:22px;height:22px;}
+.ck-scard:active{background:var(--primary-soft);}
+.ck-scard.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary-deep);font-weight:700;}
+.ck-main{flex:1;min-width:0;overflow-y:auto;padding:12px;}
+.ck-panel{display:none;}
+.ck-panel.active{display:block;}
+
+/* 结果三宫格 */
+.ck-result{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ck-res{text-align:center;padding:10px 2px;border-radius:12px;background:var(--group-bg);}
+.ck-res .v{font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;}
+.ck-res .v small{font-size:11px;font-weight:600;}
+.ck-res .k{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+.ck-warn{display:none;margin-top:8px;font-size:12px;color:var(--danger);
+  background:#FDECEA;padding:7px 10px;border-radius:10px;}
+.ck-warn.show{display:block;}
+
+/* 材料行 / 混调行 / 配方行（共用行样式，紧凑适配窄栏） */
+.ck-mat{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);}
+.ck-mat:last-child{border-bottom:none;}
+.ck-ic{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;background:var(--primary-soft);color:var(--primary-deep);}
+.ck-ic svg{width:18px;height:18px;}
+.ck-info{flex:1;min-width:0;}
+.ck-info .nm{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ck-info .sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+.ck-info .sub b{color:var(--primary-deep);}
+.ck-iconbtn{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:none;
+  background:var(--group-bg);color:var(--ink-sub);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.ck-iconbtn svg{width:16px;height:16px;}
+.ck-iconbtn.del{color:var(--danger);}
+
+.ck-mix{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);}
+.ck-mix:last-child{border-bottom:none;}
+.ck-mix .nm{flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ck-mix .nm small{display:block;font-size:10.5px;color:var(--ink-faint);font-weight:400;}
+.ck-mix .vol{flex:0 0 auto;width:60px;}
+.ck-mix .vol input{width:100%;height:34px;border-radius:10px;background:#fff;
+  border:1.5px solid var(--line);padding:0 4px;font-size:13px;text-align:center;}
+.ck-mix .cost{flex:0 0 auto;width:50px;text-align:right;font-size:12.5px;font-weight:700;color:var(--primary-deep);}
+
+/* 快速配方 chips（复用衣橱 .chip） */
+.ck-quick{display:flex;gap:6px;overflow-x:auto;padding:2px 0;scrollbar-width:none;}
+.ck-quick::-webkit-scrollbar{display:none;}
+.ck-quick .chip{min-height:36px;padding:0 12px;font-size:12px;margin:0;cursor:pointer;}
+.ck-hint{font-size:12px;color:var(--ink-faint);line-height:1.65;margin:0;}
+.ck-sec{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;}
+.ck-sec h3{font-size:15px;font-weight:700;margin:0;color:var(--ink);display:flex;align-items:center;gap:6px;}
+.ck-sec h3 svg{width:17px;height:17px;color:var(--primary-deep);}
+.ck-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ck-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.ck-gap{height:10px;}
+/* 居中弹层（调酒专用，基于衣橱 .overlay 机制） */
+.overlay.ck-center{align-items:center;padding:20px;}
+.ck-modal{width:100%;max-width:400px;background:var(--card);border-radius:var(--r-card);
+  box-shadow:var(--shadow-modal);padding:16px;max-height:80%;overflow-y:auto;}
+/* 配方卡片右侧缩略图 + 长按反馈（V4.4.0） */
+.ck-rec-card{cursor:pointer;}
+.ck-rec-card.longpressing{opacity:.55;transform:scale(.985);}
+.ck-rec-thumb{flex:0 0 auto;width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--group-bg);}
+.ck-rec-thumb-ph{display:flex;align-items:center;justify-content:center;font-size:26px;
+  background:linear-gradient(135deg,var(--primary-soft),#FDF3E3);}
+/* 配方详情弹窗：大图 + 材料明细 + 可编辑备注 */
+.ck-view-imgwrap{width:100%;height:210px;border-radius:14px;overflow:hidden;background:var(--group-bg);
+  display:flex;align-items:center;justify-content:center;margin-bottom:10px;cursor:pointer;}
+.ck-view-imgwrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.ck-rec-ph-big{font-size:56px;opacity:.8;}
+.ck-view-name{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ck-items{margin-top:8px;border-top:1px solid var(--line);}
+.ck-item-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink);}
+.ck-item-row:last-child{border-bottom:none;}
+.ck-item-row b{color:var(--primary-deep);flex:0 0 auto;}
+

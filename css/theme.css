@@ -1,0 +1,236 @@
+/* ==========================================================================
+   v5.8.0：极简简约主题   html[data-theme="minimal"]
+   --------------------------------------------------------------------------
+   实现原则（与「活力卡通」完全隔离；整块可直接删除以回退）：
+     ① 重定义令牌（L1 语义 + L2 组件）→ 大多数界面自动换肤；
+     ② 追加覆盖规则，处理卡通装饰与粉色皮肤。
+   **本块不修改任何既有规则** → 切回「活力卡通」时视觉与线上基线逐像素一致
+   （已用「计算样式快照」逐元素验证：1406 元素 × 41 属性 = 0 差异）。
+   卡通素材（气泡 / 插画 / 随机头像 / 记账随机背景图）全部保留在代码与资源中，
+   仅在本主题下不显示，切回活力卡通即完整恢复。
+   品牌识别：植物绿 #5F8F62（强调 / 选中）、深墨绿 #315C3B（按钮 / 深文字），仅用于按钮、选中态、重点数字。
+   ========================================================================== */
+
+/* ---- 1. 令牌：田园植物绿 + 暖白（明亮 · 自然 · 通透） ---- */
+html[data-theme="minimal"]{
+  /* 品牌：自然植物绿（点缀与识别色，不做大面积铺底） */
+  --primary:#5F8F62; --primary-deep:#315C3B; --primary-soft:#E8F1E3;
+  --accent:#5F8F62; --accent-deep:#315C3B; --accent-soft:#EEF4E9;
+  /* 表面：暖白页底 + 象牙白卡片（卡片明显比边框浅，保证通透） */
+  --bg:#FAFBF5; --card:#FFFFFF; --group-bg:#EEF4E9;
+  /* 文字：深墨绿 / 自然绿灰 / 弱提示（均带绿倾向，避开纯灰） */
+  --ink:#26382B; --ink-sub:#6D8670; --ink-faint:#95A897;
+  /* 边框：柔和植物绿细边（1px） */
+  --line:#A8C3A0;
+  --success:#4E9A6B; --danger:#C0574B; --warm:#C08A3E; --cherry:#95A897;
+  --shadow-card:none;
+  --shadow-sheet:0 -2px 8px rgba(49,92,59,.06);
+  --shadow-modal:0 10px 26px rgba(49,92,59,.12);
+  --r-btn:8px; --r-card:10px; --r-input:8px; --r-chip:8px; --r-sheet:14px;
+  --t-modal-bg:#FFFFFF; --t-modal-radius:12px;
+  --t-modal-shadow:0 10px 26px rgba(49,92,59,.12);
+  --t-mask-bg:rgba(38,56,43,.38);
+  --t-head-bg:rgba(250,251,245,.96);
+  --t-warm-ink:#315C3B; --t-warm-sub:#6D8670; --t-warm-line:#C4D8BE;
+  --t-warm-base:#5F8F62; --t-warm-deep:#315C3B; --t-warm-chip:#E8F1E3;
+  --t-warm-icon:#E8F1E3; --t-warm-soft:#EEF4E9; --t-warm-bg:#FFFFFF;
+  --t-warm-field:#FFFFFF; --t-warm-dash:#C9DCC4; --t-warm-mark:#DCEBCF;
+  --t-divider:#DDEBD8;
+}
+html[data-theme="minimal"] body{background:#EDF2E8;}
+/* 记账 / 睡眠：粉色皮肤 → 田园绿；收/支语义色保留（暖红 / 自然绿，仍清晰可辨） */
+html[data-theme="minimal"] #screen-ledger,
+html[data-theme="minimal"] #screen-sleep{
+  --lg-primary:#5F8F62; --lg-deep:#315C3B; --lg-soft:#EEF4E9; --lg-pale:#F5F9F2;
+  --lg-exp:#C0574B; --lg-red:#C0574B; --lg-inc:#4E9A6B; --lg-ink:#26382B;
+}
+
+/* ---- 2. 装饰层：本主题下不显示（DOM 与素材均保留） ---- */
+html[data-theme="minimal"] .bubble-field,
+html[data-theme="minimal"] .sticker,
+html[data-theme="minimal"] #screen-home .home-hero .cat,
+html[data-theme="minimal"] #screen-home .home-hero .scat,
+html[data-theme="minimal"] .lg-banner-avatar,
+html[data-theme="minimal"] .lg-banner-emojis,
+html[data-theme="minimal"] .lg-banner-emoji{display:none;}
+/* 首页三卡：关掉磨砂/流光动画，回到朴素表面 */
+html[data-theme="minimal"] #screen-home .home-hero,
+html[data-theme="minimal"] #screen-home .memo-card,
+html[data-theme="minimal"] #screen-home .group-card,
+html[data-theme="minimal"] #screen-home #home-entries .group-card{
+  animation:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:var(--card);border:1px solid var(--line);box-shadow:none;
+}
+html[data-theme="minimal"] #screen-home .home-hero{
+  /* v5.12.8：原 min-height:0 会让本卡在高度不足时被 flex 压缩（其它卡片有内容最小高度保护，只有它被压），
+     叠加基础样式的 overflow:hidden → 简约模式下语录被裁掉、显示不全。
+     改为 auto：不再保留 104px 地板，但恢复「不低于内容高度」的保护；高度不足时整屏滚动而非压扁卡片。 */
+  border:none;background:transparent;border-radius:0;min-height:auto;
+  margin:6px 16px 2px;padding:6px 0 10px;
+}
+html[data-theme="minimal"] #screen-home .memo-card,
+html[data-theme="minimal"] #screen-home #home-entries .group-card{
+  border-radius:var(--r-card);padding:12px 14px;
+}
+/* v5.9.1：只有「备忘卡」（块级、#screen-home 直接子元素）用左右外边距内缩；
+   「功能入口」卡在 grid 内、容器 #home-entries 已有 padding:0 16px，且卡片自身是 width:100% 的 grid 项，
+   再叠 margin:0 16px 会让它右移 16px、向右溢出 16px（破坏居中）—— 这里不加外边距。 */
+html[data-theme="minimal"] #screen-home .memo-card{margin:0 16px 10px;}
+html[data-theme="minimal"] #screen-home #home-entries .group-card{padding:14px;}
+html[data-theme="minimal"] #screen-home .group-card:active,
+html[data-theme="minimal"] #screen-home #home-entries .group-card:active{
+  background:var(--group-bg);box-shadow:none;transform:none;
+}
+html[data-theme="minimal"] #screen-home{background:var(--bg);}
+
+/* v5.8.2：首页文字整体调浅调亮（降低厚重感、更通透）—— 作用域仅限首页，其他页文字不变 */
+html[data-theme="minimal"] #screen-home{color:#48705A;--ink:#48705A;--ink-sub:#78907C;--ink-faint:#9FAFA2;}
+
+/* ---- 3. 首页：重建字体层级 / 留白 / 信息密度 ---- */
+html[data-theme="minimal"] .home-greet{font-size:20px;font-weight:600;line-height:26px;letter-spacing:-.2px;}
+html[data-theme="minimal"] .home-date{font-size:11.5px;margin-top:3px;}
+html[data-theme="minimal"] #screen-home .home-hero .qt .zh{font-size:clamp(13px,3.7vw,14px);font-weight:500;color:var(--ink-sub);line-height:1.55;}
+html[data-theme="minimal"] #screen-home .home-hero .qt .en{font-size:clamp(10.5px,3.1vw,11px);color:var(--ink-faint);font-style:normal;margin-top:2px;}
+html[data-theme="minimal"] #screen-home .home-reload{background:var(--card);border:1px solid var(--line);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-home .home-reload:active{background:var(--group-bg);}
+html[data-theme="minimal"] .sec-title{font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.2px;padding:2px 16px 6px;}
+html[data-theme="minimal"] .avatar{background:var(--group-bg);border:1px solid var(--line);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-home #home-entries .gc-name{color:var(--ink);text-shadow:none;}
+html[data-theme="minimal"] #screen-home #home-entries .gc-count{color:var(--ink-faint);text-shadow:none;}
+html[data-theme="minimal"] .gc-emoji{font-size:22px;}
+html[data-theme="minimal"] #screen-cloth .lg-banner-text h3,
+html[data-theme="minimal"] #screen-ledger .lg-banner-text h3,
+html[data-theme="minimal"] #screen-sleep .lg-banner-text h3{font-size:15px;font-weight:600;}
+html[data-theme="minimal"] #screen-cloth .lg-banner-text p,
+html[data-theme="minimal"] #screen-ledger .lg-banner-text p,
+html[data-theme="minimal"] #screen-sleep .lg-banner-text p{color:var(--ink-faint);opacity:1;}
+
+/* ---- 4. 备忘录：琥珀 → 中性，突出 日期 / 标题 / 摘要 ---- */
+html[data-theme="minimal"] #screen-home .memo-head .memo-title{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] #screen-home .memo-head .memo-cnt{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-home .memo-act{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-home .memo-act:active{background:var(--line);}
+html[data-theme="minimal"] #screen-home .memo-item{background:transparent;border-bottom:1px solid var(--line);border-radius:0;padding:9px 0;}
+html[data-theme="minimal"] #screen-home .memo-item:last-child{border-bottom:none;}
+html[data-theme="minimal"] #screen-home .memo-item .mt .mtitle{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] #screen-home .memo-item .mdel{background:var(--group-bg);color:var(--ink-faint);}
+html[data-theme="minimal"] .memo-cal-head button{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] .memo-cal-head button:active{background:var(--line);}
+html[data-theme="minimal"] .memo-cal-head span{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] .memo-cal-cell{background:var(--group-bg);border-radius:8px;}
+html[data-theme="minimal"] .memo-cal-cell.has .cd{color:var(--ink);}
+html[data-theme="minimal"] .memo-cal-cell.today .cd{color:var(--primary-deep);}
+html[data-theme="minimal"] .memo-cal-cell.sel{box-shadow:inset 0 0 0 1.5px var(--primary);}
+html[data-theme="minimal"] .memo-cal-cell .cm{background:var(--primary);}
+html[data-theme="minimal"] .memo-cal-day{border-top:1px solid var(--line);}
+html[data-theme="minimal"] .memo-cal-day .cdh b{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] .memo-cal-day .cadd{background:var(--primary);}
+html[data-theme="minimal"] .memo-cal-mini,
+html[data-theme="minimal"] .memo-search-item{background:var(--card);border:1px solid var(--line);}
+html[data-theme="minimal"] .memo-cal-mini .t,
+html[data-theme="minimal"] .memo-search-item .t{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] .memo-search-item mark{background:var(--t-warm-mark);color:var(--ink);}
+html[data-theme="minimal"] .wb-row .v.exp{color:#C0574B;}
+html[data-theme="minimal"] .wb-row .v.inc{color:#4E9A6B;}
+
+/* ---- 5. 记账 / 睡眠 / 衣橱：粉色皮肤 → 中性 + 线性 ---- */
+html[data-theme="minimal"] #screen-ledger::before{background:transparent;}
+html[data-theme="minimal"] #screen-ledger .lg-head,
+html[data-theme="minimal"] #screen-sleep .lg-head,
+html[data-theme="minimal"] #screen-cloth .lg-head{
+  background:var(--card);color:var(--ink);backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-bottom:1px solid var(--line);
+}
+html[data-theme="minimal"] #screen-ledger .lg-head .back,
+html[data-theme="minimal"] #screen-sleep .lg-head .back,
+html[data-theme="minimal"] #screen-cloth .lg-head .back{color:var(--ink)!important;background:var(--group-bg)!important;}
+html[data-theme="minimal"] #screen-ledger .lg-sync,
+html[data-theme="minimal"] #screen-sleep .lg-sync,
+html[data-theme="minimal"] #screen-cloth .lg-sync{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-ledger .lg-side,
+html[data-theme="minimal"] #screen-sleep .lg-side,
+html[data-theme="minimal"] #screen-cloth .lg-side{
+  background:var(--card);backdrop-filter:none;-webkit-backdrop-filter:none;border-right:1px solid var(--line);
+}
+html[data-theme="minimal"] #screen-ledger .lg-nav,
+html[data-theme="minimal"] #screen-sleep .lg-nav,
+html[data-theme="minimal"] #screen-cloth .lg-nav{border-radius:8px;font-weight:600;font-size:10.5px;}
+html[data-theme="minimal"] #screen-ledger .lg-nav .lg-emoji,
+html[data-theme="minimal"] #screen-sleep .lg-nav .lg-emoji,
+html[data-theme="minimal"] #screen-cloth .lg-nav .lg-emoji{font-size:16px;}
+html[data-theme="minimal"] #screen-ledger .lg-nav.active,
+html[data-theme="minimal"] #screen-sleep .lg-nav.active,
+html[data-theme="minimal"] #screen-cloth .lg-nav.active{background:var(--primary-soft);color:var(--primary-deep);box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-banner,
+html[data-theme="minimal"] #screen-sleep .lg-banner,
+html[data-theme="minimal"] #screen-cloth .lg-banner{
+  background:var(--card);border:1px solid var(--line);box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:var(--r-card);min-height:0;padding:12px 14px;
+}
+html[data-theme="minimal"] #screen-ledger .lg-sum,
+html[data-theme="minimal"] #screen-ledger .lg-chart,
+html[data-theme="minimal"] #screen-sleep .lg-chart{
+  background:var(--card);border:1px solid var(--line);box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:var(--r-card);
+}
+html[data-theme="minimal"] #screen-ledger .lg-cal-head button,
+html[data-theme="minimal"] #screen-sleep .lg-cal-head button,
+html[data-theme="minimal"] .lg-zoom-btn{background:var(--group-bg);color:var(--ink-sub);box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-cell,
+html[data-theme="minimal"] #screen-sleep .lg-cell{background:transparent;box-shadow:none;border-radius:8px;}
+html[data-theme="minimal"] #screen-ledger .lg-cell.today,
+html[data-theme="minimal"] #screen-sleep .lg-cell.today{background:var(--primary-soft);}
+html[data-theme="minimal"] #screen-ledger .lg-cell.sel,
+html[data-theme="minimal"] #screen-sleep .lg-cell.sel{box-shadow:inset 0 0 0 1.5px var(--primary);}
+html[data-theme="minimal"] #screen-ledger .lg-cell.fu-has{background:var(--primary-soft);box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-progress{background:var(--t-divider);}
+html[data-theme="minimal"] #screen-ledger .lg-type{background:var(--group-bg);border:1px solid var(--line);}
+html[data-theme="minimal"] #screen-ledger .lg-budget-row .input{background:var(--card);border:1.5px solid var(--line);}
+html[data-theme="minimal"] #screen-ledger .lg-rec,
+html[data-theme="minimal"] #screen-sleep .lg-rec,
+html[data-theme="minimal"] .fu-item,
+html[data-theme="minimal"] .lg-recent-item{border-bottom:1px solid var(--line);}
+html[data-theme="minimal"] #screen-ledger .lg-rec:active,
+html[data-theme="minimal"] #screen-sleep .lg-rec:active{background:var(--group-bg);}
+html[data-theme="minimal"] #screen-ledger .lg-rec .del,
+html[data-theme="minimal"] #screen-sleep .lg-rec .del{background:var(--group-bg);}
+html[data-theme="minimal"] #screen-sleep .sp-modal{background:var(--t-modal-bg);border-radius:var(--t-modal-radius);box-shadow:var(--t-modal-shadow);}
+html[data-theme="minimal"] #screen-sleep .lg-daybar i.sl{background:var(--ink-faint);}
+html[data-theme="minimal"] #screen-ledger .lg-donut{box-shadow:none;}
+html[data-theme="minimal"] #screen-ledger .lg-donut-hole{background:var(--card);}
+
+/* ---- 6. 通用：卡片 / 分割线体系与排版层级 ---- */
+html[data-theme="minimal"] .screen-head{background:var(--t-head-bg);border-bottom:1px solid var(--line);}
+html[data-theme="minimal"] .screen-head .title{font-size:16px;font-weight:600;letter-spacing:0;}
+html[data-theme="minimal"] .card{border:1px solid var(--line);}
+html[data-theme="minimal"] .card-title{font-size:13px;font-weight:600;color:var(--ink-sub);line-height:20px;}
+html[data-theme="minimal"] .input{background:var(--card);}
+html[data-theme="minimal"] .chip{background:var(--card);}
+html[data-theme="minimal"] .chip.active{background:var(--primary-soft);color:var(--primary-deep);border-color:transparent;}
+html[data-theme="minimal"] .btn{font-size:15px;font-weight:600;letter-spacing:0;}
+html[data-theme="minimal"] .btn-secondary{background:var(--primary-soft);border:1.5px solid var(--line);color:var(--primary-deep);}
+html[data-theme="minimal"] .btn-secondary:active{background:#DCE9D7;}
+html[data-theme="minimal"] .btn-primary,
+html[data-theme="minimal"] #screen-ledger .btn-primary{background:#315C3B;color:#fff;}
+html[data-theme="minimal"] .btn-primary:active,
+html[data-theme="minimal"] #screen-ledger .btn-primary:active{background:#264A2F;}
+html[data-theme="minimal"] .btn-sm{font-size:13.5px;letter-spacing:0;}
+html[data-theme="minimal"] .wb-x{background:var(--group-bg);color:var(--ink-sub);}
+/* 列表分割线：比卡片边框更浅，保持轻盈通透（卡片边框仍为植物绿） */
+html[data-theme="minimal"] #screen-home .memo-item,
+html[data-theme="minimal"] #screen-ledger .lg-rec,
+html[data-theme="minimal"] #screen-sleep .lg-rec,
+html[data-theme="minimal"] .fu-item,
+html[data-theme="minimal"] .lg-recent-item,
+html[data-theme="minimal"] .memo-cal-day{border-color:var(--t-divider);}
+
+html[data-theme="minimal"] #screen-fuel-trend{background:linear-gradient(180deg,#f3faf4 0%,#eef7ef 100%);}
+html[data-theme="minimal"] #screen-fuel-trend .lg-head{background:#ffffff;border-bottom:1px solid #d8e8da;}
+html[data-theme="minimal"] #screen-fuel-trend .lg-head h2{color:#1f7a4d;}
+html[data-theme="minimal"] #screen-fuel-trend .lg-head .back{background:#e9f5ec;color:#1f7a4d;}
+html[data-theme="minimal"] #screen-fuel-trend .card{background:#ffffff;border:1px solid #d8e8da;box-shadow:0 1px 3px rgba(31,122,77,.06);}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell{background:#f3faf4;border-color:#d8e8da;}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell .v{color:#1f3a2a;}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-tab{background:#f3faf4;border-color:#d8e8da;color:#3a7a52;}
+html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
+

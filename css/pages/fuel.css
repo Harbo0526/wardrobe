@@ -1,0 +1,63 @@
+/* ============ v5.3.0：油费模块 ============ */
+.fu-list{max-height:128px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:2px;}   /* 约两行高，可滑动看历史 */
+.fu-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,214,231,.6);}
+.fu-item:last-child{border-bottom:none;}
+.fu-item .fu-date{flex:0 0 86px;font-size:12px;color:var(--lg-ink);opacity:.85;}
+.fu-item .fu-main{flex:1;min-width:0;}
+.fu-item .fu-amt{font-size:14.5px;font-weight:700;color:var(--lg-deep);}
+.fu-item .fu-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fu-item .fu-del{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:#ffe3e3;color:#c0392b;font-size:12px;display:flex;align-items:center;justify-content:center;}
+/* v5.7.2：油费明细整行可点击 → 放大查看/二次编辑（复用通用弹窗 .wb-*） */
+.fu-item{cursor:pointer;}
+.fu-item:active{background:rgba(255,214,231,.35);border-radius:10px;}
+/* v5.7.2：日志查询「某天至某天」响应式修复——grid 的 minmax(0,1fr) 保证窄屏可收缩，
+   字号/内边距/高度用 clamp() 随屏宽自适应；不使用固定像素宽度、也不隐藏任何元素。 */
+.fu-query-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:clamp(4px,1.6vw,8px);margin-top:8px;width:100%;}
+.fu-query-row .input{width:100%;min-width:0;box-sizing:border-box;height:clamp(40px,11vw,48px);padding:0 clamp(8px,2.4vw,14px);font-size:clamp(11px,3.2vw,15px);text-overflow:ellipsis;}
+.fu-query-sep{flex:0 0 auto;font-size:clamp(11px,3.2vw,12px);color:var(--ink-faint);white-space:nowrap;line-height:1;}
+/* v5.7.2：油费日历「当天明细 + 当天统计」 */
+.fu-cal-day{margin-top:10px;border-top:1px dashed rgba(255,143,179,.45);padding-top:8px;}
+.fu-cal-day .cdh{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-bottom:6px;}
+.fu-cal-day .cdh b{font-size:12.5px;color:var(--lg-deep);}
+.fu-cal-day .cdh .sum{font-size:11.5px;color:var(--ink-faint);}
+.fu-cal-list{display:flex;flex-direction:column;gap:6px;max-height:186px;overflow-y:auto;overflow-x:hidden;}
+.fu-cal-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:8px 0;}
+.fu-query-result{margin-top:10px;}
+/* v5.4.7：日志查询结果里的日期字号调小 + 不换行不自适应压缩，保证窄屏/大字号下也能完整显示 */
+#fuQueryResult .fu-item .fu-date{flex:0 0 auto;min-width:74px;font-size:11px;letter-spacing:-.2px;white-space:nowrap;}
+.fu-sum{display:flex;gap:8px;flex-wrap:wrap;}
+.fu-sum .box{flex:1 1 46%;background:rgba(255,255,255,.72);border-radius:12px;padding:8px 10px;}
+.fu-sum .box .k{font-size:11px;color:var(--ink-faint);}
+.fu-sum .box .v{font-size:14px;font-weight:700;color:var(--lg-deep);margin-top:2px;}
+/* 油费日历高亮（复用 .lg-cell 基础样式） */
+#screen-ledger .lg-cell.fu-has{background:rgba(255,214,231,.8);box-shadow:0 2px 6px rgba(255,143,179,.22);}
+#screen-ledger .lg-cell.fu-today{outline:1.6px solid var(--lg-primary);}
+.fu-cal-amt{font-size:9.5px;font-weight:700;color:var(--lg-deep);margin-top:1px;line-height:1.1;}
+
+/* 油费趋势（v5.12.0） */
+#screen-fuel-trend .lg-shell{display:block;max-width:680px;margin:0 auto;padding:12px 12px 28px;}
+#screen-fuel-trend .fuel-price-grid{display:flex;gap:12px;}
+#screen-fuel-trend .fuel-price-cell{flex:1;background:var(--bg-soft,#f4f8f4);border:1px solid var(--line,#e3ece3);border-radius:14px;padding:12px;text-align:center;}
+#screen-fuel-trend .fuel-price-cell .k{font-size:13px;color:var(--text-2,#5b6b5b);}
+#screen-fuel-trend .fuel-price-cell .v{font-size:26px;font-weight:700;color:var(--text,#223);line-height:1.2;}
+#screen-fuel-trend .fuel-price-cell .u{font-size:12px;color:var(--text-2,#5b6b5b);}
+#screen-fuel-trend .fuel-next{font-size:16px;font-weight:600;color:var(--text,#223);}
+#screen-fuel-trend .fuel-next .up{color:#E86A5E;}
+#screen-fuel-trend .fuel-next .down{color:#58B368;}
+#screen-fuel-trend .fuel-pred{font-size:16px;font-weight:600;color:var(--text,#223);}
+#screen-fuel-trend .fuel-pred .up{color:#E86A5E;}
+#screen-fuel-trend .fuel-pred .down{color:#58B368;}
+#screen-fuel-trend .fuel-disclaimer{margin-top:8px;font-size:12px;color:var(--text-2,#7a8a7a);}
+#screen-fuel-trend .fuel-tabs{display:flex;gap:8px;margin-bottom:8px;}
+#screen-fuel-trend .fuel-tab{border:1px solid var(--line,#e3ece3);background:var(--bg-soft,#f4f8f4);color:var(--text-2,#5b6b5b);border-radius:20px;padding:6px 14px;font-size:13px;cursor:pointer;}
+#screen-fuel-trend .fuel-tab.active{background:var(--accent,#3a9d6e);color:#fff;border-color:var(--accent,#3a9d6e);}
+#screen-fuel-trend .fuel-status{font-size:12px;color:var(--text-2,#7a8a7a);text-align:center;margin-top:4px;}
+#screen-fuel-trend .lg-chart{width:100%;overflow:hidden;}
+
+/* ===== v5.26.0：油电费（记录加油 / 记录电费）两张卡片的折叠按钮 =====
+   参考待办卡片（.todo-collapse）的折叠实现：圆形按钮 + 文字符号 ⌄ / ⌃ 切换。
+   .ck-sec 本身已是 flex + space-between，按钮直接放进去即靠右对齐，无需改布局。 */
+.ck-collapse{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:16px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;}
+.ck-collapse:active{filter:brightness(.94);}
+/* 明细列表里的「油 / 电」类型徽标（合并展示两种记录时区分单位来源） */
+.fu-kind{font-size:11px;font-weight:800;opacity:.85;}

@@ -1,0 +1,56 @@
+/* ============ 待办清单（v5.9.2 独立模块）============
+   仅用既有语义/组件令牌着色 → 「活力卡通」「极简简约」两套主题自动适配，不新增第三套色系。
+   列表固定约 3 行高、区域内部独立滚动；文字 min-width:0 + 省略号 → 绝不错位、绝不撑破卡片。 */
+.todo-card{margin:0 16px 12px;}
+.todo-sec + .todo-sec{margin-top:12px;padding-top:12px;border-top:1px dashed var(--t-divider);}
+.todo-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.todo-title{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;}
+.todo-cnt{font-size:11.5px;font-weight:700;color:var(--ink-faint);white-space:nowrap;}
+.todo-add{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:17px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
+.todo-add:active{filter:brightness(.94);}
+.todo-list{max-height:132px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.todo-item{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--t-divider);}
+.todo-item:last-child{border-bottom:none;}
+.todo-ck{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:1.6px solid var(--primary);background:transparent;color:var(--primary-deep);font-size:12px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+.todo-item.done .todo-ck{background:var(--primary);color:#fff;border-color:var(--primary);}
+.todo-tx{flex:1;min-width:0;font-size:13px;color:var(--ink);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.todo-item.done .todo-tx{color:var(--ink-faint);text-decoration:line-through;}
+/* 提醒铃铛：仅「已设提醒」的行显示（未设提醒的行保持 ⭕ 内容 ✏ 三段式，不增加视觉噪音） */
+.todo-bell{flex:0 0 auto;font-size:11px;line-height:1;opacity:.4;}
+.todo-bell.on{opacity:.95;}
+.todo-ed{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--group-bg);color:var(--ink-sub);font-size:12px;display:flex;align-items:center;justify-content:center;border:none;padding:0;}
+.todo-ed:active{background:var(--primary-soft);}
+.todo-day{font-size:11px;font-weight:700;color:var(--ink-faint);padding:6px 0 1px;}
+.todo-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:10px 0;}
+.todo-collapse{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:16px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
+.todo-collapse:active{filter:brightness(.94);}
+.todo-head-actions{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.todo-pre{font-size:10.5px;font-weight:700;color:var(--ink-faint);background:var(--t-divider);border-radius:6px;padding:1px 6px;white-space:nowrap;flex:0 0 auto;}
+
+/* ============ v5.27.0：标题可点击 → 「全部待办」放大查看（纯新增，不改动上面任何既有规则） ============
+   首页三节保持原样：标题文字、`＋`、`⌄/⌃`、`.todo-list{max-height:132px}` 的「约 3 行 + 内部滚动」都不动，
+   下面只是给标题加了可点区域提示，以及一个独立的居中大弹窗。 */
+.todo-title{cursor:pointer;}
+.todo-zoom{font-size:11px;line-height:1;color:var(--ink-faint);opacity:.7;margin-left:5px;pointer-events:none;}
+/* 弹窗：标题栏固定 → 列表区内部滚动 → 底部按钮固定；flex + min-height:0 保证「记录几十条也不撑高」 */
+.todo-full-modal{width:94%;max-width:560px;max-height:82vh;background:var(--t-modal-bg);border-radius:var(--t-modal-radius);box-shadow:var(--t-modal-shadow);overflow:hidden;display:flex;flex-direction:column;animation:fadeIn .2s ease;}
+.todo-full-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;border-bottom:1px solid var(--t-divider);}
+.todo-full-head h3{margin:0;font-size:16px;font-weight:800;color:var(--t-warm-ink);}
+.todo-full-close{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--t-warm-chip);color:#c0392b;font-size:15px;display:flex;align-items:center;justify-content:center;border:none;}
+.todo-full-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:6px 16px 4px;}
+.todo-full-foot{flex:0 0 auto;padding:10px 16px 14px;border-top:1px solid var(--t-divider);}
+.todo-full-foot .btn{width:100%;margin:0;}
+/* 弹窗里宽度充裕 → 长待办换行完整显示（首页列表仍是单行省略号，未改动） */
+.todo-full-body .todo-tx{white-space:normal;overflow:visible;text-overflow:clip;}
+html[data-theme="minimal"] .todo-full-close{background:var(--group-bg);color:var(--ink-sub);}
+
+.memo-search-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:14px 0;}
+.cloth-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  padding:12px;
+  box-shadow:var(--shadow-card);
+  text-align:left;width:100%;
+}
+.cloth-card:active{background:var(--group-bg);}

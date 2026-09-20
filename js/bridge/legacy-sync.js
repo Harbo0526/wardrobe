@@ -236,12 +236,14 @@
       }), deleted: []
     };
 
-    /* 油费（v5.3.0）：record_date/amount/unit_price/volume/note */
+    /* 油电费（v5.3.0 油费 / v5.26.0 加充电）：record_date/amount/unit_price/volume/kind/note
+       kind 缺失（v5.26.0 之前写入的历史行，理论上已被迁移回填）→ 兜底 'fuel' */
     state.fuel = {
       records: fue.map(function (x) {
         return { id: x.id, date: x.record_date, amount: Number(x.amount) || 0,
                  price: (x.unit_price == null ? null : Number(x.unit_price)),
                  vol: (x.volume == null ? null : Number(x.volume)),
+                 kind: (x.kind === 'charge' ? 'charge' : 'fuel'),
                  note: x.note || '', createdAt: x.created_at, _sbSaved: true };
       }), deleted: []
     };
