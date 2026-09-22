@@ -4,8 +4,11 @@
 .todo-card{margin:0 16px 12px;}
 .todo-sec + .todo-sec{margin-top:12px;padding-top:12px;border-top:1px dashed var(--t-divider);}
 .todo-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.todo-title{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;}
-.todo-cnt{font-size:11.5px;font-weight:700;color:var(--ink-faint);white-space:nowrap;}
+/* v5.31.0 响应式基础（R3）：.todo-head 是「标题 + 计数 + …… + 右侧按钮组」的单行 flex，
+   这两个元素自带 nowrap 却没有溢出方案 → 内容一变长就会把右侧按钮组顶出卡片。
+   补 min-width:0 + 省略号（对现有文案无视觉影响）。 */
+.todo-title{font-size:13px;font-weight:800;color:var(--ink);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.todo-cnt{font-size:11.5px;font-weight:700;color:var(--ink-faint);white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto;}
 .todo-add{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--primary-soft);color:var(--primary-deep);font-size:17px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;border:none;}
 .todo-add:active{filter:brightness(.94);}
 .todo-list{max-height:132px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}

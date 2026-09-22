@@ -37,7 +37,7 @@
 .ck-panel.active{display:block;}
 
 /* 结果三宫格 */
-.ck-result{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ck-result{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}
 .ck-res{text-align:center;padding:10px 2px;border-radius:12px;background:var(--group-bg);}
 .ck-res .v{font-size:16px;font-weight:800;color:var(--ink);white-space:nowrap;}
 .ck-res .v small{font-size:11px;font-weight:600;}
@@ -79,8 +79,8 @@
 .ck-sec{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;}
 .ck-sec h3{font-size:15px;font-weight:700;margin:0;color:var(--ink);display:flex;align-items:center;gap:6px;}
 .ck-sec h3 svg{width:17px;height:17px;color:var(--primary-deep);}
-.ck-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.ck-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.ck-row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.ck-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;}
 .ck-gap{height:10px;}
 /* 居中弹层（调酒专用，基于衣橱 .overlay 机制） */
 .overlay.ck-center{align-items:center;padding:20px;}
@@ -103,4 +103,4 @@
   padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--ink);}
 .ck-item-row:last-child{border-bottom:none;}
 .ck-item-row b{color:var(--primary-deep);flex:0 0 auto;}
-
+

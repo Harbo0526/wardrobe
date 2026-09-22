@@ -32,10 +32,12 @@
 #screen-sleep .lg-banner-row{display:flex;align-items:center;position:relative;}
 #screen-sleep .lg-banner-emojis{position:absolute;inset:0;z-index:1;pointer-events:none;}
 #screen-sleep .lg-banner-emoji{position:absolute;font-size:18px;line-height:1;transform-origin:center;filter:saturate(1.1);}
-#screen-sleep .lg-ov-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-#screen-sleep .lg-ov-card{padding:16px 10px;text-align:center;}
+#screen-sleep .lg-ov-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+#screen-sleep .lg-ov-card{padding:16px 10px;text-align:center;min-width:0;}
 #screen-sleep .lg-ov-card .k{font-size:12px;color:var(--lg-ink);opacity:.72;}
-#screen-sleep .lg-ov-card .v{font-size:21px;font-weight:800;margin-top:6px;}
+/* v5.31.0 响应式基础（R2/R6）：与记账页概览同理 —— 列用 minmax(0,1fr) 防止被内容顶宽；
+   数值保留 21px（睡眠数值是「7小时32分」这类短文本），只加断行兜底与等宽数位。 */
+#screen-sleep .lg-ov-card .v{font-size:21px;font-weight:800;margin-top:6px;line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
 #screen-sleep .lg-ov-card.inc .v{color:var(--lg-inc);}
 #screen-sleep .lg-ov-card.exp .v{color:var(--lg-exp);}
 #screen-sleep .lg-ov-card.net .v{color:var(--lg-primary);}
@@ -43,8 +45,8 @@
 #screen-sleep .lg-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 #screen-sleep .lg-cal-head button{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.85);color:var(--lg-deep);font-size:18px;box-shadow:0 2px 8px rgba(255,143,179,.12);}
 #screen-sleep .lg-cal-head span{font-size:15px;font-weight:700;color:var(--lg-ink);}
-#screen-sleep .lg-cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
-#screen-sleep .lg-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+#screen-sleep .lg-cal-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
+#screen-sleep .lg-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;}
 #screen-sleep .lg-cell{border-radius:12px;background:rgba(255,255,255,.80);min-height:46px;padding:4px 1px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;box-shadow:0 2px 6px rgba(255,143,179,.08);}
 #screen-sleep .lg-cell.empty{background:transparent;box-shadow:none;}
 #screen-sleep .lg-cell .lg-d{font-size:12px;font-weight:600;color:var(--lg-ink);}
@@ -55,7 +57,7 @@
 #screen-sleep .lg-cell .lg-c.exp{color:var(--lg-exp);}
 #screen-sleep .lg-cell .lg-c.inc{color:var(--lg-inc);}
 #screen-sleep .lg-c.sl{color:var(--lg-deep);background:var(--lg-soft);border-radius:6px;padding:0 3px;}
-#screen-sleep .lg-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 12px;}
+#screen-sleep .lg-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:6px 0 12px;}
 #screen-sleep .lg-sum{padding:16px 4px;text-align:center;}
 #screen-sleep .lg-sum .v{font-size:18px;font-weight:800;color:var(--lg-deep);}
 #screen-sleep .lg-sum.inc .v{color:var(--lg-inc);}
@@ -78,7 +80,16 @@
 #screen-sleep .lg-rec:last-child{border-bottom:none;}
 #screen-sleep .lg-rec .dot{flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:var(--lg-exp);}
 #screen-sleep .lg-rec .ri{flex:1;min-width:0;}
-#screen-sleep .lg-rec .ri .t{font-size:14px;font-weight:600;color:var(--lg-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* v5.31.0 响应式基础（R3/R6）：这一行是「入睡 → 起床 · 时长 · 备注」，前两项是主数据、
+   末尾是用户自由文本。原先整行 nowrap + 省略号 → 备注一长，**连时间/时长也被裁掉**
+   （实测 360px：内容 323px > 容器 178px，只剩「23:48 → 07:20 · 7小时3…」）。
+   改为最多两行：短内容仍是一行（视觉不变），长内容换行显示，主数据永远在最前面可见；
+   行高随内容增长，外层 .lg-recent-list 本就是滚动容器，不会顶破页面。 */
+#screen-sleep .lg-rec .ri .t{
+  font-size:14px;font-weight:600;color:var(--lg-ink);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  white-space:normal;overflow-wrap:anywhere;overflow:hidden;text-overflow:clip;
+}
 #screen-sleep .lg-rec .ri .s{font-size:11px;color:var(--lg-ink);opacity:.6;margin-top:1px;}
 #screen-sleep .lg-rec .amt{font-weight:800;font-size:15px;flex:0 0 auto;color:var(--lg-deep);}
 #screen-sleep .lg-rec .del{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--lg-soft);color:var(--lg-exp);display:flex;align-items:center;justify-content:center;font-size:15px;}
@@ -88,4 +99,4 @@
 #screen-sleep .sp-modal{max-width:340px;width:100%;background:#fff;border-radius:22px;padding:16px 16px 18px;box-shadow:0 12px 44px rgba(255,143,179,.32);animation:fadeIn .2s ease;}
 #screen-sleep .sp-modal .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 #screen-sleep .sp-modal .mh h3{margin:0;font-size:16px;font-weight:800;color:var(--lg-deep);}
-#screen-sleep .sp-ed-dur{margin-top:10px;font-size:13px;color:var(--lg-deep);font-weight:700;}
+#screen-sleep .sp-ed-dur{margin-top:10px;font-size:13px;color:var(--lg-deep);font-weight:700;}

@@ -70,4 +70,29 @@ input[type="datetime-local"]::-webkit-datetime-edit{min-width:0;overflow:hidden;
 input[type="date"]::-webkit-datetime-edit-fields-wrapper,
 input[type="time"]::-webkit-datetime-edit-fields-wrapper,
 input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper{min-width:0;}
-
+
+/* =====================================================================
+   v5.31.0：移动端响应式安全规则（组件级，不是机型级）
+   ---------------------------------------------------------------------
+   本层与上面两条 v5.13.3 / v5.13.4 是同一性质：**全局兜底**。
+   背景：页面在桌面（本应用桌面上限 430px 的 .phone-shell）看着正常，换到真机
+   （CSS viewport 320~430）就出现「文字换行/互相覆盖/数字截断/按钮溢出」——
+   根因不是某个元素，而是几条**布局基础能力**在项目里没有统一：
+     R1 可收缩的 flex 子项：flex:1 的默认 min-width:auto = 内容宽 → 内容一长就顶破父容器
+     R2 grid 列：裸 1fr 的最小尺寸同样是 min-content → 单格内容能把整条轨道顶宽
+     R3 必须单行的组件（自带 nowrap）：必须同时给出溢出方案（省略号 / 最大宽）
+     R4 含文字的固定高度：只在确有理由时保留（本轮未新增）
+     R5 不用 overflow:hidden 掩盖布局错误：所有结论都用元素级 scrollWidth / getBoundingClientRect 实测
+     R6 长数字：等宽数位 + 允许断行兜底 + （仅个别主数据）随屏宽轻微收敛字号
+     R7 页面不得出现横向整体溢出（实测 html/body 的 overflow:hidden 会掩盖它，
+        所以审计一律看「元素是否越出容器/视口」，而不是只看 document.scrollWidth）
+   本轮按 R1~R6 修的是**具体组件**（各自写在所在页面/组件文件里，带 v5.31.0 注释）；
+   这里只放两条**跨页面**、且对所有页面都成立的：
+     · .chip 是「必须单行」的标签组件（components.css 里自带 white-space:nowrap），
+       按 R3 补上溢出处理：一旦标签文字长于容器，收敛为省略号而不是把父容器顶宽。
+     · 表单类控件的「可收缩」已在 v5.13.3/v5.13.4 统一处理，本轮不重复。
+   注意：**没有新增任何 @media(max-width)** —— 响应式一律靠 minmax()/clamp()/min-width:0
+   让组件按自身可用宽度自适应，新增页面直接沿用这套规则即可。
+   ===================================================================== */
+.chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+

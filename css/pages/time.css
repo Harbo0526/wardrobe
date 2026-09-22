@@ -71,11 +71,19 @@
   display:flex;align-items:center;justify-content:center;font-size:21px;
 }
 #screen-time .tm-mid{flex:1;min-width:0;}
+/* v5.31.0 响应式基础（R3）：.tm-name / .tm-sub 在 HTML 里是 <span>（display:inline），
+   而这里给它们写了 line-height / margin-top —— 行内元素既不生效 margin-top，也会让
+   「事件名」和「起始日期 · 周期」**排在同一行里首尾相接**（实测真机：显示成
+   「日本旅行2027.03.15 · 不重复」；名字变长时两段文字还会折行交错、bounding box 互相覆盖）。
+   改成块级：名字一行、副标题一行（margin-top:3px 也随之生效），即原本的设计意图。
+   布局高度由内容决定，时光页本身是可滚动列表（.screen overflow-y:auto），不会顶破页面。 */
 #screen-time .tm-name{
+  display:block;
   font-size:14.5px;font-weight:700;color:#2F3E38;line-height:1.35;
   overflow-wrap:anywhere;
 }
 #screen-time .tm-sub{
+  display:block;
   font-size:11.5px;color:#6B7B74;margin-top:3px;line-height:1.4;
   overflow-wrap:anywhere;
 }

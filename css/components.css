@@ -122,7 +122,9 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .wb-row .v.inc{color:#69D19D;font-weight:800;}
 .wb-time{margin-top:8px;font-size:11.5px;color:var(--ink-faint);}
 .wb-btns{display:flex;gap:10px;margin-top:12px;}
-.wb-btns .btn{flex:1;margin:0;}
+/* v5.31.0 响应式基础（R1）：flex:1 的子项默认 min-width:auto（=内容宽），文字一变长就
+   无法收缩、会把按钮顶出弹窗。补 min-width:0 让它真正可收缩（文字本身保持不换行居中）。 */
+.wb-btns .btn{flex:1;min-width:0;margin:0;}
 .wb-label{display:block;margin:10px 0 4px;font-size:11.5px;font-weight:700;color:var(--t-warm-sub);}
 .wb-modal .input{width:100%;box-sizing:border-box;height:auto;background:var(--t-warm-field);border:1.5px solid var(--t-warm-line);border-radius:14px;padding:9px 12px;font-size:14px;color:var(--ink);font-family:inherit;}
 .wb-modal .input:focus{outline:none;border-color:var(--t-warm-base);box-shadow:none;}
@@ -141,8 +143,8 @@ textarea.input{height:88px;padding:12px 14px;resize:none;line-height:22px;}
 .memo-cal-head button{width:32px;height:32px;border-radius:50%;background:#fff3e3;color:#8a4b00;font-size:17px;font-weight:800;border:none;display:flex;align-items:center;justify-content:center;}
 .memo-cal-head button:active{background:#ffd9a8;}
 .memo-cal-head span{font-size:14px;font-weight:800;color:#8a4b00;}
-.memo-cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
-.memo-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.memo-cal-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center;font-size:11px;color:var(--ink-faint);margin-bottom:4px;}
+.memo-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;}
 .memo-cal-cell{border-radius:12px;background:#fff7ec;min-height:44px;padding:4px 1px 3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;cursor:pointer;}
 .memo-cal-cell.empty{background:transparent;cursor:default;}
 .memo-cal-cell .cd{font-size:12px;font-weight:600;color:var(--ink);}
@@ -235,7 +237,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
   padding:10px 12px;margin-bottom:16px;
 }
 .del-actions{display:flex;gap:10px;}
-.del-actions .btn{flex:1;}
+/* v5.31.0 响应式基础（R1）：允许收缩（对现有文案无视觉影响） */
+.del-actions .btn{flex:1;min-width:0;}
 
 /* 衣物操作菜单（三个点 → 编辑/删除） */
 .cm-item{
@@ -270,7 +273,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 }
 .gm-row:last-of-type{border-bottom:none;}
 .gm-emoji{width:36px;height:36px;border-radius:12px;background:var(--group-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.gm-name{flex:1;font-size:15px;color:var(--ink);font-weight:500;}
+/* v5.31.0 响应式基础（R1/R3）：分组名是用户输入，原先 flex:1 但没有 min-width:0 →
+   名字一长就顶住右侧「重命名 / 删除」按钮（按钮被挤出卡片）。补收缩 + 省略号。 */
+.gm-name{flex:1;min-width:0;font-size:15px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .gm-count{font-size:12px;color:var(--ink-faint);margin-right:4px;}
 .gm-act{font-size:12px;color:var(--ink-sub);padding:6px 8px;border-radius:8px;}
 .gm-act:active{background:var(--primary-soft);}
@@ -312,4 +317,4 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 .tr-body{padding:2px 0 10px;}
 .tr-time{font-size:12.5px;color:var(--ink-sub);margin-bottom:8px;}
 .tr-text{font-size:17px;font-weight:600;color:var(--ink);line-height:1.55;white-space:pre-wrap;word-break:break-word;}
-.tr-more{margin-top:10px;font-size:12.5px;color:var(--ink-faint);}
+.tr-more{margin-top:10px;font-size:12.5px;color:var(--ink-faint);}
