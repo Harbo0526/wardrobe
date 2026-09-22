@@ -44,6 +44,26 @@ html[data-theme="minimal"] #screen-sleep{
   --lg-primary:#5F8F62; --lg-deep:#315C3B; --lg-soft:#EEF4E9; --lg-pale:#F5F9F2;
   --lg-exp:#C0574B; --lg-red:#C0574B; --lg-inc:#4E9A6B; --lg-ink:#26382B;
 }
+/* ---- v5.31.1：衣橱 / 记账 / 睡眠的**页面底色**统一成「时光」页的底色（均取 var(--bg)） ----
+   背景：极简模式下三页仍能看到粉紫色底，来源有两处，性质不同：
+     ① 衣橱：#screen-cloth 的粉色渐变写在 CSS 里（css/pages/cloth.css:53）→ 普通覆盖即可压住；
+     ② 记账 / 睡眠：粉底是**渲染时由 JS 以 inline style 写到屏幕元素上的**
+        （js/pages/ledger.js 的 renderLedger、js/pages/sleep.js 的 renderSleep
+         里 `screen.style.backgroundImage = ...`，逻辑与主题无关）——
+        inline 样式优先级高于任何普通 CSS 规则，所以必须用 `background-image:none!important`。
+   ② 才是本次真正的原因：换到极简主题后，变量（--lg-*）已经变绿、卡片也变白，
+      但每次进页面又被 JS 重新铺上一层粉色底图/粉渐变 → 看起来「极简模式下还是粉的」。
+   ⚠️ 作用域严格限定 `html[data-theme="minimal"]`：
+      「活力卡通」下的随机粉色背景**完全不受影响**（切回卡通仍是原来的粉图/粉渐变）；
+      也没有改任何 JS、没有动 --lg-* 皮肤变量与卡片样式，只改页面底色一层。
+   （时光页在同层已由 css/pages/time.css 的 `html[data-theme="minimal"] #screen-time{background:var(--bg)}` 处理，
+     这里刻意不重复声明，四页最终取同一个 --bg。） */
+html[data-theme="minimal"] #screen-cloth,
+html[data-theme="minimal"] #screen-ledger,
+html[data-theme="minimal"] #screen-sleep{
+  background:var(--bg);
+  background-image:none!important;
+}
 
 /* ---- 2. 装饰层：本主题下不显示（DOM 与素材均保留） ---- */
 html[data-theme="minimal"] .bubble-field,
