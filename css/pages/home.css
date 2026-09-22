@@ -196,3 +196,223 @@
   color:#5c7e9c;
   text-shadow:0 1px 0 rgba(255,255,255,.55);
 }
+
+/* ============ v5.30.0：入口卡「信息层级 + 有语义的图形」（卡片**不增高**） ============
+   作用域严格限定 #screen-home #home-entries —— 不影响衣橱分组卡、记账/睡眠页里的
+   同名视觉（.lg-donut / .lg-progress / .lg-daybar），也不影响同网格里的「衣橱 / 我的」
+   （它们仍是原来的横向布局，只是被网格行高拉伸居中）。
+
+   ⚠️ 硬约束：**卡片高度不得超过 v5.29.0 的实测基线**（记账/调酒 71px、睡眠/时光 79px，
+   360px 卡通 = 最坏情况）。所以四张卡内部只允许两行横向栏 + 可选一根 4px 条：
+     .gc-r1 = 图标 + 模块名（小）……右侧 .gc-aux（完成度 / 收支 / 材料数 / 事件语义）
+     .gc-r2 = .gc-value 核心数据（16px 加粗）……右侧 .gc-aux / .gc-note / 环
+     .gc-bar = 4px 条
+   实测（360px 卡通，内容宽 125px）：两行卡 67px、带条的三行卡 75px —— 均不超过原基线；
+   所有文字都带 ellipsis ⇒ 内容再长也只截断，永远不会把卡片撑高。 */
+#screen-home #home-entries .group-card.gc-stack{
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:0;
+}
+#screen-home #home-entries .gc-r1,
+#screen-home #home-entries .gc-r2{
+  display:flex;align-items:center;gap:4px;min-width:0;
+}
+#screen-home #home-entries .gc-r2{margin-top:1px;}
+/* v5.30.1：带 28px 环的卡（目前只有「记账」）——环在核心数据行内，行高被环撑到 28px，
+   故把该卡纵向内边距收到 11px，保证卡片仍 ≤71px（实测 68px）。
+   ⚠️ 只作用于 .gc-has-ring，其它五张卡的内边距与视觉完全不变。
+   极简模式的对应值在 css/theme.css（9px）。 */
+#screen-home #home-entries .group-card.gc-has-ring{padding-top:11px;padding-bottom:11px;}
+#screen-home #home-entries .gc-stack .gc-emoji{font-size:14px;line-height:1;flex:0 0 auto;}
+#screen-home #home-entries .gc-stack .gc-name{font-size:11px;font-weight:600;flex:0 0 auto;}
+/* 核心数据：卡片里最大的字 → 视觉中心 */
+#screen-home #home-entries .gc-value{
+  font-size:16px;font-weight:700;line-height:1.15;
+  color:#23405a;text-shadow:0 1px 0 rgba(255,255,255,.7);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto;
+}
+/* 核心数据右侧的小标签（「结余」「个配方」） */
+#screen-home #home-entries .gc-note{
+  font-size:9.5px;line-height:1.15;margin-left:3px;
+  color:#5c7e9c;text-shadow:0 1px 0 rgba(255,255,255,.55);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0;
+}
+/* 两行右侧的辅助文字（永远靠右，不新起一行）。
+   字号 9.5px 是刻意的：为了在不增高、不折行的前提下把辅助信息塞进同一行；
+   若将来文案变长，这里只会出现省略号，不会把卡片撑高。 */
+#screen-home #home-entries .gc-aux{
+  margin-left:auto;font-size:9.5px;line-height:1.15;
+  color:#5c7e9c;text-shadow:0 1px 0 rgba(255,255,255,.55);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0;
+}
+
+/* ---------- 只保留两个「说得清含义」的图形 ----------
+   ① 28px 环（记账 = 本月储蓄率，v5.30.1 由 14px 放大 1 倍）：放在核心数据一行内最右侧。
+      28px > 核心数据行高 18.4px ⇒ 该行被撑到 28px，因此**只有这张卡**（.gc-has-ring）
+      把纵向内边距收到 11px（极简 9px），卡片仍为 68px ≤ 71px 基线。
+      另外 margin-right:-6px 让它向卡片内边距侧借 6px，保证核心数据 +「结余」
+      两个文字都不被省略号截断。conic-gradient + mask **真镂空**（不是盖一层底色圆）——
+      镂空处直接透出卡片自身背景（卡通是半透明磨砂玻璃、极简是白底），
+      所以无需硬编码任何背景色，两种主题下都不会出现色差圈。
+      填充色与 4px 条**完全一致**：活力卡通用红色 #FF4D6D，极简用 --primary 绿色
+      （覆盖在 css/theme.css）—— 实测卡通的薄荷绿在磨砂卡上不够醒目。
+      轨道用「墨色 12% 透明」而不是 --group-bg —— 实测卡通的 --group-bg(#F2F9F1)
+      在磨砂卡上几乎与底色同色，低进度（如储蓄率 5%）时整个环会看不出形状。
+   ② 4px 条（睡眠 = 相对 8h 参考基准的完成度；时光 = 距离目标日期的时间流逝）：
+      轨道 + 填充，填充宽度由 JS 写百分比；占 4px + 4px 上边距，是四张卡里唯一
+      比两行多出来的高度（仍低于 79px 基线）。
+   两者都只在**有明确分母**时出现：调酒没有图形；时光「已结束」整条隐藏。 */
+#screen-home #home-entries .gc-ring{
+  flex:0 0 28px;width:28px;height:28px;border-radius:50%;
+  margin-left:auto;margin-right:-6px;
+  background:conic-gradient(#FF4D6D 0 var(--ring-p,0%), rgba(38,56,43,.12) var(--ring-p,0%) 100%);
+  -webkit-mask:radial-gradient(closest-side, transparent calc(100% - 3.4px), #000 calc(100% - 3.2px));
+          mask:radial-gradient(closest-side, transparent calc(100% - 3.4px), #000 calc(100% - 3.2px));
+}
+#screen-home #home-entries .gc-bar{
+  display:block;position:relative;overflow:hidden;
+  height:4px;border-radius:2px;margin-top:4px;
+  background:rgba(38,56,43,.12);
+}
+/* v5.30.1：填充改**红**（活力卡通）。原用 var(--primary) 的薄荷绿，在磨砂玻璃卡上不够醒目。
+   取卡通用色 #FF4D6D（与记账环图 / .lg-daybar 支出色同一支红）。极简模式仍为绿色 —— 覆盖在 css/theme.css。 */
+#screen-home #home-entries .gc-bar > i{
+  position:absolute;top:0;left:0;height:100%;width:0;
+  border-radius:2px;background:#FF4D6D;
+  transition:left .3s ease,width .3s ease;
+}
+
+/* 已结束的一次性时光事件：整卡低饱和。
+   ⚠️ 刻意不用 filter:saturate() —— 卡片自身带 backdrop-filter 磨砂，加 filter 会破坏它；
+      改为只改配色 + emoji 灰度。 */
+#screen-home #home-entries .group-card.gc-ended{
+  background:linear-gradient(135deg, rgba(255,255,255,.30), rgba(233,237,233,.28));
+  box-shadow:0 4px 12px rgba(88,120,100,.07), 0 0 0 1px rgba(196,212,198,.30);
+}
+#screen-home #home-entries .group-card.gc-ended .gc-value{color:#7f9086;}
+#screen-home #home-entries .group-card.gc-ended .gc-emoji{filter:grayscale(1);opacity:.7;}
+
+/* ==========================================================================
+   v5.28.0：首页焦点卡 Carousel（第 1 页 励志语句 ←→ 第 2 页 时光）
+   --------------------------------------------------------------------------
+   ⚠️ 硬约束（验收项）：卡片外框尺寸一像素都不能变 —— 实测基线 358 × 112。
+      高度锁在 .hero-viewport 的 **82px**（恰好等于原 .cat 的高度），于是
+      卡片总高 = 82 + padding(14×2) + border(1×2) = 112px，与改造前逐像素一致。
+      圆点用**绝对定位**放进卡片自身的 14px 下内边距带里 → 不占高度、不遮内容。
+      除本段之外，.home-hero 的 width / padding / margin / min-height / border-radius /
+      background / box-shadow / flex-shrink 一律未改动。
+   ========================================================================== */
+#screen-home .home-hero .hero-viewport{
+  flex:1;min-width:0;height:82px;overflow:hidden;position:relative;
+  touch-action:pan-y;   /* 横向手势留给自己翻页；纵向交给浏览器（时光列表可上下滚） */
+}
+#screen-home .home-hero .hero-track{
+  display:flex;height:100%;transition:transform .28s ease;will-change:transform;
+}
+#screen-home .home-hero .hero-slide{
+  flex:0 0 100%;min-width:0;height:100%;position:relative;
+  display:flex;align-items:center;gap:12px;
+}
+/* 第 2 页：事件列表（内部上下滚动；横滑仍归 Carousel） */
+#screen-home .home-hero .hero-time-list{
+  width:100%;height:100%;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;touch-action:pan-y;
+  scrollbar-width:none;
+}
+#screen-home .home-hero .hero-time-list::-webkit-scrollbar{display:none;}
+
+/* 时光事件行（紧凑：约 34px 一行 → 82px 内可见 2 行多一点，可上下滑动） */
+#screen-home .home-hero .tm-hero-item{
+  display:flex;align-items:center;gap:8px;width:100%;
+  padding:5px 1px;border:none;background:transparent;text-align:left;
+  border-bottom:1px solid rgba(138,75,0,.08);
+}
+#screen-home .home-hero .tm-hero-item:last-child{border-bottom:none;}
+#screen-home .home-hero .tm-hero-ic{font-size:19px;flex-shrink:0;line-height:1;}
+#screen-home .home-hero .tm-hero-mid{flex:1;min-width:0;display:flex;flex-direction:column;}
+#screen-home .home-hero .tm-hero-name{
+  font-size:12.5px;font-weight:800;color:#8a4b00;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#screen-home .home-hero .tm-hero-sub{
+  font-size:10.5px;color:#b0762e;line-height:1.3;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#screen-home .home-hero .tm-hero-days{
+  font-size:12px;font-weight:800;color:#C77A1E;white-space:nowrap;flex-shrink:0;
+}
+/* 「已结束」才用低饱和（唯一允许灰显的状态；记录保留不删） */
+#screen-home .home-hero .tm-hero-item.ended .tm-hero-ic{filter:saturate(.35);}
+#screen-home .home-hero .tm-hero-item.ended .tm-hero-name{color:#9A8B7A;}
+#screen-home .home-hero .tm-hero-item.ended .tm-hero-sub{color:#B3A79B;}
+#screen-home .home-hero .tm-hero-item.ended .tm-hero-days{color:#A99C8E;}
+
+/* 第 2 页空态 */
+#screen-home .home-hero .tm-hero-empty{display:flex;align-items:center;gap:9px;width:100%;}
+#screen-home .home-hero .tm-hero-empty .tm-hero-mid{gap:2px;}
+#screen-home .home-hero .tm-hero-empty .tm-hero-name{font-size:13px;color:#8a4b00;}
+#screen-home .home-hero .tm-hero-empty .tm-hero-sub{font-size:10.5px;}
+
+/* 圆点：只表示 Carousel 当前页（2 个点） */
+#screen-home .home-hero .hero-dots{
+  position:absolute;left:0;right:0;bottom:4px;z-index:4;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+#screen-home .home-hero .hero-dots i{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(138,75,0,.26);
+  transition:background .18s ease,transform .18s ease;
+}
+#screen-home .home-hero .hero-dots i.on{background:#E8892B;transform:scale(1.3);}
+
+/* 长按反馈（约 480ms 起，600ms 触发置顶菜单） */
+#screen-home .home-hero.longpressing{animation:heroPinPulse .5s ease-in-out infinite;}
+@keyframes heroPinPulse{
+  0%,100%{filter:brightness(1);}
+  50%{filter:brightness(1.07);}
+}
+
+/* ==========================================================================
+   简洁模式：同一份 DOM，纯 CSS 脱掉 Carousel 外壳
+   · 无左右滑动（track 不再位移）、无圆点、无长按（JS 侧也跳过）
+   · 保留现有励志语句两行（.cat / .scat 在 theme.css 里已被隐藏 → 只剩文字）
+   · 在其下方追加**紧凑的时光日期区**
+   v5.28.2：该区域由「只显示第一条」改为**单条 + 上下滑动翻看** ——
+     一个高度恰为「一行」的吸附滚动器（scroll-snap），任何时刻只呈现一条，
+     上下滑动切到下一条；滑到哪条会被 JS 记住（localStorage，按账号隔离），
+     下次进入首页直接显示那一条。行高用 --tm-mini-row 统一，保证「列表高 === 行高」。
+   ⚠️ 不改 css/theme.css（既有主题块保持可整块回退）
+   ========================================================================== */
+html[data-theme="minimal"] #screen-home .home-hero .hero-viewport{height:auto;overflow:visible;}
+html[data-theme="minimal"] #screen-home .home-hero .hero-track{
+  display:block;transform:none!important;transition:none;will-change:auto;
+}
+html[data-theme="minimal"] #screen-home .home-hero .hero-slide{display:block;height:auto;}
+html[data-theme="minimal"] #screen-home .home-hero .hero-dots{display:none;}
+/* 分隔线挂在「不可滚动的父容器」上：滚动发生在子元素内部，故分隔线固定不动 */
+html[data-theme="minimal"] #screen-home .home-hero .hero-slide-time{
+  margin-top:7px;padding-top:7px;border-top:1px dashed var(--t-divider);
+}
+/* 单条视窗：高 = 一行；上下吸附滚动（一次只翻一条） */
+html[data-theme="minimal"] #screen-home .home-hero{--tm-mini-row:44px;}
+html[data-theme="minimal"] #screen-home .home-hero .hero-time-list{
+  height:var(--tm-mini-row);overflow-y:auto;overflow-x:hidden;
+  scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;
+}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-item{
+  display:flex;height:var(--tm-mini-row);padding:0;border-bottom:none;
+  scroll-snap-align:start;scroll-snap-stop:always;
+}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-ic{font-size:16px;}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-name{font-size:13px;font-weight:600;color:var(--ink);}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-days{font-size:12.5px;font-weight:700;color:var(--primary-deep);}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-item.ended .tm-hero-name{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-item.ended .tm-hero-sub{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-item.ended .tm-hero-days{color:var(--ink-faint);}
+/* 空态：简洁模式显示「＋ 添加一个重要的日子」（点击直接进入新增）——同样占一行高 */
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-empty{
+  display:flex;align-items:center;height:var(--tm-mini-row);
+}
+html[data-theme="minimal"] #screen-home .home-hero .tm-hero-empty .tm-hero-name{font-size:13px;color:var(--primary-deep);}
+html[data-theme="minimal"] .tm-ne-cute{display:none;}
+html[data-theme="minimal"] .tm-ne-mini{display:inline;}

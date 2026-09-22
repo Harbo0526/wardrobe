@@ -64,24 +64,25 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="生活象限">
-<link rel="stylesheet" href="./css/variables.css?v=5.27.0">
-<link rel="stylesheet" href="./css/reset.css?v=5.27.0">
-<link rel="stylesheet" href="./css/layout.css?v=5.27.0">
-<link rel="stylesheet" href="./css/components.css?v=5.27.0">
-<link rel="stylesheet" href="./css/common.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/auth.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/home.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/cloth.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/group.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/upload.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/mine.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/cocktail.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/ledger.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/sleep.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/todo.css?v=5.27.0">
-<link rel="stylesheet" href="./css/pages/fuel.css?v=5.27.0">
-<link rel="stylesheet" href="./css/overrides.css?v=5.27.0">
-<link rel="stylesheet" href="./css/theme.css?v=5.27.0">
+<link rel="stylesheet" href="./css/variables.css?v=5.30.2">
+<link rel="stylesheet" href="./css/reset.css?v=5.30.2">
+<link rel="stylesheet" href="./css/layout.css?v=5.30.2">
+<link rel="stylesheet" href="./css/components.css?v=5.30.2">
+<link rel="stylesheet" href="./css/common.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/auth.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/home.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/cloth.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/group.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/upload.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/mine.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/cocktail.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/ledger.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/sleep.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/todo.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/fuel.css?v=5.30.2">
+<link rel="stylesheet" href="./css/pages/time.css?v=5.30.2">
+<link rel="stylesheet" href="./css/overrides.css?v=5.30.2">
+<link rel="stylesheet" href="./css/theme.css?v=5.30.2">
 </head>
 <body>
 <script>
@@ -199,14 +200,37 @@
       <div class="avatar" id="home-avatar" onclick="openAvatarView()" title="查看头像">绿</div>
     </div>
 
-    <!-- 励志卡（v4.2.0：加菲猫橘猫点缀 + 中英双语励志语；v4.2.5 起每次启动只随机一次） -->
-    <div class="home-hero">
-      <div class="cat"></div>
-      <div class="qt">
-        <div class="zh" id="home-quote-zh">热爱可抵岁月漫长。</div>
-        <div class="en" id="home-quote-en">Love makes time pass slower.</div>
+    <!-- 励志卡（v4.2.0：加菲猫橘猫点缀 + 中英双语励志语；v4.2.5 起每次启动只随机一次）
+         v5.28.0：本区域改造为「首页焦点卡 Carousel」——**固定两页**，左右滑动只在
+                  第 1 页「励志语句」与第 2 页「时光」之间切换，时光不再拆成多页。
+              · 第 2 页内部可**上下滑动**浏览多个时光事件，横滑仍归 Carousel（互不误触）；
+              · 底部圆点只表示 Carousel 当前页（2 个点）；
+              · ⚠️ 卡片外框尺寸一像素都不能变（实测基线 358×112）：
+                高度锁在 .hero-viewport 的 82px（= 原 .cat 的高度），
+                卡片总高 = 82 + padding(14×2) + border(1×2) = 112px；
+                圆点用绝对定位放进卡片自身的 14px 下内边距带里，不占高度、不遮内容。
+              · ⚠️ 简洁模式（html[data-theme="minimal"]）用同一份 DOM、纯 CSS 脱掉
+                Carousel 外壳（无横滑 / 无圆点 / 无长按），只保留「励志语句 + 一条最紧凑的
+                时光信息」，因此**不需要**主题切换时重渲染。
+              · renderHomeQuote() 的 #screen-home .home-hero .cat 选择器仍只命中本页
+                （励志页的 .cat 是时光页图标以外的唯一 .cat；时光页用 .tm-hero-ic）。 -->
+    <div class="home-hero" id="homeHero">
+      <div class="hero-viewport" id="heroViewport">
+        <div class="hero-track" id="heroTrack">
+          <div class="hero-slide hero-slide-quote">
+            <div class="cat"></div>
+            <div class="qt">
+              <div class="zh" id="home-quote-zh">热爱可抵岁月漫长。</div>
+              <div class="en" id="home-quote-en">Love makes time pass slower.</div>
+            </div>
+            <div class="scat" id="home-hero-emojis"></div>
+          </div>
+          <div class="hero-slide hero-slide-time">
+            <div class="hero-time-list" id="heroTimeList"></div>
+          </div>
+        </div>
       </div>
-      <div class="scat" id="home-hero-emojis"></div>
+      <div class="hero-dots" id="heroDots"></div>
     </div>
 
     <!-- 备忘卡（v4.2.0：快速记录，固定展示 2 条，多余下滑翻看） -->
@@ -251,24 +275,38 @@
       </div>
     </div>
 
-    <!-- 功能入口（v4.2.0：两列卡片网格，「我的」独占一行） -->
+    <!-- 功能入口（v4.2.0：两列卡片网格；v5.28.1 新增「时光」→ 共 6 张卡 = 3 行，
+         顺序为 衣橱·调酒 / 记账·睡眠 / 时光·我的）
+         v5.29.0：调酒/记账/睡眠/时光 四张卡接上真实数据；衣橱（he-cloth）与我的保持原样。
+         v5.30.0：这四张卡改为「两行横向栏 + 可选 4px 条」(.gc-stack)：
+             .gc-r1 = 图标 + 模块名（小）……右侧辅助（完成度 / 收支 / 材料数 / 事件语义）
+             .gc-r2 = 核心数据（最大字号，卡片视觉中心）……右侧辅助（入睡→起床 / 小标签 / 环）
+             .gc-bar = 4px 条（只有能说出「它代表什么」时才显示）
+           ⚠️ **卡片高度上限保持 v5.29.0 的实测基线**（记账/调酒 71px、睡眠/时光 79px）：
+              辅助信息一律放在两行的右侧，绝不为了塞内容新起一行。
+           文案 / 进度全部由 js/pages/home.js 的 renderHomeSummaries() 写入
+           （计算在各模块 *HomeSummary() 纯函数里），HTML 里保留的是渲染前的兜底文案。
+           ⚠️ 卡片数量、排列顺序、onclick、.home-groups 两列网格一律未变。 -->
     <div class="sec-title">功能入口</div>
     <div class="home-groups" id="home-entries">
       <button class="group-card press" onclick="gotoCloth()">
         <span class="gc-emoji">👕</span>
         <span class="gc-info"><span class="gc-name">衣橱</span><span class="gc-count" id="he-cloth">管理你的衣物</span></span>
       </button>
-      <button class="group-card press" onclick="navTo(3)">
-        <span class="gc-emoji">🍹</span>
-        <span class="gc-info"><span class="gc-name">调酒</span><span class="gc-count">配方 · 计算</span></span>
+      <button class="group-card press gc-stack" onclick="navTo(3)">
+        <span class="gc-r1"><span class="gc-emoji">🍹</span><span class="gc-name">调酒</span><span class="gc-aux" id="he-cocktail-aux"></span></span>
+        <span class="gc-r2"><span class="gc-value" id="he-cocktail">—</span><span class="gc-note">个配方</span></span>
       </button>
-      <button class="group-card press" onclick="navTo(2)">
-        <span class="gc-emoji">📒</span>
-        <span class="gc-info"><span class="gc-name">记账</span><span class="gc-count">收支一目了然</span></span>
+      <!-- v5.30.1：记账卡追加 gc-has-ring —— 环放大到 28px 后，需要把该卡内边距纵向收到 12px
+           才能保证卡片仍 ≤71px（环在核心数据行内，行高由环决定） -->
+      <button class="group-card press gc-stack gc-has-ring" onclick="navTo(2)">
+        <span class="gc-r1"><span class="gc-emoji">📒</span><span class="gc-name">记账</span><span class="gc-aux" id="he-ledger-aux"></span></span>
+        <span class="gc-r2"><span class="gc-value" id="he-ledger">—</span><span class="gc-note">结余</span><span class="gc-ring" id="he-ledger-ring"></span></span>
       </button>
-      <button class="group-card press" onclick="gotoSleep()">
-        <span class="gc-emoji">🌙</span>
-        <span class="gc-info"><span class="gc-name">睡眠</span><span class="gc-count">记录你的睡眠</span></span>
+      <button class="group-card press gc-stack" onclick="gotoSleep()">
+        <span class="gc-r1"><span class="gc-emoji">🌙</span><span class="gc-name">睡眠</span><span class="gc-aux" id="he-sleep-aux"></span></span>
+        <span class="gc-r2"><span class="gc-value" id="he-sleep">—</span><span class="gc-aux" id="he-sleep-aux2"></span></span>
+        <span class="gc-bar" id="he-sleep-bar"><i></i></span>
       </button>
       <!-- v5.12.1：油费趋势入口【暂不上线，不在页面展示】。
            后端接口（DB 五表 + daily-fuel-update Edge Function + fuel-price-cron.sql）与前端
@@ -279,9 +317,22 @@
         <span class="gc-info"><span class="gc-name">油费趋势</span><span class="gc-count">地区油价 · 调价预测</span></span>
       </button>
       -->
+      <!-- v5.28.1：时光入口（放在「我的」之前，点击进入完整时光页）
+           v5.29.0：副标题由「事件条数」改为「最近一条的天数」（条数已由焦点卡第 2 页承担）。
+           v5.30.0：做成「倒计时 + 时间流逝」——核心数据 = 还剩/已经 N 天；
+           模块名一行右侧 = 事件语义（一次性：距离「事件名」；重复：下次还有 N 天）；
+           4px 条 = 「距离目标日期已经走过多少」：一次性事件用「记录日 → 目标日」，
+           重复事件用「上次发生日 → 下次发生日」；**已结束的一次性事件不显示条**并整卡低饱和。
+           文案与进度由 renderHomeSummaries() 写入（计算在 timeHomeSummary()，全部复用 WBTime）。
+           ⚠️ 卡片高度上限仍为 79px（与 v5.29.0 实测基线一致，未增高）。 -->
+      <button class="group-card press gc-stack" onclick="gotoTime()">
+        <span class="gc-r1"><span class="gc-emoji">🕰️</span><span class="gc-name">时光</span><span class="gc-aux" id="he-time-aux">记录重要的日子</span></span>
+        <span class="gc-r2"><span class="gc-value" id="he-time">—</span></span>
+        <span class="gc-bar" id="he-time-bar"><i></i></span>
+      </button>
       <button class="group-card press" onclick="navTo(4)">
         <span class="gc-emoji">👤</span>
-        <span class="gc-info"><span class="gc-name">我的</span><span class="gc-count">账号 · 令牌 · 数据管理</span></span>
+        <span class="gc-info"><span class="gc-name">我的</span><span class="gc-count">账号 · 数据管理</span></span>
       </button>
     </div>
 
@@ -1290,6 +1341,21 @@
 
   </section>
 
+  <!-- ============ 时光页（v5.28.0）：事件 + 初始日期 + 重复规则 ============
+       分组展示：即将到来 / 持续中 / 已结束（已结束保留不删，卡片灰显）。
+       派生天数（已经 X 天 / 还有 X 天 / 下一次 / 已结束）全部由 js/services/time.js 实时算。 -->
+  <section class="screen" id="screen-time">
+    <div class="tm-head">
+      <button class="tm-back press" type="button" onclick="goHome()" title="返回首页">‹</button>
+      <h2>🕰️ 时光</h2>
+      <button class="tm-sync press" type="button" onclick="timeRefreshAll()" title="刷新">⟳</button>
+    </div>
+    <div class="tm-shell">
+      <button class="tm-add press" type="button" onclick="timeOpenNew()">＋ 添加时光</button>
+      <div id="tmGroups"></div>
+    </div>
+  </section>
+
   <!-- ============ 油费趋势详情页（v5.12.0） ============ -->
   <section class="screen" id="screen-fuel-trend">
     <div class="lg-head">
@@ -1849,13 +1915,89 @@
   </div>
 </div>
 
+<!-- ============ 弹层：时光新增 / 编辑（v5.28.0） ============
+     复用既有 .wb-mask + .wb-modal 范式（与 #todoEditMask / #memoEditMask 同构）：
+     一个弹窗 + 详情态 / 表单态切换，新增与编辑复用同一个弹窗（靠 timeEditId 为空区分）。
+     模板 / 重复 / 图标选择器复用全局 .chip 外观（容器样式在 css/pages/time.css）。 -->
+<div class="wb-mask" id="timeEditMask" style="display:none;" onclick="if(event.target===this)timeCloseEdit()">
+  <div class="wb-modal">
+    <div class="wb-h"><h3 id="timeModalTitle">时光详情</h3><button class="wb-x press" type="button" onclick="timeCloseEdit()">✕</button></div>
+
+    <div id="timeViewBox">
+      <div class="wb-view-body" id="timeViewBody"></div>
+      <div class="wb-rows" id="timeViewRows"></div>
+      <div class="wb-time" id="timeViewTime"></div>
+      <div class="wb-btns" id="timeViewBtns">
+        <button class="btn btn-primary press" type="button" onclick="timeSwitchEdit()">✏️ 编辑</button>
+        <button class="btn btn-danger press" type="button" onclick="timeDeleteEdit()">删除</button>
+      </div>
+    </div>
+
+    <div id="timeFormBox" style="display:none;">
+      <label class="wb-label">选择模板</label>
+      <div class="tm-chips" id="tmTpl"></div>
+
+      <label class="wb-label">事件名称 *</label>
+      <input class="input" id="tmEditTitle" placeholder="如 结婚纪念日 / 日本旅行" maxlength="40" autocomplete="off">
+
+      <label class="wb-label">日期 *</label>
+      <input class="input" type="date" id="tmEditDate">
+
+      <label class="wb-label">重复</label>
+      <div class="tm-chips" id="tmRepeat"></div>
+      <div class="tm-custom-row" id="tmCustomRow" style="display:none;">
+        <span class="tm-unit-txt">每</span>
+        <input class="input" type="number" inputmode="numeric" min="1" step="1" id="tmEditInterval" value="10">
+        <select class="input" id="tmEditUnit">
+          <option value="day">天</option>
+          <option value="week">周</option>
+          <option value="month">个月</option>
+          <option value="year">年</option>
+        </select>
+      </div>
+      <div class="wb-hint" id="tmRepeatHint"></div>
+
+      <label class="wb-label">图标</label>
+      <div class="tm-chips" id="tmIconRow"></div>
+
+      <label class="wb-label">备注</label>
+      <input class="input" id="tmEditNote" placeholder="可选" maxlength="60" autocomplete="off">
+
+      <div class="wb-hint" id="tmEditHint" style="display:none;"></div>
+
+      <div class="wb-btns">
+        <button class="btn btn-primary press" type="button" onclick="timeSaveEdit()">保存</button>
+        <button class="btn wb-btn-cancel press" type="button" onclick="timeCloseEdit()">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 弹层：首页焦点卡置顶（v5.28.0） ============
+     复用既有 .overlay + .sheet 小菜单范式（同 #sheet-cloth-menu）：
+     只在「设为首页置顶 / 取消首页置顶」中显示当前可用的那一项。
+     置顶只决定「下次进首页默认停在第 1 页还是第 2 页 / 时光列表定位到哪条」，
+     不改变 Carousel 的页序。 -->
+<div class="overlay" id="sheet-hero-pin" onclick="closeSheetOnBg(event,'sheet-hero-pin')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>📌 首页默认卡片</h3>
+      <button class="sheet-close press" type="button" onclick="closeSheet('sheet-hero-pin')">✕</button>
+    </div>
+    <div class="wb-hint" style="margin:0 0 10px;">「<span id="tmPinTitle">励志语句卡</span>」：只影响下次打开首页时默认显示哪一页，不会改变左右滑动的页序。</div>
+    <button class="btn btn-primary press" type="button" id="tmPinOn" onclick="timePinOn()">设为首页置顶</button>
+    <button class="btn btn-secondary press" type="button" id="tmPinOff" style="margin-top:10px;" onclick="timePinOff()">取消首页置顶</button>
+  </div>
+</div>
+
 <!-- core（Phase 3–4 / v5.14.6）：公共常量、工具函数与通用弹窗框架；必须在主内联脚本之前加载（主脚本顶层语句解析期即用 $） -->
-<script src="./js/core/constants.js?v=5.27.0"></script>
-<script src="./js/core/utils.js?v=5.27.0"></script>
-<script src="./js/core/overlays.js?v=5.27.0"></script>
-<script src="./js/core/render.js?v=5.27.0"></script>
+<script src="./js/core/constants.js?v=5.30.2"></script>
+<script src="./js/core/utils.js?v=5.30.2"></script>
+<script src="./js/core/overlays.js?v=5.30.2"></script>
+<script src="./js/core/render.js?v=5.30.2"></script>
 <!-- Theme 核心模块（Phase 3 续 / v5.22.0）：UI 风格切换（getTheme/applyTheme/setTheme/renderThemeUI/openThemeSheet/initTheme）；只设置 html[data-theme] + localStorage，无 loading-time 语句 → core 组，早于主脚本 -->
-<script src="./js/core/theme.js?v=5.27.0"></script>
+<script src="./js/core/theme.js?v=5.30.2"></script>
 <script>
 /* ============================================================
    电子衣橱 · 原型交互逻辑（中文注释）
@@ -1873,7 +2015,7 @@ function rememberLastUser(name){
 
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.27.0';
+const APP_VERSION = '5.30.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -1928,6 +2070,9 @@ function defaultState(){
     cocktail: defaultCocktail(),     // 调酒：材料库 + 配方（按账号隔离，随衣橱统一同步）
     ledger: defaultLedger(),         // 记账：收支记录（按账号隔离，独立 ledger.json）
     sleep: defaultSleep(),           // 睡眠：入睡/起床记录（按账号隔离，独立 sleep.json）
+    fuel: defaultFuel(),             // 油电费：加油/充电记录（v5.3.0 起，v5.26.0 加 kind）
+    timeEvents: defaultTimeEvents(), // 时光：事件 + 初始日期 + 重复规则（v5.28.0）
+    heroPinned: null,                // 首页焦点卡置顶：'quote' | 'time:<uuid>' | null（v5.28.0，来自 profiles.hero_pinned）
     announcements: []                // v5.6.0：公告（全局共享数据，登录后由 sbLoadAll 拉取）
   };
 }
@@ -1966,6 +2111,8 @@ function loadUserWorkspace(name){
   state.ledger = defaultLedger();
   state.sleep = defaultSleep();
   state.fuel = defaultFuel();
+  state.timeEvents = defaultTimeEvents();   // v5.28.0：时光（按账号隔离，登录后由 sbLoadAll 拉取）
+  state.heroPinned = null;                  // v5.28.0：首页置顶随账号重新拉取
   state.announcements = [];        // v5.6.0：公告（全局数据，登录后由 sbLoadAll 拉取）
   annShownThisSession = false;     // 换账号/重新登录后，未读公告可再弹一次
   // 头像随账号保留在内存（login 时已写入 state.user.avatar，且 saveState 将其存入 LS_KEY_SESSION）
@@ -1983,6 +2130,8 @@ function resetToGuest(){
   state.ledger = defaultLedger();
   state.sleep = defaultSleep();
   state.fuel = defaultFuel();
+  state.timeEvents = defaultTimeEvents();   // v5.28.0：登出清空时光（不残留给下一个账号）
+  state.heroPinned = null;                  // v5.28.0：登出清空首页置顶
   state.announcements = [];        // v5.6.0：登出清空公告（全局数据，不残留给下一个账号）
   annShownThisSession = false;
   saveState();
@@ -2032,7 +2181,7 @@ function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 
 /* ---------- 3. 屏幕导航 ---------- */
-const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep','screen-fuel-trend'];
+const SCREENS = ['screen-auth','screen-home','screen-cloth','screen-group','screen-upload','screen-mine','screen-cocktail','screen-ledger','screen-sleep','screen-time','screen-fuel-trend'];
 
 let wbScreen = '';   // 当前屏 id（供安卓物理返回键判断）
 
@@ -3165,6 +3314,11 @@ function defaultLedger(){ return { records: [], seeded: false, budgets: {}, dele
 function defaultSleep(){ return { records: [], deleted: [] }; }
 /* 油费（v5.3.0）：records[] = {id,date,amount,price,vol,note,createdAt,_sbSaved} */
 function defaultFuel(){ return { records: [], deleted: [] }; }
+/* 时光（v5.28.0）：records[] = {id,title,date,repeatType,repeatInterval,repeatUnit,icon,note,isPinned,createdAt,_sbSaved}
+   ⚠️ 派生值（days_since / days_remaining / next_date / ended）**不落库、不缓存**，
+      一律由 js/services/time.js（window.WBTime）按 date + repeat_* + 今天实时计算。
+   与 defaultFuel/defaultSleep 同属「状态形状段」，留驻 index.html（defaultState 的加载期依赖）。 */
+function defaultTimeEvents(){ return { records: [], deleted: [] }; }
 function normalizeFuel(F0){
   const d = defaultFuel();
   if(!F0 || typeof F0 !== 'object') return d;
@@ -3211,56 +3365,62 @@ function normalizeFuel(F0){
 })();
 </script>
 <!-- Cocktail 页面模块（Phase 5 / v5.14.7）：来自原主脚本的调酒页逻辑；仅事件绑定，运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/cocktail.js?v=5.27.0"></script>
+<script src="./js/pages/cocktail.js?v=5.30.2"></script>
 <!-- Fuel 页面模块（Phase 5 候选 C / v5.15.0）：来自原主脚本的油费记账页逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/fuel.js?v=5.27.0"></script>
+<script src="./js/pages/fuel.js?v=5.30.2"></script>
 <!-- Memo 页面模块（Phase 5 候选 D / v5.16.0）：来自原主脚本的备忘页逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/memo.js?v=5.27.0"></script>
+<script src="./js/pages/memo.js?v=5.30.2"></script>
 <!-- Todo 页面模块（Phase 5 候选 D / v5.16.0）：来自原主脚本的待办清单 + 页面内提醒；加载期只注册监听/定时器 → 置于主脚本之后 -->
-<script src="./js/pages/todo.js?v=5.27.0"></script>
+<script src="./js/pages/todo.js?v=5.30.2"></script>
 <!-- Sleep 页面模块（Phase 5 候选 D / v5.16.0）：来自原主脚本的睡眠屏逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/sleep.js?v=5.27.0"></script>
+<script src="./js/pages/sleep.js?v=5.30.2"></script>
 <!-- Ledger 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的记账工作台逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/ledger.js?v=5.27.0"></script>
+<script src="./js/pages/ledger.js?v=5.30.2"></script>
 <!-- Cloth 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的衣橱页逻辑；仅事件绑定与运行期调用 -->
-<script src="./js/pages/cloth.js?v=5.27.0"></script>
+<script src="./js/pages/cloth.js?v=5.30.2"></script>
 <!-- Group 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的分组管理逻辑；openSheet 的 sheet-group 分支仍留在主脚本（host → page 懒调用） -->
-<script src="./js/pages/group.js?v=5.27.0"></script>
+<script src="./js/pages/group.js?v=5.30.2"></script>
 <!-- Upload 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的上传页逻辑；含 2 条加载期 change 监听注册（原样保留） -->
-<script src="./js/pages/upload.js?v=5.27.0"></script>
+<script src="./js/pages/upload.js?v=5.30.2"></script>
 <!-- Mine 页面模块（Phase 5 候选 F / v5.18.0）：来自原主脚本的「我的」页 + 用户名 + 头像 + 同步状态；含 2 条加载期 change 监听注册（原样保留） -->
-<script src="./js/pages/mine.js?v=5.27.0"></script>
+<script src="./js/pages/mine.js?v=5.30.2"></script>
 <!-- Announcement 页面模块（Phase 5 收尾 / v5.19.0）：来自原主脚本的公告（ann*）与「关于」入口；无加载期语句，仅运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/announcement.js?v=5.27.0"></script>
+<script src="./js/pages/announcement.js?v=5.30.2"></script>
 <!-- Nav 模块（Phase 5 收尾 / v5.20.0）：左侧导航自定义排序；含 2 条加载期语句（pointerdown 捕获监听 + initNavSort()），仅依赖 DOM → 置于主脚本之后、page 组末尾 -->
-<script src="./js/pages/nav.js?v=5.27.0"></script>
+<script src="./js/pages/nav.js?v=5.30.2"></script>
+<!-- Time 页面模块（v5.28.0）：时光页（即将到来/持续中/已结束）+ 新增/编辑弹窗 + 首页焦点卡取数；
+     含 3 条加载期 change/input 绑定（脚本位于 body 末尾，DOM 已就绪）→ 置于主脚本之后、home 之前（home 运行期调用它） -->
+<script src="./js/pages/time.js?v=5.30.2"></script>
 <!-- Home 页面模块（Phase 5 / v5.21.0）：总首页渲染 + 励志语录（含 base64 意境图常量）；无加载期语句 → 置于主脚本之后、page 组末尾 -->
-<script src="./js/pages/home.js?v=5.27.0"></script>
+<script src="./js/pages/home.js?v=5.30.2"></script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.27.0"></script>
-<script src="./js/data/supabase.js?v=5.27.0"></script>
+<script src="./js/config.js?v=5.30.2"></script>
+<script src="./js/data/supabase.js?v=5.30.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.27.0"></script>
-<script src="./js/data/query.js?v=5.27.0"></script>
-<script src="./js/auth/session.js?v=5.27.0"></script>
-<script src="./js/data/groups.js?v=5.27.0"></script>
-<script src="./js/data/clothgroups.js?v=5.27.0"></script>
-<script src="./js/data/clothes.js?v=5.27.0"></script>
-<script src="./js/data/modules.js?v=5.27.0"></script>
-<script src="./js/data/index.js?v=5.27.0"></script>
-<script src="./js/storage/paths.js?v=5.27.0"></script>
-<script src="./js/storage/images.js?v=5.27.0"></script>
-<script src="./js/storage/index.js?v=5.27.0"></script>
-<script src="./js/auth/index.js?v=5.27.0"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.27.0"></script>
+<script src="./js/data/errors.js?v=5.30.2"></script>
+<script src="./js/data/query.js?v=5.30.2"></script>
+<script src="./js/auth/session.js?v=5.30.2"></script>
+<script src="./js/data/groups.js?v=5.30.2"></script>
+<script src="./js/data/clothgroups.js?v=5.30.2"></script>
+<script src="./js/data/clothes.js?v=5.30.2"></script>
+<script src="./js/data/modules.js?v=5.30.2"></script>
+<script src="./js/data/index.js?v=5.30.2"></script>
+<script src="./js/storage/paths.js?v=5.30.2"></script>
+<script src="./js/storage/images.js?v=5.30.2"></script>
+<script src="./js/storage/index.js?v=5.30.2"></script>
+<script src="./js/auth/index.js?v=5.30.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.30.2"></script>
 <!-- Phase 7（v5.23.0）：Legacy Gitee Transport 已从主内联脚本隔离到此文件；
      仅保留 ROLLBACK-ONLY 能力，giteeFetch 首行守卫保证不发出任何 gitee.com 请求 -->
-<script src="./js/legacy/gitee-sync.js?v=5.27.0"></script>
+<script src="./js/legacy/gitee-sync.js?v=5.30.2"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
+<!-- Time 服务层（v5.28.0）：日期与重复周期计算的**唯一实现处**（本地日历日、月/年推进、
+     2/29 非闰年取 2/28、第 n 次发生日、下一次发生日、事件状态、排序）；纯函数、无加载期语句 → services 组 -->
+<script src="./js/services/time.js?v=5.30.2"></script>
 <!-- Phase 8（v5.24.0）：Push / Reminder 服务已从主内联脚本隔离到此文件（Classic Script）；
      WBReminders / push* / CH_SPECS / ch* 仍为裸全局，markup onclick 与 mine.js 调用方零改动 -->
-<script src="./js/services/push.js?v=5.27.0"></script>
-<script src="./js/fuel.js?v=5.27.0"></script>
+<script src="./js/services/push.js?v=5.30.2"></script>
+<script src="./js/fuel.js?v=5.30.2"></script>
 </body>
 </html>

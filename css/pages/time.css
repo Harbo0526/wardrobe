@@ -1,0 +1,140 @@
+/* ==========================================================================
+   生活象限 · css/pages/time.css
+   --------------------------------------------------------------------------
+   v5.28.0「时光」页面样式（#screen-time）。
+   设计原则（与首页约束一致）：
+     · 明亮、清晰、轻量；不使用大面积灰色；图标/Emoji 保持有颜色；
+     · 只有「已结束」状态使用低饱和灰作为**状态表达**；
+     · 卡片沿用项目既有视觉体系（圆角 + 白底 + 极浅描边 + 极轻投影）；
+     · 主题（活力卡通 / 极简简约）在本文件内用 html[data-theme="minimal"] 覆盖，
+       **不改动 css/theme.css**（保持既有主题块可整块回退）。
+   ========================================================================== */
+
+/* ---------- 页面底色 ---------- */
+#screen-time{
+  background:linear-gradient(160deg,#eef7f1 0%,#e3f2e9 58%,#dcefe4 100%);
+}
+
+/* ---------- 页头（自成一体的轻量头部，不用其它屏的 .lg-head 作用域样式） ---------- */
+#screen-time .tm-head{
+  display:flex;align-items:center;gap:8px;padding:12px;
+  background:linear-gradient(135deg,#68B98F,#3E8E7E);
+  color:#fff;border-radius:0 0 18px 18px;
+  position:sticky;top:0;z-index:20;
+  box-shadow:0 4px 14px rgba(62,142,126,.20);
+}
+#screen-time .tm-head h2{flex:1;margin:0;font-size:17px;font-weight:800;letter-spacing:.3px;}
+#screen-time .tm-back{
+  width:34px;height:34px;flex-shrink:0;border:none;
+  border-radius:50%;background:rgba(255,255,255,.25);color:#fff;
+  font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;
+}
+#screen-time .tm-back:active{background:rgba(255,255,255,.42);}
+#screen-time .tm-sync{
+  width:34px;height:34px;flex-shrink:0;border:none;
+  border-radius:50%;background:rgba(255,255,255,.25);color:#fff;
+  font-size:17px;display:flex;align-items:center;justify-content:center;
+}
+#screen-time .tm-sync:active{background:rgba(255,255,255,.42);}
+
+/* ---------- 主体 ---------- */
+#screen-time .tm-shell{padding:14px 16px 28px;}
+#screen-time .tm-add{
+  width:100%;height:46px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#68B98F,#3E8E7E);color:#fff;
+  font-size:15px;font-weight:700;letter-spacing:.5px;
+  box-shadow:0 6px 16px rgba(62,142,126,.22);
+}
+#screen-time .tm-add:active{transform:translateY(2px) scale(.99);}
+
+/* 分组标题（即将到来 / 持续中 / 已结束） */
+#screen-time .tm-sec{margin-top:18px;}
+#screen-time .tm-sec-title{
+  font-size:12.5px;font-weight:800;color:#3E8E7E;
+  letter-spacing:.6px;padding:0 2px 8px;
+}
+#screen-time .tm-sec-title .tm-cnt{color:#8AA79B;font-weight:600;margin-left:6px;}
+
+/* ---------- 事件卡片 ---------- */
+#screen-time .tm-card{
+  display:flex;align-items:center;gap:11px;
+  background:rgba(255,255,255,.92);
+  border:1px solid rgba(62,142,126,.13);
+  border-radius:18px;padding:12px 13px;margin-bottom:9px;
+  box-shadow:0 3px 12px rgba(62,142,126,.09);
+  text-align:left;width:100%;min-width:0;
+}
+#screen-time .tm-card:active{background:rgba(233,246,238,.96);}
+#screen-time .tm-ic{
+  width:42px;height:42px;flex-shrink:0;border-radius:13px;
+  background:rgba(143,211,168,.22);
+  display:flex;align-items:center;justify-content:center;font-size:21px;
+}
+#screen-time .tm-mid{flex:1;min-width:0;}
+#screen-time .tm-name{
+  font-size:14.5px;font-weight:700;color:#2F3E38;line-height:1.35;
+  overflow-wrap:anywhere;
+}
+#screen-time .tm-sub{
+  font-size:11.5px;color:#6B7B74;margin-top:3px;line-height:1.4;
+  overflow-wrap:anywhere;
+}
+#screen-time .tm-days{
+  flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#3E8E7E;
+  line-height:1.35;white-space:nowrap;
+}
+#screen-time .tm-days .tm-dot{display:block;font-size:10.5px;font-weight:600;color:#95A79E;margin-top:3px;}
+/* 置顶标记 */
+#screen-time .tm-card .tm-pin{font-size:11px;margin-left:4px;}
+
+/* 已结束：低饱和灰（唯一允许灰显的状态） */
+#screen-time .tm-card.ended{background:rgba(255,255,255,.72);border-color:rgba(107,123,116,.16);box-shadow:none;}
+#screen-time .tm-card.ended .tm-ic{background:rgba(107,123,116,.13);filter:saturate(.35);}
+#screen-time .tm-card.ended .tm-name{color:#7C8A83;}
+#screen-time .tm-card.ended .tm-sub{color:#9AA8A1;}
+#screen-time .tm-card.ended .tm-days{color:#8C9A93;}
+
+/* 空态 */
+#screen-time .tm-empty{
+  text-align:center;font-size:13px;color:#8AA79B;
+  padding:26px 10px;line-height:1.7;
+}
+
+/* ==========================================================================
+   极简简约（html[data-theme="minimal"]）：本页跟随既有令牌，去掉渐变与彩影
+   ========================================================================== */
+html[data-theme="minimal"] #screen-time{background:var(--bg);}
+html[data-theme="minimal"] #screen-time .tm-head{
+  background:var(--card);color:var(--ink);
+  border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;
+}
+html[data-theme="minimal"] #screen-time .tm-head h2{font-size:16px;font-weight:600;}
+html[data-theme="minimal"] #screen-time .tm-back,
+html[data-theme="minimal"] #screen-time .tm-sync{background:var(--group-bg);color:var(--ink-sub);}
+html[data-theme="minimal"] #screen-time .tm-add{
+  background:var(--primary-soft);color:var(--primary-deep);
+  border:1.5px solid var(--line);box-shadow:none;font-weight:600;letter-spacing:0;
+}
+html[data-theme="minimal"] #screen-time .tm-sec-title{color:var(--ink-sub);letter-spacing:.2px;}
+html[data-theme="minimal"] #screen-time .tm-sec-title .tm-cnt{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-time .tm-card{
+  background:var(--card);border:1px solid var(--line);box-shadow:none;border-radius:var(--r-card);
+}
+html[data-theme="minimal"] #screen-time .tm-ic{background:var(--group-bg);}
+html[data-theme="minimal"] #screen-time .tm-name{color:var(--ink);font-weight:600;}
+html[data-theme="minimal"] #screen-time .tm-sub{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-time .tm-days{color:var(--primary-deep);}
+html[data-theme="minimal"] #screen-time .tm-days .tm-dot{color:var(--ink-faint);}
+html[data-theme="minimal"] #screen-time .tm-empty{color:var(--ink-faint);}
+
+/* ==========================================================================
+   弹窗内的选择器（模板 / 重复 / 图标）
+   复用全局 `.chip` / `.chip.active`（css/components.css）外观，只补容器与自适应行。
+   弹窗位于 index.html 顶层（不在 #screen-time 内），故这些类不加页面作用域。
+   ========================================================================== */
+.tm-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.tm-chips .chip{font-size:12.5px;padding:6px 11px;line-height:1.2;}
+.tm-custom-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.tm-custom-row .tm-unit-txt{font-size:12.5px;color:var(--t-warm-sub);}
+.tm-custom-row .input{width:auto;flex:0 0 80px;height:40px;text-align:center;padding:0 8px;}
+.tm-custom-row select.input{flex:0 0 auto;min-width:92px;text-align:left;}

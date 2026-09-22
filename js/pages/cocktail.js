@@ -32,6 +32,21 @@ function ckUid(){ return Date.now().toString(36) + Math.random().toString(36).sl
 function ckEsc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function ckMoney(n){ return '¥' + (Math.round(n*100)/100).toFixed(2); }
 function ckUnit(m){ return m.vol > 0 ? m.price/m.vol : 0; }
+/* v5.30.0：首页「调酒」入口卡摘要（纯函数：只读 state.cocktail，不写 DOM / 不发网络 / 不改状态）
+   · value = 配方数量（核心数据，大字号）；「个配方」由 HTML 直接写在核心数据右侧
+   · aux   = 材料数量（放在模块名一行的右侧 —— 卡片不增高）
+   设计结论：**数量型数据不使用任何图形** —— 点阵/双条既与数字重复表达同一信息，
+   又不可扩展（配方数超过约 9 个就放不进小卡片文字区），故首页只报真实数量。
+   ⚠️ 不调用 ckSeed()（它会写库注入示例材料），只读现有数据。 */
+function ckHomeSummary(){
+  const r = (state.cocktail && typeof state.cocktail === 'object') ? state.cocktail : null;
+  const n = (r && Array.isArray(r.recipes)) ? r.recipes.length : 0;
+  const m = (r && Array.isArray(r.materials)) ? r.materials.length : 0;
+  return {
+    value: String(n),
+    aux: '材料 ' + m + ' 种'
+  };
+}
 function ckMatById(id){ return ckRoot().materials.find(m => m.id === id) || null; }
 function ckCatIcon(c){
   if(c === '基酒') return '<path d="M5 4h14l-7 8z"/><path d="M12 12v6"/>';

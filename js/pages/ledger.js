@@ -76,6 +76,46 @@ function lgTodayStr(){ const d = new Date(); return d.getFullYear() + '-' + lgPa
 function lgIso(d){ return d.getFullYear() + '-' + lgPad(d.getMonth()+1) + '-' + lgPad(d.getDate()); }
 function lgFmtMoney(n){ n = Math.round((n||0)*100)/100; return '¥' + n.toLocaleString('zh-CN', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
 function lgFmtShort(n){ const v = Math.round(n*10)/10; return ('' + v); }
+/* v5.29.0：首页入口卡专用「紧凑金额」——首页 360px 卡通模式下、30px 环占位后只剩 39.3px 文字宽，
+   故必须有比 lgFmtMoney 更短的写法（lgFmtMoney 会输出 ¥6,480.00）：
+     < 1万    → ¥6,480（千分位整数，无小数）
+     ≥ 1万    → ¥1.28万（最多 2 位小数；整数时自动不带小数点，如 ¥1万 / ¥12.8万）
+     ≥ 100万  → ¥123万（整数万，避免卡片换行）
+   ⚠️ 只做「显示格式化」：任何参与计算的金额仍使用原始 number / lgFmtMoney。 */
+function lgFmtTiny(n){
+  const v = Number(n) || 0, a = Math.abs(v);
+  let body;
+  if(a >= 1000000) body = Math.round(a/10000) + '万';
+  else if(a >= 10000) body = (Math.round(a/100)/100) + '万';
+  else body = Math.round(a).toLocaleString('zh-CN');
+  return (v < 0 ? '-¥' : '¥') + body;
+}
+/* v5.30.0：首页「记账」入口卡摘要（纯函数：只读 state.ledger，不写 DOM / 不发网络 / 不改状态）
+   口径与概览 lgRenderOverview 完全一致：本月 = record_date 前缀匹配 'YYYY-MM'，type 'inc'/'exp'。
+   返回 { value, aux, ring }（卡片**不增高**：核心数据与辅助同在横向两栏里）：
+     · value = 本月结余（紧凑金额，**负数保留负号**，不为了好看丢掉支出语义）
+     · aux   = 本月收入 / 支出（紧凑金额，放在模块名一行的右侧）
+     · ring  = 本月储蓄率(%)，无收入时 null（首页隐藏环，不画假的 0%）
+   ⚠️ 刻意不读 lgState —— 那是「记账页当前选中的月份」，首页必须恒为「本月」。 */
+function lgHomeSummary(){
+  const recs = (state.ledger && Array.isArray(state.ledger.records)) ? state.ledger.records : [];
+  const mk = lgCurMonthKey();
+  let inc = 0, exp = 0, hit = false;
+  recs.forEach(function(r){
+    if(!r.date || String(r.date).indexOf(mk) !== 0) return;
+    hit = true;
+    if(r.type === 'inc') inc += Number(r.amount) || 0; else exp += Number(r.amount) || 0;
+  });
+  inc = Math.round(inc*100)/100; exp = Math.round(exp*100)/100;
+  const net = Math.round((inc - exp)*100)/100;
+  return {
+    value: hit ? lgFmtTiny(net) : '—',
+    /* 收支去掉 ¥ 号（核心数据已带 ¥，卡片里也足够表明是钱）——这一栏与模块名同行，宽度有限 */
+    aux: hit ? ('↑' + lgFmtTiny(inc).replace('¥', '') + ' · ↓' + lgFmtTiny(exp).replace('¥', ''))
+             : '本月还没有记录',
+    ring: inc > 0 ? Math.max(0, Math.min(100, Math.round(net/inc*100))) : null
+  };
+}
 
 let lgState = { type:'exp', calYM:null, statYM:null, selDate:null, qmode:'days' };
 

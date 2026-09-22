@@ -101,6 +101,58 @@ function spLastNightMin(){
   });
   return Math.round(sum);
 }
+/* v5.30.0：首页入口卡用的「紧凑时长」（spFmtDur 输出「7小时32分」，卡片里放不下）
+   → 7h 32m / 7h / 32m。仅显示用，不改任何时长计算。 */
+function spFmtHM(min){
+  min = Math.round(min);
+  const h = Math.floor(min/60), m = min % 60;
+  if(h && m) return h + 'h ' + m + 'm';
+  if(h) return h + 'h';
+  return m + 'm';
+}
+/* v5.30.0：首页「睡眠」入口卡摘要（纯函数：只读 state.sleep，不写 DOM / 不发网络 / 不改状态）
+   卡片**不增高**：核心数据与辅助同在两行横向栏内 ——
+   · value = 昨夜实际睡眠时长 —— 直接复用 spLastNightMin()，窗口口径完全一致（昨日19:00 ~ 今日12:00）
+   · aux   = 完成度 + 与 8h 的差值（放在模块名一行右侧）
+   · aux2  = 昨夜入睡 → 起床时刻（放在时长一行右侧；同一窗口裁剪后的真实时刻，与 value 同口径）
+   · bar   = min(实际分钟 / 480, 1) × 100：480 分钟（8h）**只是首页视觉参考基准**，
+             绝不是用户自定义目标（项目没有睡眠目标字段，本次也不新增）；
+             上限固定 100%，实际睡再久也不会出现「超过 100%」的条。
+   ⚠️ 无昨夜有效睡眠 → value「—」、aux2「昨夜 暂无记录」、条归零（不造默认数据）。
+   ⚠️ 下面这段窗口 + 裁剪规则与 spLastNightMin 保持一致（改动其一时必须同步另一处）。 */
+function spHomeSummary(){
+  const SP_REF = 480;                       /* 8h 参考基准（视觉基准，非用户目标） */
+  const min = spLastNightMin();
+  const now = new Date();
+  const ws = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 19, 0, 0, 0).getTime();
+  const we = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0, 0).getTime();
+  let a0 = null, b0 = null;
+  if(we > ws){
+    (state.sleep && Array.isArray(state.sleep.records) ? state.sleep.records : []).forEach(function(r){
+      if(!r.date || !r.start || !r.end) return;
+      const sd = new Date(r.date + 'T' + r.start);
+      let ed = new Date((r.endDate || r.date) + 'T' + r.end);
+      if(isNaN(sd.getTime()) || isNaN(ed.getTime())) return;
+      if(ed.getTime() <= sd.getTime()) ed = new Date(ed.getTime() + 24*60*60*1000);
+      const a = Math.max(sd.getTime(), ws), b = Math.min(ed.getTime(), we);
+      if(b > a){ if(a0 === null || a < a0) a0 = a; if(b0 === null || b > b0) b0 = b; }
+    });
+  }
+  const hm = function(ms){ const d = new Date(ms); return spPad(d.getHours()) + ':' + spPad(d.getMinutes()); };
+  const pct = Math.min(min / SP_REF, 1) * 100;
+  let aux;
+  if(!(min > 0)) aux = '以8h为参考';
+  else if(min < SP_REF) aux = Math.round(pct) + '% · 距8h差' + (SP_REF - min) + 'm';
+  else if(min === SP_REF) aux = '100% · 刚好8h';
+  else aux = '100% · 超出' + (min - SP_REF) + 'm';
+  return {
+    value: min > 0 ? spFmtHM(min) : '—',
+    aux: aux,
+    /* 时刻左侧不加「昨夜」前缀：卡片已被限高，这一栏要与核心数据同行，宽度只够放时刻本身 */
+    aux2: (a0 !== null) ? (hm(a0) + ' → ' + hm(b0)) : '暂无记录',
+    bar: { pct: pct }
+  };
+}
 function spMonthRecs(prefix){ return (state.sleep.records||[]).filter(r => { const d = spAttrDate(r.date, r.start); return d && d.indexOf(prefix) === 0; }); }
 
 /* =====================================================================

@@ -44,6 +44,23 @@
 .todo-full-body .todo-tx{white-space:normal;overflow:visible;text-overflow:clip;}
 html[data-theme="minimal"] .todo-full-close{background:var(--group-bg);color:var(--ink-sub);}
 
+/* ============ v5.30.2 修复：「全览」里再打开的「二次弹窗」被全览遮住 ============
+   现象：在「全部待办」放大查看弹窗里点某行的 ✏ → 待办详情/编辑弹窗看不见（像点了没反应）。
+   原因：#todoEditMask 与 #todoFullMask 都走通用 .wb-mask（components.css 的 z-index:62），
+         而 #todoFullMask 在 index.html 里排在 #todoEditMask 之后 —— 同层级、同定位方式时
+         **后写的盖住先写的**（两个都是 body 顶层 position:fixed，无独立层叠上下文），
+         于是先打开的「全览」反而压住了后打开的「详情/编辑」。
+   方案：把「从弹窗里再打开的二次弹窗」整体提到 63（沿用 components.css 注释里的层级阶梯：
+         页面 60 → 日历/搜索 61 → 明细/编辑 62 → **二次弹窗 63**）。
+         · #todoEditMask：详情/编辑（唯一能由「全览」内部打开的第二层弹窗，行模板的 ✏ 触发）
+         · #todoRemindPop：到点提醒弹窗。它原本靠 DOM 顺序压过详情/编辑弹窗，一起提到 63
+           才能**保持原有相对关系**（它仍排在 #todoEditMask 之后 → 到点提醒照样浮在编辑弹窗之上）。
+         · #todoFullMask 保持 62 不动 → 全览仍高于页面与日历/搜索层，只是不再遮住二次弹窗。
+   作用域：#todoEditMask / #todoRemindPop 是待办专属 id，**不会影响**其它 .wb-mask 弹窗
+         （备忘、油费、记账、时光的编辑弹窗仍是 62，相对关系未变）。
+   ⚠️ 今后若再新增「在全览/明细弹窗内部打开的弹窗」，必须同样落到 63 这一层。 */
+#todoEditMask,#todoRemindPop{z-index:63;}
+
 .memo-search-empty{text-align:center;font-size:12px;color:var(--ink-faint);padding:14px 0;}
 .cloth-card{
   background:var(--card);

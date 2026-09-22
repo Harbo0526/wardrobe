@@ -147,7 +147,8 @@
       ['衣橱分组', 'groups'], ['衣物', 'clothes'], ['调酒材料', 'materials'], ['调酒配方', 'recipes'],
       ['配方明细', 'recipeItems'], ['记账', 'ledger'], ['记账预算', 'ledgerBudgets'],
       ['睡眠', 'sleep'], ['备忘', 'memos'], ['油费', 'fuel'], ['公告', 'announcements'],
-      ['待办', 'todos']   /* v5.9.2：待办清单（独立模块；按模块容错，缺失/失败不影响其它模块） */
+      ['待办', 'todos'],  /* v5.9.2：待办清单（独立模块；按模块容错，缺失/失败不影响其它模块） */
+      ['时光', 'timeEvents']   /* v5.28.0：时光（事件 + 初始日期 + 重复规则；派生天数实时计算） */
     ];
     const failedModules = [];
     /* v5.14.1：只有「分组模块本次真的成功返回」才允许播种初始化分组（必须区别于「失败返回空数组」） */
@@ -176,7 +177,7 @@
       console.warn('[云端加载] ' + m);
       toast(m);
     }
-    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9], ann = res[10], tdo = res[11];
+    const gl = res[0], cl = res[1], mats = res[2], recs = res[3], ritems = res[4], led = res[5], bud = res[6], slp = res[7], mem = res[8], fue = res[9], ann = res[10], tdo = res[11], tme = res[12];
 
     /* 分组（id 即 UUID，旧 UI 的内联调用点已加引号适配） */
     state.groups = gl.map(function (x) {
@@ -295,8 +296,40 @@
       deleted: []
     };
 
+    /* v5.28.0「时光」：事件 + 初始日期 + 重复规则。
+       派生值（daysSince / daysLeft / nextDate / ended）**不落库、不缓存**，
+       一律由 js/services/time.js 按 date + repeat_* + 今天实时计算。 */
+    state.timeEvents = {
+      records: (tme || []).map(function (x) {
+        return {
+          id: x.id,
+          title: x.title || '',
+          date: x.date || '',
+          repeatType: x.repeat_type || 'none',
+          repeatInterval: Number(x.repeat_interval) || 1,
+          repeatUnit: x.repeat_unit || null,
+          icon: x.icon || '📅',
+          note: x.note || '',
+          isPinned: !!x.is_pinned,
+          createdAt: x.created_at || '',
+          _sbSaved: true
+        };
+      }),
+      deleted: []
+    };
+
     /* 会话隔离：加载耗时较长，完成时若已切换用户则丢弃整批结果（不写 state / 不渲染 / 不补图） */
     if (gen !== WBSession.getSessionGeneration() || !state.user || state.user.id !== uid) return;
+
+    /* v5.28.0：首页焦点卡置顶（profiles.hero_pinned = 'quote' | 'time:<uuid>' | null）。
+       必须是**独立读取**：它不属于 sbLoadAll 的业务模块装载表，失败也不能影响其它模块；
+       且必须在下面 renderHome() 之前拿到值，否则首页会先渲染成默认页再跳页（可见闪动）。 */
+    try {
+      const pr = await getSupabaseClient().from('profiles').select('hero_pinned').eq('id', uid).maybeSingle();
+      state.heroPinned = (pr && pr.data && pr.data.hero_pinned) || null;
+    } catch (e) {
+      state.heroPinned = null;   /* 读取失败 → 回到默认第一页（励志语句），不报错打断加载 */
+    }
 
     /* v5.6.7 / v5.14.1：仅当「分组模块本次加载成功」且「服务端确实 0 条」才播种初始化分组。
        加载失败时 gl=[] 绝不能被当成「新用户空分组」（旧实现据此反复灌数据，是本 bug 根因）。 */

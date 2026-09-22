@@ -153,6 +153,23 @@
     noSoftDelete: true
   });
 
+  /* 时光（v5.28.0）：事件 + 初始日期 + 重复规则。
+   * repeat_type = 'none'|'day'|'week'|'month'|'year'|'custom'
+   *   → 'custom' 用 repeat_interval + repeat_unit（如 每 10 天 = 10/day、每 3 个月 = 3/month）
+   * is_pinned 为**冗余同步字段**（唯一真相是 profiles.hero_pinned），DB 侧有局部唯一索引兜底。
+   * 派生值（days_since / days_remaining / next_date / ended）**不存库**，
+   * 一律由 js/services/time.js 依据 date + repeat_* + 今天实时计算。 */
+  const timeEvents = F({
+    table: 'time_events',
+    createFields: ['title', 'date', 'repeat_type', 'repeat_interval', 'repeat_unit',
+                   'icon', 'note', 'is_pinned', 'legacy_id'],
+    updateFields: ['title', 'date', 'repeat_type', 'repeat_interval', 'repeat_unit',
+                   'icon', 'note', 'is_pinned'],
+    orderWhitelist: ['date', 'created_at', 'updated_at'],
+    defaultOrder: 'date',
+    requiredCreate: ['title', 'date']
+  });
+
   window.WBData = {
     clothes: window.WBClothes,
     groups: window.WBGroupsApi,
@@ -167,6 +184,7 @@
     fuel: fuel,
     announcements: announcements,
     todos: todos,
+    timeEvents: timeEvents,
     pushSubscriptions: pushSubscriptions,
     reminderChannels: reminderChannels
   };

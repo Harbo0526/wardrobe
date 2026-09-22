@@ -6,7 +6,7 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v5.27.0';
+const CACHE_NAME = 'wardrobe-v5.30.2';
 /* v5.13.13：头像本地缓存（首页/我的页头像；由 index.html 通过 CacheStorage 写入）。
    ⚠ 这是「用户数据缓存」，不是 app shell 的版本缓存 —— activate 清理旧版本时必须保留它，
    否则每次版本更新都会把它清掉，头像又得重新下载（白白浪费流量）。名字须与 index.html 的 AVATAR_CACHE 一致。 */
@@ -40,6 +40,7 @@ const APP_SHELL = [
   './css/pages/sleep.css',
   './css/pages/todo.css',
   './css/pages/fuel.css',
+  './css/pages/time.css',   /* v5.28.0：时光页样式 */
   './css/overrides.css',
   './css/theme.css',
   /* Phase 3（v5.14.5）：公共常量与工具函数抽出为 core 模块，一并预缓存
@@ -70,6 +71,8 @@ const APP_SHELL = [
   './js/pages/nav.js',
   /* Phase 5（v5.21.0）：总首页模块（来自原主脚本，含 base64 意境图常量） */
   './js/pages/home.js',
+  /* v5.28.0：时光页模块（页面 + 新增/编辑弹窗 + 首页焦点卡取数）——离线必须可加载 */
+  './js/pages/time.js',
   './js/config.js',
   './js/data/supabase.js',
   './js/data/errors.js',
@@ -92,6 +95,8 @@ const APP_SHELL = [
   /* Phase 8（v5.24.0）：Push / Reminder 服务（WBReminders + push* + CH_SPECS + ch*）从
      index.html 主内联脚本隔离到此文件（Classic Script）。markup 的 7 个 onclick 与
      js/pages/mine.js 的 pushAutoHeal 仍是运行期裸全局调用，故必须离线可加载 */
+  /* v5.28.0：时光服务层（日期与重复周期计算的唯一实现处）——离线必须可加载 */
+  './js/services/time.js',
   './js/services/push.js'
   /* 注：励志卡图片（8 张意境插画 + 基础橘猫）自 v4.3.3 起以 base64 内联在 index.html 内，
      不再作为独立文件预缓存——GitHub Pages 部署只保留根目录文件，子目录 avatars/ 不会被部署（手机 404）。 */

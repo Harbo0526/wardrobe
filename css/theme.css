@@ -98,6 +98,28 @@ html[data-theme="minimal"] .avatar{background:var(--group-bg);border:1px solid v
 html[data-theme="minimal"] #screen-home #home-entries .gc-name{color:var(--ink);text-shadow:none;}
 html[data-theme="minimal"] #screen-home #home-entries .gc-count{color:var(--ink-faint);text-shadow:none;}
 html[data-theme="minimal"] .gc-emoji{font-size:22px;}
+/* v5.30.0：入口卡信息层级（.gc-value 核心 / .gc-note·.gc-aux 辅助）
+   在极简模式下走「墨绿系」而不是卡通模式的蓝灰系（去阴影、去发光，保持极简的平铺感）。 */
+html[data-theme="minimal"] #screen-home #home-entries .gc-value{color:var(--ink);text-shadow:none;}
+html[data-theme="minimal"] #screen-home #home-entries .gc-note,
+html[data-theme="minimal"] #screen-home #home-entries .gc-aux{color:var(--ink-faint);text-shadow:none;}
+/* v5.30.1：进度条填充 —— 极简模式**保持绿色**（var(--primary) = #5F8F62），
+   只有活力卡通模式改成红色（见 css/pages/home.css 的 .gc-bar > i）。 */
+html[data-theme="minimal"] #screen-home #home-entries .gc-bar > i{background:var(--primary);}
+/* v5.30.1：记账储蓄率环的填充 —— 与进度条同一规则：极简**保持绿色**，
+   活力卡通为红色 #FF4D6D（写死在 css/pages/home.css 的 .gc-ring conic-gradient 里）。
+   注意只覆盖填充色的第一个色标，轨道（墨色 12%）与 mask 镂空做法保持不变。 */
+html[data-theme="minimal"] #screen-home #home-entries .gc-ring{
+  background:conic-gradient(var(--primary) 0 var(--ring-p,0%), rgba(38,56,43,.12) var(--ring-p,0%) 100%);
+}
+/* v5.30.1：28px 环所在卡（记账）的纵向内边距补偿 —— 极简原本是 12px，这里再收到 9px，
+   保证卡片高度不超过基线（实测 64px ≤ 71px）。 */
+html[data-theme="minimal"] #screen-home #home-entries .group-card.gc-has-ring{padding-top:9px;padding-bottom:9px;}
+/* 极简模式下「已结束」的时光卡保持平铺白底 + 细边，不套卡通模式的渐变底 */
+html[data-theme="minimal"] #screen-home #home-entries .group-card.gc-ended{
+  background:var(--card);border-color:rgba(168,195,160,.45);box-shadow:none;
+}
+html[data-theme="minimal"] #screen-home #home-entries .group-card.gc-ended .gc-value{color:var(--ink-faint);}
 html[data-theme="minimal"] #screen-cloth .lg-banner-text h3,
 html[data-theme="minimal"] #screen-ledger .lg-banner-text h3,
 html[data-theme="minimal"] #screen-sleep .lg-banner-text h3{font-size:15px;font-weight:600;}
@@ -233,4 +255,4 @@ html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell{background:#f3faf
 html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell .v{color:#1f3a2a;}
 html[data-theme="minimal"] #screen-fuel-trend .fuel-tab{background:#f3faf4;border-color:#d8e8da;color:#3a7a52;}
 html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
-
+
