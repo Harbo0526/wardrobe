@@ -135,6 +135,23 @@
 
   /* ============ 登录后全量加载（新用户 = 空账户） ============ */
   window.sbLoadAll = async function () {
+    /* v5.32.3-A（首屏 CDN 关键路径专项）：启动引导第一段（bootFast）可能在 Supabase CDN /
+       接入层（data/supabase.js 的 getSupabaseClient）就绪之前就经 enterApp() 调到这里。
+       本函数是异步后台路径，在这里等待接入层就绪（每 40ms 轮询，最多 20s）即可：
+         · 首页可见性不受影响（等待发生在后台）；
+         · CDN 就绪后数据照常加载，T7 与原时序一致；
+         · 超时（如 CDN 不可达）则照常继续，由下方按模块容错逻辑报错——
+           与既有离线行为一致，绝不静默吞数据。 */
+    await (function waitSdkReady () {
+      var ok = function () {
+        try { return typeof getSupabaseClient === 'function' && !!getSupabaseClient(); }
+        catch (e) { return false; }   /* SDK 尚未加载 / 未配置：继续等，超时后走容错 */
+      };
+      return new Promise(function (resolve) {
+        var t0 = Date.now();
+        (function w () { if (ok() || Date.now() - t0 > 20000) return resolve(); setTimeout(w, 40); })();
+      });
+    })();
     const D = window.WBData;
     // 会话隔离：记录开始时的代际 + user ID；加载完成（含网络往返）后若不仍匹配则丢弃结果，
     // 避免「登出 → 切号」后旧用户的业务数据回写新用户 UI。
@@ -338,9 +355,13 @@
     /* 渲染 */
     try {
       renderHome();
-      renderGroupManage();
-      renderGroupChips();
       renderMemos();
+      /* v5.32.4（首屏启动专项 B）：group.js / cloth.js 已改为 FUSH 后空闲加载，
+         数据到达时可能尚未就绪 —— 加 typeof 守卫，避免 ReferenceError 连累
+         同一 try 块里的 renderMemos / ckRenderAll（守卫缺失时两模块就绪后由
+         对应页面导航/操作触发渲染，首页不受影响）。 */
+      if (typeof renderGroupManage === 'function') renderGroupManage();
+      if (typeof renderGroupChips === 'function') renderGroupChips();
       if (typeof ckRenderAll === 'function') ckRenderAll();
     } catch (e) { /* 渲染容错，不阻塞 */ }
 
@@ -356,9 +377,13 @@
       }
     } catch (e) { /* 渲染容错，不阻塞 */ }
 
-    /* v5.6.0：公告自动弹（有未读公告才弹、同一次会话只弹一次；放在其它渲染之后，避免被遮挡） */
+    /* v5.6.0：公告自动弹（有未读公告才弹、同一次会话只弹一次；放在其它渲染之后，避免被遮挡）
+       v5.32.4：announcement.js 已改为 FUSH 后空闲加载 —— 若此刻模块尚未就绪，
+       置 pending 标记，由 announcement.js 加载完成后主动消费（见该文件尾部），
+       保证公告不因延后加载而丢失；模块已就绪则照常执行，不会重复弹。 */
     try {
-      if (typeof maybeShowAnnouncement === 'function') maybeShowAnnouncement();
+      if (typeof maybeShowAnnouncement === 'function') { maybeShowAnnouncement(); }
+      else { window.__wbAnnPending = true; }
     } catch (e) { /* 容错，不阻塞 */ }
 
     hideLegacyCloudUI();

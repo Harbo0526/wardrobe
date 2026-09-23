@@ -44,6 +44,9 @@ let timeTplKey = 'custom';    /* 当前选中的模板 */
 let timeRepeat = 'none';      /* 当前选中的重复规则 */
 let timeIcon = '📅';          /* 当前选中的图标 */
 let timePinTarget = null;     /* 置顶菜单待操作的键：'quote' | 'time:<id>' */
+/* v5.32.0：当前编辑表单里的「首页置顶」开关（true = 这条作为首页时光卡片默认展示对象）。
+   新增时默认 false；打开已有事件编辑时按该事件的 isPinned 回显。 */
+let timePinned = false;
 
 function timeEsc(s) {
   if (typeof spEsc === 'function') return spEsc(s);
@@ -88,7 +91,12 @@ function timeHomeSummary() {
   const T = window.WBTime;
   const today = timeToday();
   const list = timeRecs();
-  const ev = list.length ? T.mostImportant(list, today) : null;
+  /* v5.32.0：选择规则显式化 ——
+       ① 用户置顶的那条优先（time_events.is_pinned，同时最多一条）；
+       ② 没有任何置顶时，回落到**既有**的自动规则（WBTime.mostImportant = 排序后第一条：
+          未结束优先 → 下一次发生日越近越前）。自动规则只能作为 fallback，永远不会覆盖用户主动设置的置顶。 */
+  const pinned = list.find(function (e) { return !!e.isPinned; }) || null;
+  const ev = pinned || (list.length ? T.mostImportant(list, today) : null);
   if (!ev) return { value: '—', aux: '记录重要的日子', bar: null, ended: false };
   const st = T.stateOf(ev, today);
   const title = ev.title || '这件事';
@@ -246,6 +254,9 @@ function timeRefreshAll() {
      homeHeroRender），typeof 守卫使它恒为 no-op，导致「时光页内 ⟳ / 保存 / 删除 / 首页长按置顶后，
      焦点卡时光列表不会立即重排」。此处按真实函数名修正（仅改这一处名字，不做其它重构）。 */
   try { if (typeof homeHeroRender === 'function') homeHeroRender(); } catch (e) { }
+  /* v5.32.0：置顶变化后，首页「功能入口」里的时光卡也要同步（它走 renderHomeSummaries → timeHomeSummary）。
+     加在这里是为了「在时光页改完置顶，回到首页之前卡片就已经是新值」，不依赖再次进入首页触发渲染。 */
+  try { if (typeof renderHomeSummaries === 'function') renderHomeSummaries(); } catch (e) { }
 }
 
 /* ==========================================================================
@@ -294,6 +305,24 @@ function timeBindChips() {
       b.onclick = function () { timeIcon = b.getAttribute('data-tm-icon'); timeBindChips(); };
     });
   }
+  /* v5.32.0：「首页置顶」分段控件（关闭 / 开启）—— 与上面几组同一套 .chip 外观 */
+  const pin = $('tmPinRow');
+  if (pin) {
+    pin.innerHTML =
+      '<button class="chip' + (!timePinned ? ' active' : '') + '" type="button" data-tm-pin="0">关闭</button>' +
+      '<button class="chip' + (timePinned ? ' active' : '') + '" type="button" data-tm-pin="1">📌 开启</button>';
+    pin.querySelectorAll('[data-tm-pin]').forEach(function (b) {
+      b.onclick = function () { timePinned = (b.getAttribute('data-tm-pin') === '1'); timeBindChips(); };
+    });
+    timeSyncPinHint();
+  }
+}
+/* v5.32.0：「首页置顶」的说明文案（随开关实时变化） */
+function timeSyncPinHint() {
+  const box = $('tmPinHint'); if (!box) return;
+  box.textContent = timePinned
+    ? '首页「时光」卡片固定显示这一条；保存时会自动取消其它事件的置顶（同时只会有一条）。'
+    : '未置顶：首页「时光」卡片按现有规则自动选择（最近/最重要的一条）。';
 }
 /* 自定义周期的行显隐 + 规则文案 */
 function timeSyncRepeatUI() {
@@ -342,6 +371,7 @@ function timeOpenNew(tplKey) {
   if ($('tmEditNote')) $('tmEditNote').value = '';
   if ($('tmEditInterval')) $('tmEditInterval').value = '10';
   if ($('tmEditUnit')) $('tmEditUnit').value = 'day';
+  timePinned = false;   /* v5.32.0：新增默认不置顶 —— 不会覆盖用户已有的置顶事件 */
   timeBindChips(); timeSyncRepeatUI(); timeEditHint();
   timeShowBox(false);
   const f = $('tmEditTitle');
@@ -376,6 +406,8 @@ function timeSwitchEdit() {
     if ($('tmEditNote')) $('tmEditNote').value = ev.note || '';
     if ($('tmEditInterval')) $('tmEditInterval').value = String(ev.repeatInterval || 1);
     if ($('tmEditUnit')) $('tmEditUnit').value = ev.repeatUnit || 'day';
+    /* v5.32.0：回显「首页置顶」—— 按该事件真实的 isPinned，不做「每次都默认关闭」 */
+    timePinned = !!ev.isPinned;
   }
   timeBindChips(); timeSyncRepeatUI(); timeEditHint();
   timeShowBox(false);
@@ -384,7 +416,19 @@ function timeCloseEdit() {
   wbModalHide(TIME_MODAL);
   timeEditId = null;
 }
-function timeSaveEdit() {
+/* v5.32.0：置顶互斥 —— 取消「除 keepId 之外」所有已置顶事件（本机立即生效 + 逐条 await 写库）。
+   为什么必须先取消再置新：DB 上有局部唯一索引 uq_time_events_pinned（同一用户最多一条 is_pinned=true），
+   若先写新的再删旧的，服务端会报唯一冲突 —— 与下方 timeApplyPin 采用同一顺序。 */
+async function timeClearPinsExcept(keepId) {
+  const others = timeRecs().filter(function (e) { return !!e.isPinned && String(e.id) !== String(keepId); });
+  for (var i = 0; i < others.length; i++) {
+    const e = others[i];
+    e.isPinned = false;                    /* 本机立即生效 → 首页马上按新规则选择 */
+    try { await sbSaveObj('timeEvents', e, { is_pinned: false }); } catch (err) { /* 单条失败不阻塞，下次云端加载会校正 */ }
+  }
+}
+
+async function timeSaveEdit() {
   const title = ($('tmEditTitle') ? $('tmEditTitle').value : '').trim();
   const date = $('tmEditDate') ? $('tmEditDate').value : '';
   if (!title) { toast('请填写事件名称'); return; }
@@ -397,20 +441,26 @@ function timeSaveEdit() {
     rUnit = rType;
   }
   const note = ($('tmEditNote') ? $('tmEditNote').value : '').trim();
+  const wantPin = !!timePinned;   /* v5.32.0：置顶由表单开关决定 */
+  /* v5.32.0：payload 终于带上 is_pinned —— 原先只有 title / date / repeat 三个 / icon / note，
+     编辑端根本无法设置置顶；这里是在**保留原字段**的基础上新增一项，不会因重建 payload 丢字段。 */
   const payload = {
     title: title, date: date, repeat_type: rType, repeat_interval: rIv,
-    repeat_unit: rUnit, icon: timeIcon, note: note
+    repeat_unit: rUnit, icon: timeIcon, note: note, is_pinned: wantPin
   };
   if (timeEditId) {
     const ev = timeById(timeEditId);
     if (!ev) { timeCloseEdit(); timeRefreshAll(); return; }
+    if (wantPin) await timeClearPinsExcept(timeEditId);   /* 先取消旧的，再写本条 */
     ev.title = title; ev.date = date; ev.repeatType = rType;
     ev.repeatInterval = rIv; ev.repeatUnit = rUnit; ev.icon = timeIcon; ev.note = note;
+    ev.isPinned = wantPin;
     sbSaveObj('timeEvents', ev, payload);
   } else {
+    if (wantPin) await timeClearPinsExcept(null);          /* 新增时开置顶 → 先清掉旧的 */
     const t = {
       id: wbUuid(), title: title, date: date, repeatType: rType, repeatInterval: rIv,
-      repeatUnit: rUnit, icon: timeIcon, note: note, isPinned: false,
+      repeatUnit: rUnit, icon: timeIcon, note: note, isPinned: wantPin,
       createdAt: new Date().toISOString(), _sbSaved: false
     };
     timeRecs().push(t);
@@ -437,13 +487,23 @@ function timeDelete(id) {
 }
 
 /* ==========================================================================
-   首页焦点卡置顶（profiles.hero_pinned 为唯一真相）
+   首页焦点卡置顶（profiles.hero_pinned）
    --------------------------------------------------------------------------
    'quote'       → 下次进入首页默认停在「励志语句」页
    'time:<uuid>' → 下次进入首页默认停在「时光」页，并把列表定位到该事件
    null          → 回到默认第一页
    ※ 只影响「默认显示哪一页 / 定位到哪条」，**不改变 Carousel 的页序**
      （页序恒为 第1页 励志语句 → 第2页 时光）。
+
+   ⚠️ v5.32.0：两个字段各管一件事，**不是同一个概念的两个副本**：
+        profiles.hero_pinned   → 首页默认显示「励志语句」还是「时光」这一页
+        time_events.is_pinned  → 进入「时光」后，首页时光卡片展示哪条纪念日
+      · 长按首页时光卡设置置顶 = 两个一起写（设默认页 + 标记该事件），保持既有行为；
+      · 时光编辑表单里的「首页置顶」**只写 time_events.is_pinned**，不动 hero_pinned
+        （用户可能只想换展示哪条，而不想改默认停在哪一页）；
+      · 两边都有唯一性保证：hero_pinned 只有一个值；is_pinned 由 DB 的
+        uq_time_events_pinned 局部唯一索引兜底（同时最多一条）。
+      若两边出现不一致，以 time_events.is_pinned 决定「展示哪条」，以 hero_pinned 决定「停在哪一页」。
    ========================================================================== */
 function timeOpenPinSheet(key) {
   timePinTarget = key;

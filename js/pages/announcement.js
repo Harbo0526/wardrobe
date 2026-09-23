@@ -138,3 +138,14 @@ function annDelete(id){
 function showAbout(){
   openAnnSheet(3);
 }
+
+/* v5.32.4（首屏启动专项 B）：本模块已改为 FIRST_USABLE_HOME 后由 bootFast 空闲加载。
+   若 sbLoadAll 完成时本模块尚未就绪，legacy-sync 会置 window.__wbAnnPending = true；
+   这里在加载完成后主动消费一次，保证公告不因延后加载而丢失。
+   正常路径（模块先于数据加载完）不会置 pending → 不重复弹窗；
+   pending 置位后也只消费一次（置 false），maybeShowAnnouncement 内部仍有
+   「有未读才弹 / 同一会话只弹一次」的原有判定。 */
+if (window.__wbAnnPending) {
+  window.__wbAnnPending = false;
+  try { maybeShowAnnouncement(); } catch (e) { /* 容错，不影响其它功能 */ }
+}
