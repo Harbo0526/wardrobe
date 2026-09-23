@@ -44,12 +44,16 @@ function renderMine(){
   try{ pushAutoHeal(); }catch(e){}
 
   // v5.6.0：公告发布卡片仅管理员可见（真正的写入权限由数据库 RLS 卡死，此处只是入口显隐）
+  // v5.32.6 bugfix：announcement.js 自 v5.32.4 起为空闲注入，renderMine 可能在其就绪前被调
+  // （登录后立刻进「我的」/ refreshUserName 回调）→ annIsAdmin 无守卫会抛 ReferenceError
+  // 中断本函数（navTo(4) 时连 showScreen 都不执行）。加 typeof 守卫：未就绪时先隐藏公告卡，
+  // 模块注入完成后下次进「我的」重跑 renderMine 自然恢复。
   var annCard = $('mine-ann-card');
   if(annCard){
-    if(annIsAdmin()){
+    if(typeof annIsAdmin === 'function' && annIsAdmin()){
       annCard.style.display = '';
       var pub = $('annPublish'); if(pub) pub.onclick = annPublish;
-      annRenderHistory();
+      if(typeof annRenderHistory === 'function') annRenderHistory();
     }else{
       annCard.style.display = 'none';
     }

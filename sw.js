@@ -6,7 +6,7 @@
    - Gitee API 等跨域请求：完全不缓存（含令牌、数据须实时
    注意：CACHE_NAME 必须与 APP_VERSION 同步升级，否则用户拿不到新版
    ============================================================ */
-const CACHE_NAME = 'wardrobe-v5.32.4';
+const CACHE_NAME = 'wardrobe-v5.32.6';
 /* v5.13.13：头像本地缓存（首页/我的页头像；由 index.html 通过 CacheStorage 写入）。
    ⚠ 这是「用户数据缓存」，不是 app shell 的版本缓存 —— activate 清理旧版本时必须保留它，
    否则每次版本更新都会把它清掉，头像又得重新下载（白白浪费流量）。名字须与 index.html 的 AVATAR_CACHE 一致。 */

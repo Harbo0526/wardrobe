@@ -126,11 +126,12 @@ html[data-theme="minimal"] #screen-home #home-entries .gc-aux{color:var(--ink-fa
 /* v5.30.1：进度条填充 —— 极简模式**保持绿色**（var(--primary) = #5F8F62），
    只有活力卡通模式改成红色（见 css/pages/home.css 的 .gc-bar > i）。 */
 html[data-theme="minimal"] #screen-home #home-entries .gc-bar > i{background:var(--primary);}
-/* v5.30.1：记账储蓄率环的填充 —— 与进度条同一规则：极简**保持绿色**，
-   活力卡通为红色 #FF4D6D（写死在 css/pages/home.css 的 .gc-ring conic-gradient 里）。
-   注意只覆盖填充色的第一个色标，轨道（墨色 12%）与 mask 镂空做法保持不变。 */
+/* v5.32.5：记账收支构成环 —— 绿弧=入账、红弧=支出（v5.30.1~v5.32.4 为单色「储蓄率」弧）。
+   极简双色取记账页极简变量值（theme.css 顶部 #screen-ledger 的 --lg-inc/--lg-exp）：
+   入账绿 #4E9A6B + 支出红 #C0574B；活力卡通为 #69D19D + #FF4D6D（css/pages/home.css）。
+   --ring-p = 入账占比（JS 写入），两段铺满整环、无轨道。 */
 html[data-theme="minimal"] #screen-home #home-entries .gc-ring{
-  background:conic-gradient(var(--primary) 0 var(--ring-p,0%), rgba(38,56,43,.12) var(--ring-p,0%) 100%);
+  background:conic-gradient(#4E9A6B 0 var(--ring-p,0%), #C0574B var(--ring-p,0%) 100%);
 }
 /* v5.30.1：28px 环所在卡（记账）的纵向内边距补偿 —— 极简原本是 12px，这里再收到 9px，
    保证卡片高度不超过基线（实测 64px ≤ 71px）。 */

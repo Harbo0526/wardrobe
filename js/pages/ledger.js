@@ -95,7 +95,8 @@ function lgFmtTiny(n){
    返回 { value, aux, ring }（卡片**不增高**：核心数据与辅助同在横向两栏里）：
      · value = 本月结余（紧凑金额，**负数保留负号**，不为了好看丢掉支出语义）
      · aux   = 本月收入 / 支出（紧凑金额，放在模块名一行的右侧）
-     · ring  = 本月储蓄率(%)，无收入时 null（首页隐藏环，不画假的 0%）
+     · ring  = 本月入账占比(%)——环上绿弧=入账、红弧=支出（v5.32.5 由「储蓄率」改为
+       收支构成）；本月无任何收支时 null（首页隐藏环，不画假的 0%）
    ⚠️ 刻意不读 lgState —— 那是「记账页当前选中的月份」，首页必须恒为「本月」。 */
 function lgHomeSummary(){
   const recs = (state.ledger && Array.isArray(state.ledger.records)) ? state.ledger.records : [];
@@ -113,7 +114,10 @@ function lgHomeSummary(){
     /* 收支去掉 ¥ 号（核心数据已带 ¥，卡片里也足够表明是钱）——这一栏与模块名同行，宽度有限 */
     aux: hit ? ('↑' + lgFmtTiny(inc).replace('¥', '') + ' · ↓' + lgFmtTiny(exp).replace('¥', ''))
              : '本月还没有记录',
-    ring: inc > 0 ? Math.max(0, Math.min(100, Math.round(net/inc*100))) : null
+    /* v5.32.5：环语义 = 收支构成（CSS 绿弧 0→--ring-p、红弧 --ring-p→100%），
+       --ring-p 写入账占比 inc/(inc+exp)；只有支出没有收入时（inc+exp>0）仍显示
+       （全红环 = 全是支出），比隐藏更有信息量；本月无任何收支 → null 隐藏 */
+    ring: (inc + exp) > 0 ? Math.max(0, Math.min(100, Math.round(inc/(inc + exp)*100))) : null
   };
 }
 

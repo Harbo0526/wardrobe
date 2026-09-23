@@ -255,17 +255,20 @@
 }
 
 /* ---------- 只保留两个「说得清含义」的图形 ----------
-   ① 28px 环（记账 = 本月储蓄率，v5.30.1 由 14px 放大 1 倍）：放在核心数据一行内最右侧。
+   ① 28px 环（记账 = 本月收支构成：绿弧=入账、红弧=支出；v5.30.1 由 14px 放大 1 倍，
+      v5.32.5 由单色「储蓄率」弧改为绿/红双段，--ring-p 由 JS 写入账占比）：
+      放在核心数据一行内最右侧。
       28px > 核心数据行高 18.4px ⇒ 该行被撑到 28px，因此**只有这张卡**（.gc-has-ring）
       把纵向内边距收到 11px（极简 9px），卡片仍为 68px ≤ 71px 基线。
       另外 margin-right:-6px 让它向卡片内边距侧借 6px，保证核心数据 +「结余」
       两个文字都不被省略号截断。conic-gradient + mask **真镂空**（不是盖一层底色圆）——
       镂空处直接透出卡片自身背景（卡通是半透明磨砂玻璃、极简是白底），
       所以无需硬编码任何背景色，两种主题下都不会出现色差圈。
-      填充色与 4px 条**完全一致**：活力卡通用红色 #FF4D6D，极简用 --primary 绿色
-      （覆盖在 css/theme.css）—— 实测卡通的薄荷绿在磨砂卡上不够醒目。
-      轨道用「墨色 12% 透明」而不是 --group-bg —— 实测卡通的 --group-bg(#F2F9F1)
-      在磨砂卡上几乎与底色同色，低进度（如储蓄率 5%）时整个环会看不出形状。
+      双段色取记账页语义色（css/pages/ledger.css 的 --lg-inc/--lg-red）：
+      活力卡通 = 入账绿 #69D19D + 支出红 #FF4D6D；极简覆盖在 css/theme.css
+      （入账绿 #4E9A6B + 支出红 #C0574B，同为记账页极简变量值）。
+      两段铺满整环 ⇒ 原「墨色 12% 轨道」不再需要；只有支出没有收入时全环红、
+      只有收入没有支出时全环绿，语义仍然正确。
    ② 4px 条（睡眠 = 相对 8h 参考基准的完成度；时光 = 距离目标日期的时间流逝）：
       轨道 + 填充，填充宽度由 JS 写百分比；占 4px + 4px 上边距，是四张卡里唯一
       比两行多出来的高度（仍低于 79px 基线）。
@@ -273,7 +276,7 @@
 #screen-home #home-entries .gc-ring{
   flex:0 0 28px;width:28px;height:28px;border-radius:50%;
   margin-left:auto;margin-right:-6px;
-  background:conic-gradient(#FF4D6D 0 var(--ring-p,0%), rgba(38,56,43,.12) var(--ring-p,0%) 100%);
+  background:conic-gradient(#69D19D 0 var(--ring-p,0%), #FF4D6D var(--ring-p,0%) 100%);
   -webkit-mask:radial-gradient(closest-side, transparent calc(100% - 3.4px), #000 calc(100% - 3.2px));
           mask:radial-gradient(closest-side, transparent calc(100% - 3.4px), #000 calc(100% - 3.2px));
 }
