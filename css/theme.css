@@ -277,3 +277,330 @@ html[data-theme="minimal"] #screen-fuel-trend .fuel-price-cell .v{color:#1f3a2a;
 html[data-theme="minimal"] #screen-fuel-trend .fuel-tab{background:#f3faf4;border-color:#d8e8da;color:#3a7a52;}
 html[data-theme="minimal"] #screen-fuel-trend .fuel-disclaimer{color:#5b8a6b;}
 
+/* ==========================================================================
+   v5.33.0：手帐绘本风主题   html[data-theme="scrapbook"]
+   --------------------------------------------------------------------------
+   实现原则（与「活力卡通」「极简简约」完全隔离；整块可直接删除以回退）：
+     ① 重定义令牌（L1 语义 + L2 组件）→ 大多数界面自动换肤；
+     ② 追加覆盖规则，去掉卡通角色插画 / 玻璃拟态 / 粉色皮肤，改「可爱手绘手帐」。
+   **本块不修改任何既有规则** → 切回其它主题视觉逐像素不变。
+   手绘质感的实现抓手（纯 CSS/SVG，无外部图片依赖）：
+     ① 不规则手绘边框：非对称 border-radius（255px 15px 225px 15px / 15px 225px 15px 255px）
+        + 2px 纯黑描边 #1a1a1a；
+     ② 硬阴影错位：box-shadow 4px 4px 0 rgba(26,26,26,.85)（纯黑实心、零模糊），
+        整页卡片 -1°~+1.2° 随机旋转，制造「纸片贴歪」感；
+     ③ 纸张纹理：米黄纸 #FDFBF7 + 浅灰细网格（repeating-linear-gradient）；
+     ④ 涂鸦高亮：标题下方垫线性渐变色块，模拟马克笔涂抹。
+   字体：ZCOOL KuaiLe（站酷快乐体，display=swap）+ Comic Sans MS / cursive 兜底。
+   色彩：马克笔/水彩笔色（蜡笔红 #E8604C、姜黄 #F4B942、抹茶绿 #8FCF8F、婴儿蓝 #A7D8F0、
+   便签底 白/浅草绿/水蜜桃粉 #F7C5C0），描边纯黑；禁止商务灰/科技渐变/毛玻璃/无描边大色块。
+   ========================================================================== */
+
+/* ---- 1. 令牌：马克笔手帐色 + 手写体 ---- */
+html[data-theme="scrapbook"]{
+  --primary:#E8604C; --primary-deep:#D94A36; --primary-soft:#FDEAE6;
+  --accent:#8FCF8F; --accent-deep:#5FA85F; --accent-soft:#EAF7EA;
+  --bg:#FDFBF7; --card:#FFFFFF; --group-bg:#FFF3E6;
+  --ink:#1a1a1a; --ink-sub:#5a5a5a; --ink-faint:#9a9a9a;
+  --line:#1a1a1a;
+  --success:#8FCF8F; --danger:#E8604C; --warm:#F4B942; --cherry:#F7C5C0;
+  --shadow-card:4px 4px 0 rgba(26,26,26,.85);
+  --shadow-sheet:0 -2px 0 rgba(26,26,26,.85);
+  --shadow-modal:6px 6px 0 rgba(26,26,26,.85);
+  --r-btn:255px 15px 225px 15px / 15px 225px 15px 255px;
+  --r-card:255px 15px 225px 15px / 15px 225px 15px 255px;
+  --r-input:255px 15px 225px 15px / 15px 225px 15px 255px;
+  --r-chip:255px 15px 225px 15px / 15px 225px 15px 255px;
+  --r-sheet:18px 4px 22px 4px / 4px 22px 4px 22px;
+  --t-warm-ink:#1a1a1a; --t-warm-sub:#5a5a5a; --t-warm-line:#1a1a1a;
+  --t-warm-base:#F4B942; --t-warm-deep:#E0A72E; --t-warm-chip:#FFF3E6;
+  --t-warm-icon:#FFF3E6; --t-warm-soft:#FFF6E8; --t-warm-bg:#FFFFFF;
+  --t-warm-field:#FFFFFF; --t-warm-dash:#1a1a1a; --t-warm-mark:#FFF0A8;
+  --t-modal-bg:#FFFFFF; --t-modal-radius:18px 4px 22px 4px / 4px 22px 4px 22px;
+  --t-modal-shadow:6px 6px 0 rgba(26,26,26,.85);
+  --t-mask-bg:rgba(26,26,26,.45);
+  --t-divider:rgba(26,26,26,.12);
+  --t-head-bg:rgba(253,251,247,.96);
+}
+/* 手写体：站酷快乐体（display=swap 加载失败自动降级 Comic Sans / cursive） */
+html[data-theme="scrapbook"] body,
+html[data-theme="scrapbook"] .home-greet,
+html[data-theme="scrapbook"] .sec-title,
+html[data-theme="scrapbook"] .screen-head .title,
+html[data-theme="scrapbook"] .gc-value,
+html[data-theme="scrapbook"] .memo-title{
+  font-family:'ZCOOL KuaiLe','Comic Sans MS','PingFang SC','Segoe UI',cursive;
+}
+/* 纸张纹理：米黄纸 + 浅灰细网格（铺满整页；phone-shell 在桌面宽屏留白处也透出同款纹理） */
+html[data-theme="scrapbook"] body,
+html[data-theme="scrapbook"] .phone-shell{
+  background-color:#FDFBF7;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(26,26,26,.045) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(26,26,26,.045) 0 1px, transparent 1px 24px);
+}
+html[data-theme="scrapbook"] #screen-ledger,
+html[data-theme="scrapbook"] #screen-sleep{
+  --lg-primary:#E8604C; --lg-deep:#D94A36; --lg-soft:#FDEAE6; --lg-pale:#FFF8F4;
+  --lg-exp:#E8604C; --lg-red:#E8604C; --lg-inc:#8FCF8F; --lg-ink:#1a1a1a;
+}
+/* 衣橱 / 记账 / 睡眠页面底色统一成米黄纸（JS 渲染时写 inline 粉底，需 !important 压住） */
+html[data-theme="scrapbook"] #screen-cloth,
+html[data-theme="scrapbook"] #screen-ledger,
+html[data-theme="scrapbook"] #screen-sleep{
+  background:var(--bg);
+  background-image:none!important;
+}
+
+/* ---- 2. 装饰层：卡通角色/气泡/插画隐藏（手帐风不保留动漫角色） ---- */
+html[data-theme="scrapbook"] .bubble-field,
+html[data-theme="scrapbook"] .sticker,
+html[data-theme="scrapbook"] #screen-home .home-hero .cat,
+html[data-theme="scrapbook"] #screen-home .home-hero .scat,
+html[data-theme="scrapbook"] .lg-banner-avatar,
+html[data-theme="scrapbook"] .lg-banner-emojis,
+html[data-theme="scrapbook"] .lg-banner-emoji{display:none;}
+/* 首页三卡：便签纸片 —— 白底 + 黑手绘描边 + 硬阴影错位 + 不规则圆角，关掉磨砂/流光 */
+html[data-theme="scrapbook"] #screen-home .home-hero,
+html[data-theme="scrapbook"] #screen-home .memo-card,
+html[data-theme="scrapbook"] #screen-home .group-card,
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card{
+  animation:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:var(--card);border:2px solid #1a1a1a;
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+  box-shadow:4px 4px 0 rgba(26,26,26,.85);
+}
+/* 卡片随机小角度旋转 → 「纸片贴歪」的手工感 */
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card:nth-child(odd){transform:rotate(-1deg);}
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card:nth-child(even){transform:rotate(1.2deg);}
+html[data-theme="scrapbook"] #screen-home .home-hero{
+  border:none;background:transparent;box-shadow:none;border-radius:0;min-height:auto;
+  margin:6px 16px 2px;padding:6px 0 10px;
+}
+html[data-theme="scrapbook"] #screen-home .memo-card,
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card{
+  padding:16px;
+}
+html[data-theme="scrapbook"] #screen-home .memo-card{margin:0 16px 12px;}
+html[data-theme="scrapbook"] #screen-home #home-entries{gap:16px;padding:0 16px 16px;}
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card{padding:16px;transition:all .2s ease;}
+html[data-theme="scrapbook"] #screen-home .group-card:active,
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card:active{
+  background:#FFF6E8;box-shadow:2px 2px 0 rgba(26,26,26,.85);transform:none;
+}
+html[data-theme="scrapbook"] #screen-home{background:var(--bg);color:var(--ink);}
+
+/* ---- 3. 首页：文字层级（纯黑墨 + 涂鸦高亮，去发光去阴影） ---- */
+html[data-theme="scrapbook"] .home-greet{
+  font-size:22px;font-weight:400;line-height:28px;letter-spacing:0;color:var(--ink);
+  /* 涂鸦高亮：标题下方垫姜黄色块，模拟马克笔涂抹 */
+  background:linear-gradient(transparent 62%, #FFF0A8 62%);display:inline-block;padding:0 4px;
+}
+html[data-theme="scrapbook"] .home-date{font-size:12px;margin-top:4px;color:var(--ink-sub);}
+html[data-theme="scrapbook"] #screen-home .home-hero .qt .zh{font-size:clamp(13px,3.7vw,14px);font-weight:400;color:var(--ink-sub);line-height:1.55;}
+html[data-theme="scrapbook"] #screen-home .home-hero .qt .en{font-size:clamp(10.5px,3.1vw,11px);color:var(--ink-faint);font-style:normal;margin-top:2px;}
+html[data-theme="scrapbook"] #screen-home .home-reload{
+  background:#FFF3E6;border:2px solid #1a1a1a;color:var(--ink);
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;box-shadow:3px 3px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] #screen-home .home-reload:active{background:#FFE8D0;box-shadow:1px 1px 0 rgba(26,26,26,.85);}
+html[data-theme="scrapbook"] .sec-title{
+  font-size:13px;font-weight:400;color:var(--ink);letter-spacing:.5px;padding:2px 16px 8px;
+  display:inline-block;
+}
+html[data-theme="scrapbook"] .avatar{
+  background:#F7C5C0;border:2px solid #1a1a1a;color:var(--ink);
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;box-shadow:3px 3px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-name{color:var(--ink);text-shadow:none;font-weight:400;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-count{color:var(--ink-faint);text-shadow:none;}
+html[data-theme="scrapbook"] .gc-emoji{font-size:22px;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-stack .gc-emoji{font-size:18px;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-value{font-size:20px;font-weight:400;color:var(--ink);text-shadow:none;}
+html[data-theme="scrapbook"] #screen-home #home-entries #he-time{font-size:24px;color:#E8604C;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-note,
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-aux{color:var(--ink-faint);text-shadow:none;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-bar > i{background:#8FCF8F;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-ring{
+  background:conic-gradient(#8FCF8F 0 var(--ring-p,0%), #E8604C var(--ring-p,0%) 100%);
+}
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card.gc-has-ring{padding-top:13px;padding-bottom:13px;}
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card.gc-ended{
+  background:#FFFFFF;box-shadow:4px 4px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] #screen-home #home-entries .group-card.gc-ended .gc-value{color:var(--ink-faint);}
+html[data-theme="scrapbook"] #screen-cloth .lg-banner-text h3,
+html[data-theme="scrapbook"] #screen-ledger .lg-banner-text h3,
+html[data-theme="scrapbook"] #screen-sleep .lg-banner-text h3{font-size:15px;font-weight:400;color:var(--ink);}
+html[data-theme="scrapbook"] #screen-cloth .lg-banner-text p,
+html[data-theme="scrapbook"] #screen-ledger .lg-banner-text p,
+html[data-theme="scrapbook"] #screen-sleep .lg-banner-text p{color:var(--ink-faint);opacity:1;}
+
+/* ---- 4. 备忘录：中性 → 手帐便签（日期 / 标题 / 摘要） ---- */
+html[data-theme="scrapbook"] #screen-home .memo-head .memo-title{color:var(--ink);font-weight:400;}
+html[data-theme="scrapbook"] #screen-home .memo-head .memo-cnt{color:var(--ink-faint);}
+html[data-theme="scrapbook"] #screen-home .memo-act{
+  background:#F7C5C0;color:var(--ink);border:2px solid #1a1a1a;
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;box-shadow:2px 2px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] #screen-home .memo-act:active{background:#F0B4AD;box-shadow:1px 1px 0 rgba(26,26,26,.85);}
+html[data-theme="scrapbook"] #screen-home .memo-item{background:transparent;border-bottom:1px dashed rgba(26,26,26,.3);border-radius:0;padding:9px 0;}
+html[data-theme="scrapbook"] #screen-home .memo-item:last-child{border-bottom:none;}
+html[data-theme="scrapbook"] #screen-home .memo-item .mt .mtitle{color:var(--ink);font-weight:400;}
+html[data-theme="scrapbook"] #screen-home .memo-item .mdel{background:#FDEAE6;color:var(--ink);border:1.5px solid #1a1a1a;}
+html[data-theme="scrapbook"] .memo-cal-head button{
+  background:#FFF3E6;color:var(--ink);border:2px solid #1a1a1a;
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+html[data-theme="scrapbook"] .memo-cal-head button:active{background:#FFE8D0;}
+html[data-theme="scrapbook"] .memo-cal-head span{color:var(--ink);font-weight:400;}
+html[data-theme="scrapbook"] .memo-cal-cell{background:#FFF3E6;border-radius:8px 3px 10px 3px / 3px 10px 3px 10px;border:1.5px solid rgba(26,26,26,.25);}
+html[data-theme="scrapbook"] .memo-cal-cell.has .cd{color:var(--ink);}
+html[data-theme="scrapbook"] .memo-cal-cell.today .cd{color:#E8604C;}
+html[data-theme="scrapbook"] .memo-cal-cell.sel{box-shadow:inset 0 0 0 2px #E8604C;}
+html[data-theme="scrapbook"] .memo-cal-cell .cm{background:#E8604C;}
+html[data-theme="scrapbook"] .memo-cal-day{border-top:1px dashed rgba(26,26,26,.3);}
+html[data-theme="scrapbook"] .memo-cal-day .cdh b{color:var(--ink);font-weight:400;}
+html[data-theme="scrapbook"] .memo-cal-day .cadd{background:#E8604C;}
+html[data-theme="scrapbook"] .memo-cal-mini,
+html[data-theme="scrapbook"] .memo-search-item{
+  background:#FFFFFF;border:2px solid #1a1a1a;
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;box-shadow:4px 4px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] .memo-cal-mini .t,
+html[data-theme="scrapbook"] .memo-search-item .t{color:var(--ink);font-weight:400;}
+html[data-theme="scrapbook"] .memo-search-item mark{background:#FFF0A8;color:var(--ink);}
+html[data-theme="scrapbook"] .wb-row .v.exp{color:#E8604C;}
+html[data-theme="scrapbook"] .wb-row .v.inc{color:#5FA85F;}
+
+/* ---- 5. 记账 / 睡眠 / 衣橱：粉皮肤 → 便签纸片（黑描边 + 硬阴影） ---- */
+html[data-theme="scrapbook"] #screen-ledger::before{background:transparent;}
+html[data-theme="scrapbook"] #screen-ledger .lg-head,
+html[data-theme="scrapbook"] #screen-sleep .lg-head,
+html[data-theme="scrapbook"] #screen-cloth .lg-head{
+  background:#FFFFFF;color:var(--ink);backdrop-filter:none;-webkit-backdrop-filter:none;
+  border-bottom:2px solid #1a1a1a;
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-head .back,
+html[data-theme="scrapbook"] #screen-sleep .lg-head .back,
+html[data-theme="scrapbook"] #screen-cloth .lg-head .back{color:var(--ink)!important;background:#FFF3E6!important;border:2px solid #1a1a1a!important;}
+html[data-theme="scrapbook"] #screen-ledger .lg-sync,
+html[data-theme="scrapbook"] #screen-sleep .lg-sync,
+html[data-theme="scrapbook"] #screen-cloth .lg-sync{background:#FFF3E6;color:var(--ink-sub);}
+html[data-theme="scrapbook"] #screen-ledger .lg-side,
+html[data-theme="scrapbook"] #screen-sleep .lg-side,
+html[data-theme="scrapbook"] #screen-cloth .lg-side{
+  background:#FFFFFF;backdrop-filter:none;-webkit-backdrop-filter:none;border-right:2px solid #1a1a1a;
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-nav,
+html[data-theme="scrapbook"] #screen-sleep .lg-nav,
+html[data-theme="scrapbook"] #screen-cloth .lg-nav{
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;font-weight:400;font-size:11px;
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-nav .lg-emoji,
+html[data-theme="scrapbook"] #screen-sleep .lg-nav .lg-emoji,
+html[data-theme="scrapbook"] #screen-cloth .lg-nav .lg-emoji{font-size:18px;}
+html[data-theme="scrapbook"] #screen-ledger .lg-nav.active,
+html[data-theme="scrapbook"] #screen-sleep .lg-nav.active,
+html[data-theme="scrapbook"] #screen-cloth .lg-nav.active{
+  background:#FDEAE6;color:#D94A36;box-shadow:2px 2px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-banner,
+html[data-theme="scrapbook"] #screen-sleep .lg-banner,
+html[data-theme="scrapbook"] #screen-cloth .lg-banner{
+  background:#FFFFFF;border:2px solid #1a1a1a;box-shadow:4px 4px 0 rgba(26,26,26,.85);
+  backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;min-height:0;padding:16px;
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-sum,
+html[data-theme="scrapbook"] #screen-ledger .lg-chart,
+html[data-theme="scrapbook"] #screen-sleep .lg-chart{
+  background:#FFFFFF;border:2px solid #1a1a1a;box-shadow:4px 4px 0 rgba(26,26,26,.85);
+  backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-cal-head button,
+html[data-theme="scrapbook"] #screen-sleep .lg-cal-head button,
+html[data-theme="scrapbook"] .lg-zoom-btn{
+  background:#FFF3E6;color:var(--ink);box-shadow:2px 2px 0 rgba(26,26,26,.85);border:2px solid #1a1a1a;
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+html[data-theme="scrapbook"] #screen-ledger .lg-cell,
+html[data-theme="scrapbook"] #screen-sleep .lg-cell{background:transparent;box-shadow:none;border-radius:8px 3px 10px 3px / 3px 10px 3px 10px;}
+html[data-theme="scrapbook"] #screen-ledger .lg-cell.today,
+html[data-theme="scrapbook"] #screen-sleep .lg-cell.today{background:#FDEAE6;}
+html[data-theme="scrapbook"] #screen-ledger .lg-cell.sel,
+html[data-theme="scrapbook"] #screen-sleep .lg-cell.sel{box-shadow:inset 0 0 0 2px #E8604C;}
+html[data-theme="scrapbook"] #screen-ledger .lg-cell.fu-has{background:#EAF7EA;box-shadow:none;}
+html[data-theme="scrapbook"] #screen-ledger .lg-progress{background:var(--t-divider);}
+html[data-theme="scrapbook"] #screen-ledger .lg-type{background:#FFF3E6;border:1.5px solid #1a1a1a;}
+html[data-theme="scrapbook"] #screen-ledger .lg-budget-row .input{background:#FFFFFF;border:1.5px solid #1a1a1a;}
+html[data-theme="scrapbook"] #screen-ledger .lg-rec,
+html[data-theme="scrapbook"] #screen-sleep .lg-rec,
+html[data-theme="scrapbook"] .fu-item,
+html[data-theme="scrapbook"] .lg-recent-item{border-bottom:1px dashed rgba(26,26,26,.3);}
+html[data-theme="scrapbook"] #screen-ledger .lg-rec:active,
+html[data-theme="scrapbook"] #screen-sleep .lg-rec:active{background:#FFF6E8;}
+html[data-theme="scrapbook"] #screen-ledger .lg-rec .del,
+html[data-theme="scrapbook"] #screen-sleep .lg-rec .del{background:#FDEAE6;border:1.5px solid #1a1a1a;}
+html[data-theme="scrapbook"] #screen-sleep .sp-modal{background:var(--t-modal-bg);border-radius:var(--t-modal-radius);box-shadow:var(--t-modal-shadow);border:2px solid #1a1a1a;}
+html[data-theme="scrapbook"] #screen-sleep .lg-daybar i.sl{background:var(--ink-faint);}
+html[data-theme="scrapbook"] #screen-ledger .lg-donut{box-shadow:none;}
+html[data-theme="scrapbook"] #screen-ledger .lg-donut-hole{background:#FFFFFF;}
+
+/* ---- 6. 通用：卡片 / 按钮 / 输入 / 弹窗 → 手帐纸片 ---- */
+html[data-theme="scrapbook"] .screen-head{background:var(--t-head-bg);border-bottom:2px solid #1a1a1a;}
+html[data-theme="scrapbook"] .screen-head .title{font-size:17px;font-weight:400;letter-spacing:.5px;color:var(--ink);}
+html[data-theme="scrapbook"] .card{
+  border:2px solid #1a1a1a;background:#FFFFFF;box-shadow:4px 4px 0 rgba(26,26,26,.85);
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+html[data-theme="scrapbook"] .card-title{font-size:13px;font-weight:400;color:var(--ink-sub);line-height:20px;}
+html[data-theme="scrapbook"] .input{
+  background:#FFFFFF;border:2px solid #1a1a1a;color:var(--ink);
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+html[data-theme="scrapbook"] .input:focus{box-shadow:3px 3px 0 rgba(26,26,26,.6);}
+html[data-theme="scrapbook"] .input::placeholder{color:var(--ink-faint);}
+html[data-theme="scrapbook"] .chip{background:#FFFFFF;border:1.5px solid #1a1a1a;color:var(--ink-sub);}
+html[data-theme="scrapbook"] .chip.active{background:#FDEAE6;color:#D94A36;}
+html[data-theme="scrapbook"] .btn{font-size:15px;font-weight:400;letter-spacing:0;transition:all .2s ease;}
+html[data-theme="scrapbook"] .btn-secondary{
+  background:#FFFFFF;border:2px solid #1a1a1a;color:var(--ink);box-shadow:3px 3px 0 rgba(26,26,26,.85);
+}
+html[data-theme="scrapbook"] .btn-secondary:active{background:#F1F5F9;box-shadow:1px 1px 0 rgba(26,26,26,.85);}
+html[data-theme="scrapbook"] .btn-primary,
+html[data-theme="scrapbook"] #screen-ledger .btn-primary{background:#F4B942;color:#1a1a1a;box-shadow:4px 4px 0 rgba(26,26,26,.85);border:2px solid #1a1a1a;}
+html[data-theme="scrapbook"] .btn-primary:active,
+html[data-theme="scrapbook"] #screen-ledger .btn-primary:active{background:#E0A72E;box-shadow:2px 2px 0 rgba(26,26,26,.85);}
+html[data-theme="scrapbook"] .btn-sm{font-size:13.5px;letter-spacing:0;}
+html[data-theme="scrapbook"] .wb-x{background:#FDEAE6;color:var(--ink);border:1.5px solid #1a1a1a;}
+/* 列表分隔线：虚线手绘感 */
+html[data-theme="scrapbook"] #screen-home .memo-item,
+html[data-theme="scrapbook"] #screen-ledger .lg-rec,
+html[data-theme="scrapbook"] #screen-sleep .lg-rec,
+html[data-theme="scrapbook"] .fu-item,
+html[data-theme="scrapbook"] .lg-recent-item,
+html[data-theme="scrapbook"] .memo-cal-day{border-color:rgba(26,26,26,.3);}
+
+/* ---- 7. 油价趋势：手帐纸片化 ---- */
+html[data-theme="scrapbook"] #screen-fuel-trend{background:var(--bg);}
+html[data-theme="scrapbook"] #screen-fuel-trend .lg-head{background:#FFFFFF;border-bottom:2px solid #1a1a1a;}
+html[data-theme="scrapbook"] #screen-fuel-trend .lg-head h2{color:var(--ink);}
+html[data-theme="scrapbook"] #screen-fuel-trend .lg-head .back{background:#FFF3E6;color:var(--ink);border:2px solid #1a1a1a;}
+html[data-theme="scrapbook"] #screen-fuel-trend .card{
+  background:#FFFFFF;border:2px solid #1a1a1a;box-shadow:4px 4px 0 rgba(26,26,26,.85);
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+html[data-theme="scrapbook"] #screen-fuel-trend .fuel-price-cell{background:#FFF3E6;border:1.5px solid rgba(26,26,26,.3);}
+html[data-theme="scrapbook"] #screen-fuel-trend .fuel-price-cell .v{color:var(--ink);}
+html[data-theme="scrapbook"] #screen-fuel-trend .fuel-tab{background:#FFF3E6;border:1.5px solid #1a1a1a;color:var(--ink-sub);}
+html[data-theme="scrapbook"] #screen-fuel-trend .fuel-tab.active{background:#FDEAE6;color:#D94A36;}
+html[data-theme="scrapbook"] #screen-fuel-trend .fuel-disclaimer{color:var(--ink-faint);}
+
+/* ---- 8. 待办：手绘 checkbox + 完成项删除线 ---- */
+html[data-theme="scrapbook"] .todo-item.done .todo-tx{color:#9a9a9a;text-decoration:line-through;}
+html[data-theme="scrapbook"] .todo-ck{border:2px solid #1a1a1a;color:var(--ink);border-radius:8px 3px 10px 3px / 3px 10px 3px 10px;}
+html[data-theme="scrapbook"] .todo-item.done .todo-ck{background:#8FCF8F;border-color:#1a1a1a;}
+html[data-theme="scrapbook"] .todo-add{
+  background:#F4B942;color:#1a1a1a;border:2px solid #1a1a1a;box-shadow:2px 2px 0 rgba(26,26,26,.85);
+  border-radius:255px 15px 225px 15px / 15px 225px 15px 255px;
+}

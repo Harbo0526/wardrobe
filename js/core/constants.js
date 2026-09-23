@@ -21,5 +21,5 @@ const LS_KEY_GUEST = 'wardrobe.v1.guest';
 const LS_KEY_LAST = 'wardrobe.v1.lastUser';   // 最近登录用户名：供刷新/重启后自动恢复会话
 const LS_KEY_SESSION = 'wardrobe.v1.session';  // 仅存登录态 {user}（纯云端策略：衣物/图片/调酒等用户数据不落盘）
 
-const WB_THEMES = ['cute', 'minimal'];
+const WB_THEMES = ['cute', 'minimal', 'scrapbook'];  // v5.33.0 新增「手帐绘本」主题
 const THEME_LS_KEY = 'wardrobe.v1.theme';

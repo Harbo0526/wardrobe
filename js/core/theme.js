@@ -38,15 +38,20 @@ function applyTheme(t, persist){
   if(persist){ try{ localStorage.setItem(THEME_LS_KEY, t); }catch(e){} }
   renderThemeUI();
 }
+/* v5.33.0：主题显示名映射（三套视觉：活力卡通 / 极简简约 / 手帐绘本）——
+   setTheme 的 toast 与 renderThemeUI 的副标题共用同一份，避免文案漂移 */
+function themeLabel(t){
+  return t === 'minimal' ? '极简简约' : (t === 'scrapbook' ? '手帐绘本' : '活力卡通');
+}
 function setTheme(t){
   applyTheme(t, true);
-  toast(t === 'minimal' ? '已切换为「极简简约」✓' : '已切换为「活力卡通」✓');
+  toast('已切换为「' + themeLabel(t) + '」✓');
 }
 /* 同步「我的」页副标题与选择面板选中态（元素不存在时静默跳过） */
 function renderThemeUI(){
   const t = getTheme();
   const sub = $('mine-theme-sub');
-  if(sub) sub.textContent = (t === 'minimal' ? '极简简约' : '活力卡通');
+  if(sub) sub.textContent = themeLabel(t);
   document.querySelectorAll('[data-theme-opt]').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-theme-opt') === t);
   });

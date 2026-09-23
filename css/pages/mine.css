@@ -115,6 +115,10 @@
 .tm-prev-min{background:#f6f7f8;}
 .tm-prev-min::before{background:#fff;box-shadow:0 0 0 1px #e5e7eb;}
 .tm-prev-min::after{background:#2e7d5b;}
+/* v5.33.0：手帐绘本主题预览色块（米黄纸底 + 白便签条 + 蜡笔红/姜黄），与主题令牌同色系 */
+.tm-prev-scr{background:#FDFBF7;}
+.tm-prev-scr::before{background:#FFFFFF;box-shadow:0 0 0 2px #1a1a1a;}
+.tm-prev-scr::after{background:#F4B942;box-shadow:0 0 0 2px #1a1a1a;}
 .tm-meta{flex:1;min-width:0;display:flex;flex-direction:column;}
 .tm-meta b{font-size:14px;font-weight:600;color:var(--ink);}
 .tm-meta i{font-style:normal;font-size:11.5px;color:var(--ink-faint);margin-top:2px;line-height:1.4;}
