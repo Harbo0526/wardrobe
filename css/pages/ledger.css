@@ -97,11 +97,16 @@
 #screen-ledger .lg-ov-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 #screen-ledger .lg-ov-card{padding:16px 10px;text-align:center;min-width:0;}
 #screen-ledger .lg-ov-card .k{font-size:12px;color:var(--lg-ink);opacity:.72;}
-/* v5.31.0 响应式基础（R6 长数字）：金额是这里的主数据，不能靠截断也不能靠溢出。
-   做法与项目既有先例一致（.book-money .bm .v 早就这么写）：数字用等宽数位 + 允许在
-   必要时断行；字号只在这张卡的数值上随屏宽轻微收敛（320→15px / 430→20px / ≥447→21px），
-   保证 ¥128,640.50 这类 11 位金额在 320px 两列网格里也放得下（原先会把网格顶出 75px）。 */
-#screen-ledger .lg-ov-card .v{font-size:clamp(15px,4.7vw,21px);font-weight:800;margin-top:6px;line-height:1.2;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+/* v5.31.2（数字框重做）：金额是这里的主数据 —— 原先是「允许断行」，而断行点会落进
+   数字内部（¥11,229.50 被拆成两行），所以改为：**永不折行 + 按屏宽轻微收敛字号 + 省略号兜底**。
+   字号：min(21px,5.4vw) —— 实测 320px 卡片内容宽 93px，10 位金额（¥12,000.00 = 117px@21px）
+   在 17.3px 时刚好放下；389px 以上回到 21px 原字号（视觉不变）。 */
+#screen-ledger .lg-ov-card .v{
+  font-size:clamp(13px,4.3vw,21px);font-weight:800;margin-top:6px;line-height:1.2;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;
+  overflow:hidden;text-overflow:ellipsis;
+}
 #screen-ledger .lg-ov-card.inc .v{color:var(--lg-inc);}
 #screen-ledger .lg-ov-card.exp .v{color:var(--lg-exp);}
 #screen-ledger .lg-ov-card.net .v{color:var(--lg-primary);}
@@ -159,7 +164,13 @@
 /* 统计 */
 #screen-ledger .lg-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:6px 0 12px;}
 #screen-ledger .lg-sum{padding:16px 4px;text-align:center;}
-#screen-ledger .lg-sum .v{font-size:18px;font-weight:800;color:var(--lg-deep);}
+/* v5.31.2（数字框重做）：统计卡数值同样「永不折行 + 轻微收敛 + 省略号兜底」 */
+#screen-ledger .lg-sum .v{
+  font-size:clamp(14px,4.3vw,18px);font-weight:800;color:var(--lg-deep);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;
+  overflow:hidden;text-overflow:ellipsis;
+}
 #screen-ledger .lg-sum.inc .v{color:var(--lg-inc);}
 #screen-ledger .lg-sum.exp .v{color:var(--lg-exp);}
 #screen-ledger .lg-sum.net .v{color:var(--lg-primary);}
@@ -185,7 +196,14 @@
 #screen-ledger .lg-rec .ri{flex:1;min-width:0;}
 #screen-ledger .lg-rec .ri .t{font-size:14px;font-weight:600;color:var(--lg-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #screen-ledger .lg-rec .ri .s{font-size:11px;color:var(--lg-ink);opacity:.6;margin-top:1px;}
-#screen-ledger .lg-rec .amt{font-weight:800;font-size:15px;flex:0 0 auto;}
+/* v5.31.2（数字框重做）：明细行金额 —— 原先 flex:0 0 auto 且无溢出方案，超长金额会顶出卡片；
+   现在永不折行、按屏宽收敛字号、必要时省略号（右侧金额栏宽度由内容决定，不影响左侧文字省略） */
+#screen-ledger .lg-rec .amt{
+  font-weight:800;font-size:clamp(13px,4vw,15px);flex:0 0 auto;max-width:48%;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;
+  overflow:hidden;text-overflow:ellipsis;text-align:right;
+}
 #screen-ledger .lg-rec.exp .amt{color:var(--lg-exp);}
 #screen-ledger .lg-rec.inc .amt{color:var(--lg-inc);}
 /* v5.7.2：记账明细整行可点击 → 放大查看/二次编辑；⛽ 标记表示该笔由油费记录同步生成 */
@@ -209,19 +227,43 @@
 .book-money{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px;}
 .book-money .bm{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-card);padding:12px 14px;min-width:0;}
 .book-money .bm .t{font-size:12px;color:var(--ink-sub);}
-.book-money .bm .v{font-size:22px;font-weight:800;margin-top:6px;color:var(--ink);overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+/* v5.31.2（数字框重做）：金额**永不折行**（数字中间断行会读错数字）。
+   实测 320px 卡片内容宽 85px，而 ¥12,000.00 在 22px 下要 117px → 原来被折成 2 行。
+   现改为 clamp(15px,4.9vw,22px) + 等宽数位 + 省略号兜底：
+   320→15.7px / 360→17.6 / 390→19.1 / 414→20.3 / ≥449→22px（回到原字号）。 */
+.book-money .bm .v{
+  font-size:clamp(13px,4.25vw,22px);font-weight:800;margin-top:6px;color:var(--ink);
+  font-variant-numeric:tabular-nums;line-height:1.25;
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;
+  overflow:hidden;text-overflow:ellipsis;
+}
 .book-money .bm.inc .v{color:var(--lg-inc);}
 .book-money .bm.exp .v{color:var(--lg-exp);}
-/* 支出分类：每类一张卡片，一行两列网格（移动端同样两列） */
+/* 支出分类：每类一张卡片，一行两列网格（移动端同样两列）
+   v5.31.2：卡片内部改 grid（**信息量、卡片宽高、圆角、内边距、图标块一律不变**）——
+   第 1 行「图标 + 分类名 + 占比」，第 2 行「金额（占满图标右侧整行）」。
+   原因：原来是 flex，金额(.bv) 与占比(.bp) 同排抢宽度 → 实测 360px 下金额只剩 34px、
+   320px 只剩 7px，于是 ¥816.57（需 49px）被折成 3 行、卡片高度从 56px 涨到 107px。 */
 .book-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;align-items:stretch;}
-.book-row{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r-card);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card);min-width:0;}
-.book-row .bi{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;background:var(--primary-soft);}
-.book-row .bmid{flex:1 1 auto;min-width:0;}
-.book-row .bn{font-size:13px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-/* v5.31.0（R6）：金额原先 nowrap → 金额一长就整行溢出分类卡（.bmid 只有 ellipsis 的名字，
-   金额本身没有溢出方案）。改为「正常单行、放不下才断行」，并保留等宽数位。 */
-.book-row .bv{font-size:13px;font-weight:800;color:var(--ink);margin-top:2px;font-variant-numeric:tabular-nums;white-space:normal;overflow-wrap:anywhere;}
-.book-row .bp{flex:0 0 auto;align-self:flex-start;margin-top:1px;font-size:12px;color:var(--ink-sub);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.book-row{
+  display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;
+  column-gap:9px;row-gap:0;
+  padding:9px 11px;border-radius:var(--r-card);background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card);min-width:0;
+}
+.book-row .bi{grid-column:1;grid-row:1 / span 2;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1;background:var(--primary-soft);}
+/* display:contents：把 .bmid 内的「分类名 / 金额」提升为 grid 项（DOM 与 class 一字未改，不动 JS） */
+.book-row .bmid{display:contents;}
+.book-row .bn{grid-column:2;grid-row:1;min-width:0;font-size:13px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* 金额：独占第 2 行（图标右侧 → 卡片右边），**永不折行**；放不下时按屏宽收敛字号，最后才用省略号兜底。
+   实测可用宽 53/73/88/100px（320/360/390/414），¥816.57 只需 41/46/50/51px → 各宽度都能整行显示。 */
+.book-row .bv{
+  grid-column:2 / -1;grid-row:2;min-width:0;
+  font-size:clamp(11px,3.4vw,13.5px);font-weight:800;color:var(--ink);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;
+  overflow:hidden;text-overflow:ellipsis;
+}
+.book-row .bp{grid-column:3;grid-row:1;justify-self:end;font-size:12px;color:var(--ink-sub);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .book-tip{margin-top:10px;background:var(--primary-soft);}
 .book-tip p{margin:0;font-size:12.5px;line-height:1.7;color:var(--ink-sub);}
 /* ============ v5.5.0：概览「最近消费」卡片（约 5 行高度，超出可上下滚动） ============ */
@@ -230,7 +272,13 @@
 .lg-recent-item:last-child{border-bottom:none;}
 .lg-recent-item .rc-date{flex:0 0 auto;min-width:74px;font-size:11px;color:var(--lg-ink);opacity:.85;white-space:nowrap;}
 .lg-recent-item .rc-main{flex:1;min-width:0;}
-.lg-recent-item .rc-amt{font-size:14.5px;font-weight:700;color:var(--lg-exp);}
+/* v5.31.2（数字框重做）：最近收支金额 —— 永不折行 + 轻微收敛 + 省略号兜底 */
+.lg-recent-item .rc-amt{
+  font-size:clamp(12.5px,3.9vw,14.5px);font-weight:700;color:var(--lg-exp);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow-wrap:normal;word-break:keep-all;
+  overflow:hidden;text-overflow:ellipsis;
+}
 .lg-recent-item .rc-sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ===== v5.26.0：记账可点击元素的手型光标（不改变任何布局/尺寸/配色） =====

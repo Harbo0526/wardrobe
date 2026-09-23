@@ -64,25 +64,25 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="生活象限">
-<link rel="stylesheet" href="./css/variables.css?v=5.31.1">
-<link rel="stylesheet" href="./css/reset.css?v=5.31.1">
-<link rel="stylesheet" href="./css/layout.css?v=5.31.1">
-<link rel="stylesheet" href="./css/components.css?v=5.31.1">
-<link rel="stylesheet" href="./css/common.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/auth.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/home.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/cloth.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/group.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/upload.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/mine.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/cocktail.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/ledger.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/sleep.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/todo.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/fuel.css?v=5.31.1">
-<link rel="stylesheet" href="./css/pages/time.css?v=5.31.1">
-<link rel="stylesheet" href="./css/overrides.css?v=5.31.1">
-<link rel="stylesheet" href="./css/theme.css?v=5.31.1">
+<link rel="stylesheet" href="./css/variables.css?v=5.31.2">
+<link rel="stylesheet" href="./css/reset.css?v=5.31.2">
+<link rel="stylesheet" href="./css/layout.css?v=5.31.2">
+<link rel="stylesheet" href="./css/components.css?v=5.31.2">
+<link rel="stylesheet" href="./css/common.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/auth.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/home.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/cloth.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/group.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/upload.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/mine.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/cocktail.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/ledger.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/sleep.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/todo.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/fuel.css?v=5.31.2">
+<link rel="stylesheet" href="./css/pages/time.css?v=5.31.2">
+<link rel="stylesheet" href="./css/overrides.css?v=5.31.2">
+<link rel="stylesheet" href="./css/theme.css?v=5.31.2">
 </head>
 <body>
 <script>
@@ -1992,12 +1992,12 @@
 </div>
 
 <!-- core（Phase 3–4 / v5.14.6）：公共常量、工具函数与通用弹窗框架；必须在主内联脚本之前加载（主脚本顶层语句解析期即用 $） -->
-<script src="./js/core/constants.js?v=5.31.1"></script>
-<script src="./js/core/utils.js?v=5.31.1"></script>
-<script src="./js/core/overlays.js?v=5.31.1"></script>
-<script src="./js/core/render.js?v=5.31.1"></script>
+<script src="./js/core/constants.js?v=5.31.2"></script>
+<script src="./js/core/utils.js?v=5.31.2"></script>
+<script src="./js/core/overlays.js?v=5.31.2"></script>
+<script src="./js/core/render.js?v=5.31.2"></script>
 <!-- Theme 核心模块（Phase 3 续 / v5.22.0）：UI 风格切换（getTheme/applyTheme/setTheme/renderThemeUI/openThemeSheet/initTheme）；只设置 html[data-theme] + localStorage，无 loading-time 语句 → core 组，早于主脚本 -->
-<script src="./js/core/theme.js?v=5.31.1"></script>
+<script src="./js/core/theme.js?v=5.31.2"></script>
 <script>
 /* ============================================================
    电子衣橱 · 原型交互逻辑（中文注释）
@@ -2015,7 +2015,7 @@ function rememberLastUser(name){
 
 
 /* ---------- 版本号 ---------- */
-const APP_VERSION = '5.31.1';
+const APP_VERSION = '5.31.2';
 /* v2.8.4 新增记账工作台：移动端左右分栏（左 80px 导航 + 右主区），录入/日历/月度统计/区间查询（柱状图+折线图），数据独立存 ledger.json 按账号隔离、纯云端 */
 
 const DEFAULT_GROUPS = [
@@ -3365,62 +3365,62 @@ function normalizeFuel(F0){
 })();
 </script>
 <!-- Cocktail 页面模块（Phase 5 / v5.14.7）：来自原主脚本的调酒页逻辑；仅事件绑定，运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/cocktail.js?v=5.31.1"></script>
+<script src="./js/pages/cocktail.js?v=5.31.2"></script>
 <!-- Fuel 页面模块（Phase 5 候选 C / v5.15.0）：来自原主脚本的油费记账页逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/fuel.js?v=5.31.1"></script>
+<script src="./js/pages/fuel.js?v=5.31.2"></script>
 <!-- Memo 页面模块（Phase 5 候选 D / v5.16.0）：来自原主脚本的备忘页逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/memo.js?v=5.31.1"></script>
+<script src="./js/pages/memo.js?v=5.31.2"></script>
 <!-- Todo 页面模块（Phase 5 候选 D / v5.16.0）：来自原主脚本的待办清单 + 页面内提醒；加载期只注册监听/定时器 → 置于主脚本之后 -->
-<script src="./js/pages/todo.js?v=5.31.1"></script>
+<script src="./js/pages/todo.js?v=5.31.2"></script>
 <!-- Sleep 页面模块（Phase 5 候选 D / v5.16.0）：来自原主脚本的睡眠屏逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/sleep.js?v=5.31.1"></script>
+<script src="./js/pages/sleep.js?v=5.31.2"></script>
 <!-- Ledger 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的记账工作台逻辑；仅事件绑定与运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/ledger.js?v=5.31.1"></script>
+<script src="./js/pages/ledger.js?v=5.31.2"></script>
 <!-- Cloth 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的衣橱页逻辑；仅事件绑定与运行期调用 -->
-<script src="./js/pages/cloth.js?v=5.31.1"></script>
+<script src="./js/pages/cloth.js?v=5.31.2"></script>
 <!-- Group 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的分组管理逻辑；openSheet 的 sheet-group 分支仍留在主脚本（host → page 懒调用） -->
-<script src="./js/pages/group.js?v=5.31.1"></script>
+<script src="./js/pages/group.js?v=5.31.2"></script>
 <!-- Upload 页面模块（Phase 5 候选 E / v5.17.0）：来自原主脚本的上传页逻辑；含 2 条加载期 change 监听注册（原样保留） -->
-<script src="./js/pages/upload.js?v=5.31.1"></script>
+<script src="./js/pages/upload.js?v=5.31.2"></script>
 <!-- Mine 页面模块（Phase 5 候选 F / v5.18.0）：来自原主脚本的「我的」页 + 用户名 + 头像 + 同步状态；含 2 条加载期 change 监听注册（原样保留） -->
-<script src="./js/pages/mine.js?v=5.31.1"></script>
+<script src="./js/pages/mine.js?v=5.31.2"></script>
 <!-- Announcement 页面模块（Phase 5 收尾 / v5.19.0）：来自原主脚本的公告（ann*）与「关于」入口；无加载期语句，仅运行期调用 → 置于主脚本之后 -->
-<script src="./js/pages/announcement.js?v=5.31.1"></script>
+<script src="./js/pages/announcement.js?v=5.31.2"></script>
 <!-- Nav 模块（Phase 5 收尾 / v5.20.0）：左侧导航自定义排序；含 2 条加载期语句（pointerdown 捕获监听 + initNavSort()），仅依赖 DOM → 置于主脚本之后、page 组末尾 -->
-<script src="./js/pages/nav.js?v=5.31.1"></script>
+<script src="./js/pages/nav.js?v=5.31.2"></script>
 <!-- Time 页面模块（v5.28.0）：时光页（即将到来/持续中/已结束）+ 新增/编辑弹窗 + 首页焦点卡取数；
      含 3 条加载期 change/input 绑定（脚本位于 body 末尾，DOM 已就绪）→ 置于主脚本之后、home 之前（home 运行期调用它） -->
-<script src="./js/pages/time.js?v=5.31.1"></script>
+<script src="./js/pages/time.js?v=5.31.2"></script>
 <!-- Home 页面模块（Phase 5 / v5.21.0）：总首页渲染 + 励志语录（含 base64 意境图常量）；无加载期语句 → 置于主脚本之后、page 组末尾 -->
-<script src="./js/pages/home.js?v=5.31.1"></script>
+<script src="./js/pages/home.js?v=5.31.2"></script>
 <!-- Supabase 环境接入（Phase 1）：仅统一 client 初始化与连通自检，不含任何业务逻辑 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="./js/config.js?v=5.31.1"></script>
-<script src="./js/data/supabase.js?v=5.31.1"></script>
+<script src="./js/config.js?v=5.31.2"></script>
+<script src="./js/data/supabase.js?v=5.31.2"></script>
 <!-- Data Access Layer（Phase 5）：统一数据访问边界，未删除任何旧 Gitee 同步逻辑 -->
-<script src="./js/data/errors.js?v=5.31.1"></script>
-<script src="./js/data/query.js?v=5.31.1"></script>
-<script src="./js/auth/session.js?v=5.31.1"></script>
-<script src="./js/data/groups.js?v=5.31.1"></script>
-<script src="./js/data/clothgroups.js?v=5.31.1"></script>
-<script src="./js/data/clothes.js?v=5.31.1"></script>
-<script src="./js/data/modules.js?v=5.31.1"></script>
-<script src="./js/data/index.js?v=5.31.1"></script>
-<script src="./js/storage/paths.js?v=5.31.1"></script>
-<script src="./js/storage/images.js?v=5.31.1"></script>
-<script src="./js/storage/index.js?v=5.31.1"></script>
-<script src="./js/auth/index.js?v=5.31.1"></script>
-<script src="./js/bridge/legacy-sync.js?v=5.31.1"></script>
+<script src="./js/data/errors.js?v=5.31.2"></script>
+<script src="./js/data/query.js?v=5.31.2"></script>
+<script src="./js/auth/session.js?v=5.31.2"></script>
+<script src="./js/data/groups.js?v=5.31.2"></script>
+<script src="./js/data/clothgroups.js?v=5.31.2"></script>
+<script src="./js/data/clothes.js?v=5.31.2"></script>
+<script src="./js/data/modules.js?v=5.31.2"></script>
+<script src="./js/data/index.js?v=5.31.2"></script>
+<script src="./js/storage/paths.js?v=5.31.2"></script>
+<script src="./js/storage/images.js?v=5.31.2"></script>
+<script src="./js/storage/index.js?v=5.31.2"></script>
+<script src="./js/auth/index.js?v=5.31.2"></script>
+<script src="./js/bridge/legacy-sync.js?v=5.31.2"></script>
 <!-- Phase 7（v5.23.0）：Legacy Gitee Transport 已从主内联脚本隔离到此文件；
      仅保留 ROLLBACK-ONLY 能力，giteeFetch 首行守卫保证不发出任何 gitee.com 请求 -->
-<script src="./js/legacy/gitee-sync.js?v=5.31.1"></script>
+<script src="./js/legacy/gitee-sync.js?v=5.31.2"></script>
 <!-- 油费趋势（v5.12.2）：模块已引入但首页入口卡片暂隐藏；上线时取消首页卡片注释即可 -->
 <!-- Time 服务层（v5.28.0）：日期与重复周期计算的**唯一实现处**（本地日历日、月/年推进、
      2/29 非闰年取 2/28、第 n 次发生日、下一次发生日、事件状态、排序）；纯函数、无加载期语句 → services 组 -->
-<script src="./js/services/time.js?v=5.31.1"></script>
+<script src="./js/services/time.js?v=5.31.2"></script>
 <!-- Phase 8（v5.24.0）：Push / Reminder 服务已从主内联脚本隔离到此文件（Classic Script）；
      WBReminders / push* / CH_SPECS / ch* 仍为裸全局，markup onclick 与 mine.js 调用方零改动 -->
-<script src="./js/services/push.js?v=5.31.1"></script>
-<script src="./js/fuel.js?v=5.31.1"></script>
+<script src="./js/services/push.js?v=5.31.2"></script>
+<script src="./js/fuel.js?v=5.31.2"></script>
 </body>
 </html>
