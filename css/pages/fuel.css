@@ -11,7 +11,18 @@
 .fu-item{cursor:pointer;}
 .fu-item:active{background:rgba(255,214,231,.35);border-radius:10px;}
 /* v5.7.2：日志查询「某天至某天」响应式修复——grid 的 minmax(0,1fr) 保证窄屏可收缩，
-   字号/内边距/高度用 clamp() 随屏宽自适应；不使用固定像素宽度、也不隐藏任何元素。 */
+   字号/内边距/高度用 clamp() 随屏宽自适应；不使用固定像素宽度、也不隐藏任何元素。
+   v5.33.1 bugfix（日期框只显示到「2026/09」、日字段被裁）：overrides.css 的
+   防 iOS 聚焦缩放规则（.fu-query-row .input{font-size:16px}，在 fuel.css 之后加载）
+   覆盖了本文件原 clamp 字号 —— 16px 下「2026/09/17」+ 默认日历图标（⌄ 约 24px 含 margin）
+   + 较大内边距 > 半行宽，又因 overrides 的 ::-webkit-datetime-edit{overflow:hidden}
+   把放不下的右侧「日」字段静默裁掉。修复：以 #screen-ledger 前缀提高特异性夺回控制权，
+   **字号保持 16px**（降回 15px 会重新触发 iOS 聚焦缩放回归），改为压缩非文字空间：
+   ① 内边距收紧到 0 8px；② 日历指示器压到 16px、零 margin；
+   ③ datetime-edit 文字左对齐 —— 三段年月日始终完整可见。 */
+#screen-ledger .fu-query-row .input{padding:0 8px;}
+#screen-ledger .fu-query-row .input::-webkit-calendar-picker-indicator{margin:0;padding:0;width:16px;height:16px;}
+#screen-ledger .fu-query-row .input::-webkit-datetime-edit{text-align:left;}
 .fu-query-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:clamp(4px,1.6vw,8px);margin-top:8px;width:100%;}
 .fu-query-row .input{width:100%;min-width:0;box-sizing:border-box;height:clamp(40px,11vw,48px);padding:0 clamp(8px,2.4vw,14px);font-size:clamp(11px,3.2vw,15px);text-overflow:ellipsis;}
 .fu-query-sep{flex:0 0 auto;font-size:clamp(11px,3.2vw,12px);color:var(--ink-faint);white-space:nowrap;line-height:1;}
