@@ -471,6 +471,25 @@ function homeSumText(id, txt){
   const el = $(id);
   if(el && txt != null) el.textContent = txt;
 }
+/* v5.33.4：首页**记账卡**专用的「本月收支」分色渲染 —— ↑入账（绿）/ ↓支出（红）。
+   只改颜色呈现：字号、省略号兜底、卡片尺寸与其它卡片逻辑一律不动，色值由 CSS 按主题给。
+   用 createElement + textContent（不拼 innerHTML）；空态沿用原有文案「本月还没有记录」。
+   其它入口卡（睡眠 / 调酒 / 时光 / 衣橱 / 我的）仍走 homeSumText，行为完全不变。 */
+function homeSumIe(id, incTxt, expTxt){
+  const el = $(id);
+  if(!el) return;
+  if(incTxt == null || expTxt == null){ el.textContent = '本月还没有记录'; return; }
+  el.textContent = '';
+  const up = document.createElement('span');
+  up.className = 'gc-up';
+  up.textContent = incTxt;
+  const down = document.createElement('span');
+  down.className = 'gc-down';
+  down.textContent = expTxt;
+  el.appendChild(up);
+  el.appendChild(document.createTextNode(' · '));
+  el.appendChild(down);
+}
 /* 4px 条：bar = {pct} 或 {left,width}（均为百分比）；无分母（bar 为 null）→ 整条隐藏 */
 function homeSumBar(id, bar){
   const el = $(id);
@@ -504,7 +523,8 @@ function renderHomeSummaries(){
     if(typeof lgHomeSummary === 'function'){
       const s = lgHomeSummary();
       homeSumText('he-ledger', s.value);
-      homeSumText('he-ledger-aux', s.aux);
+      /* v5.33.4：本月收支改分色渲染（↑入账绿 / ↓支出红）；结构相同、仅颜色不同 */
+      homeSumIe('he-ledger-aux', s.auxInc, s.auxExp);
       homeSumRing('he-ledger-ring', s.ring);
     }
   }catch(e){ }

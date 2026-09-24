@@ -253,6 +253,12 @@
   color:#5c7e9c;text-shadow:0 1px 0 rgba(255,255,255,.55);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0;
 }
+/* v5.33.4：首页**记账卡**「本月收支」分色 —— ↑入账 = 绿、↓支出 = 红（只改颜色）。
+   色值取记账页语义色（活力卡通 = --lg-inc #69D19D / --lg-red #FF4D6D，见 css/pages/ledger.css）；
+   极简与手帐主题的覆盖在 css/theme.css。
+   ⚠️ 刻意不碰字号 / 行高 / nowrap / ellipsis：分色后窄屏的省略号兜底与卡片高度基线完全不变。 */
+#screen-home #home-entries .gc-aux .gc-up{color:#69D19D;}
+#screen-home #home-entries .gc-aux .gc-down{color:#FF4D6D;}
 
 /* ---------- 只保留两个「说得清含义」的图形 ----------
    ① 28px 环（记账 = 本月收支构成：绿弧=入账、红弧=支出；v5.30.1 由 14px 放大 1 倍，

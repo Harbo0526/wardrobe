@@ -123,6 +123,10 @@ html[data-theme="minimal"] .gc-emoji{font-size:22px;}
 html[data-theme="minimal"] #screen-home #home-entries .gc-value{color:var(--ink);text-shadow:none;}
 html[data-theme="minimal"] #screen-home #home-entries .gc-note,
 html[data-theme="minimal"] #screen-home #home-entries .gc-aux{color:var(--ink-faint);text-shadow:none;}
+/* v5.33.4：首页记账卡「本月收支」分色（极简）—— 取记账页极简语义色（--lg-inc #4E9A6B /
+   --lg-red #C0574B），与其它记账数字同色系；空态文案仍走上面的 --ink-faint。 */
+html[data-theme="minimal"] #screen-home #home-entries .gc-aux .gc-up{color:#4E9A6B;}
+html[data-theme="minimal"] #screen-home #home-entries .gc-aux .gc-down{color:#C0574B;}
 /* v5.30.1：进度条填充 —— 极简模式**保持绿色**（var(--primary) = #5F8F62），
    只有活力卡通模式改成红色（见 css/pages/home.css 的 .gc-bar > i）。 */
 html[data-theme="minimal"] #screen-home #home-entries .gc-bar > i{background:var(--primary);}
@@ -426,6 +430,11 @@ html[data-theme="scrapbook"] #screen-home #home-entries .gc-value{font-size:16px
 html[data-theme="scrapbook"] #screen-home #home-entries #he-time{font-size:24px;color:#E8604C;}
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-note,
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-aux{color:var(--ink-faint);text-shadow:none;}
+/* v5.33.4：首页记账卡「本月收支」分色（手帐）—— 取本主题**文字用**的收支色
+   （与 .wb-row .v.inc/.exp 一致：#5FA85F / #E8604C；主题的 --lg-inc #8FCF8F 偏浅，
+   9.5px 小字在米黄纸底上对比度不足，故文字沿用深一档的既有先例）。 */
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-aux .gc-up{color:#5FA85F;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-aux .gc-down{color:#E8604C;}
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-bar > i{background:#8FCF8F;}
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-ring{
   background:conic-gradient(#8FCF8F 0 var(--ring-p,0%), #E8604C var(--ring-p,0%) 100%);

@@ -114,6 +114,12 @@ function lgHomeSummary(){
     /* 收支去掉 ¥ 号（核心数据已带 ¥，卡片里也足够表明是钱）——这一栏与模块名同行，宽度有限 */
     aux: hit ? ('↑' + lgFmtTiny(inc).replace('¥', '') + ' · ↓' + lgFmtTiny(exp).replace('¥', ''))
              : '本月还没有记录',
+    /* v5.33.4：首页记账卡「本月收支」**分色渲染**所需的两个片段 —— ↑入账（绿）/ ↓支出（红），
+       具体色值由 CSS 按主题给（css/pages/home.css + css/theme.css 的 minimal/scrapbook 覆盖）。
+       与 aux 同源同口径，只是拆成两段；aux 保留不动（纯文本场景 / 兼容）。
+       无记录时同为 null → 渲染层回落到 aux 的空态文案「本月还没有记录」。 */
+    auxInc: hit ? ('↑' + lgFmtTiny(inc).replace('¥', '')) : null,
+    auxExp: hit ? ('↓' + lgFmtTiny(exp).replace('¥', '')) : null,
     /* v5.32.5：环语义 = 收支构成（CSS 绿弧 0→--ring-p、红弧 --ring-p→100%），
        --ring-p 写入账占比 inc/(inc+exp)；只有支出没有收入时（inc+exp>0）仍显示
        （全红环 = 全是支出），比隐藏更有信息量；本月无任何收支 → null 隐藏 */
