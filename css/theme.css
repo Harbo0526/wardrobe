@@ -415,8 +415,14 @@ html[data-theme="scrapbook"] .avatar{
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-name{color:var(--ink);text-shadow:none;font-weight:400;}
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-count{color:var(--ink-faint);text-shadow:none;}
 html[data-theme="scrapbook"] .gc-emoji{font-size:22px;}
-html[data-theme="scrapbook"] #screen-home #home-entries .gc-stack .gc-emoji{font-size:18px;}
-html[data-theme="scrapbook"] #screen-home #home-entries .gc-value{font-size:20px;font-weight:400;color:var(--ink);text-shadow:none;}
+/* v5.33.2（手帐主题首页卡片「显示不全」修复）：v5.33.0 引入本主题时，把首页数据卡
+   的字号放大了一档（.gc-stack 图标 14→18px、.gc-value 16→20px）、卡片内边距 14→16px，
+   但没有沿用 v5.30.0/v5.31.0 定下的首页卡片基线 —— 两列网格里卡片内容宽只有 ~127px，
+   字号放大 25% 后「睡眠」卡的 `23:48 → 07:20`、「94% · 距8h差28m」等 nowrap 辅助文字被
+   ellipsis 截断。修复 = **复用既有基线数值**：图标与核心数据回到与其它主题一致的档位
+   （手帐风由手写体 + 黑描边 + 纸片旋转承载，不靠放大字号）。 */
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-stack .gc-emoji{font-size:14px;}
+html[data-theme="scrapbook"] #screen-home #home-entries .gc-value{font-size:16px;font-weight:400;color:var(--ink);text-shadow:none;}
 html[data-theme="scrapbook"] #screen-home #home-entries #he-time{font-size:24px;color:#E8604C;}
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-note,
 html[data-theme="scrapbook"] #screen-home #home-entries .gc-aux{color:var(--ink-faint);text-shadow:none;}

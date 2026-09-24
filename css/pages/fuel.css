@@ -20,12 +20,16 @@
    **字号保持 16px**（降回 15px 会重新触发 iOS 聚焦缩放回归），改为压缩非文字空间：
    ① 内边距收紧到 0 8px；② 日历指示器压到 16px、零 margin；
    ③ datetime-edit 文字左对齐 —— 三段年月日始终完整可见。 */
-#screen-ledger .fu-query-row .input{padding:0 8px;}
+/* v5.33.2：日志查询改「2 行 × 2 列」——第一行「起始」+ 日期，第二行「结束」+ 日期
+   （DOM 见 index.html 的 .fu-query-row）。日期框独占整行剩余宽度，年月日**不再需要**
+   靠压缩内边距 / 图标来腾空间：v5.33.1 的压缩规则保留为更窄屏的兜底，内边距回到常规档。
+   注意：字号仍由 css/overrides.css 的防 iOS 聚焦缩放规则锁 16px（勿在本文件降字号）。 */
+.fu-query-row{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:8px clamp(6px,1.8vw,10px);margin-top:8px;width:100%;}
+.fu-query-lab{font-size:clamp(11px,3.2vw,13px);color:var(--ink-faint);white-space:nowrap;line-height:1;text-align:right;}
+.fu-query-row .input{width:100%;min-width:0;box-sizing:border-box;height:clamp(40px,11vw,48px);padding:0 clamp(8px,2.4vw,14px);font-size:clamp(11px,3.2vw,15px);}
+#screen-ledger .fu-query-row .input{padding:0 clamp(8px,2.4vw,14px);}
 #screen-ledger .fu-query-row .input::-webkit-calendar-picker-indicator{margin:0;padding:0;width:16px;height:16px;}
 #screen-ledger .fu-query-row .input::-webkit-datetime-edit{text-align:left;}
-.fu-query-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:clamp(4px,1.6vw,8px);margin-top:8px;width:100%;}
-.fu-query-row .input{width:100%;min-width:0;box-sizing:border-box;height:clamp(40px,11vw,48px);padding:0 clamp(8px,2.4vw,14px);font-size:clamp(11px,3.2vw,15px);text-overflow:ellipsis;}
-.fu-query-sep{flex:0 0 auto;font-size:clamp(11px,3.2vw,12px);color:var(--ink-faint);white-space:nowrap;line-height:1;}
 /* v5.7.2：油费日历「当天明细 + 当天统计」 */
 .fu-cal-day{margin-top:10px;border-top:1px dashed rgba(255,143,179,.45);padding-top:8px;}
 .fu-cal-day .cdh{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-bottom:6px;}

@@ -275,14 +275,24 @@ function lgOneRecHTML(r){
     '<span class="amt">' + (r.type==='inc'?'+':'−') + lgFmtMoney(r.amount) + '</span>' +
     '<button class="del press" data-id="' + r.id + '">✕</button></div>';
 }
-/* v5.7.2：明细行 → 放大详情弹窗；✕ → 删除（阻止冒泡，避免误开详情） */
+/* v5.7.2：明细行 → 放大详情弹窗；✕ → 删除（阻止冒泡，避免误开详情）
+   v5.33.2：✕ 删除前先二次确认 —— 明细卡右侧的 ✕ 与详情弹窗里的「删除」同口径
+   （lgDeleteEdit 早就走 confirm），文案与判据完全一致，避免误触直接删掉一条记账。 */
 function lgBindRecClicks(box){
   if(!box) return;
   box.querySelectorAll('.lg-rec[data-lgid]').forEach(function(el){
     el.onclick = function(){ lgOpenDetail(el.getAttribute('data-lgid')); };
   });
   box.querySelectorAll('.del').forEach(function(b){
-    b.onclick = function(ev){ if(ev) ev.stopPropagation(); lgDeleteRec(b.dataset.id); };
+    b.onclick = function(ev){
+      if(ev) ev.stopPropagation();
+      const r = lgRecById(b.dataset.id);
+      const msg = (r && r.fuelId)
+        ? '删除这条记账记录？（「' + (r.cat === '⚡ 电费' ? '⚡ 电费' : '⛽ 油费') + '」原始记录不会被删除）'
+        : '删除这条记账记录？';
+      if(!confirm(msg)) return;
+      lgDeleteRec(b.dataset.id);
+    };
   });
 }
 function lgRenderDayChart(date){
@@ -736,11 +746,19 @@ function lgRenderStats(){
   const days = Array.from(new Set(Object.keys(incByDay).concat(Object.keys(expByDay))));   /* v5.6.4：去重，避免同一天收+支出现两根柱子 */
   if(!days.length){ box.innerHTML = '<div class="empty"><span class="empty-emoji">📭</span><div class="empty-text">本月暂无记录</div></div>'; return; }
   const maxv = Math.max(1, ...days.map(d => expByDay[d] || 0), ...days.map(d => incByDay[d] || 0));
+  /* v5.33.2：柱高改用**开方缩放**（与 lgGroupBarSVG 同一规则，见该函数注释）——
+     线性比例下「25 元 vs 6400 元」= 0.4%，柱高不足 1px，只能靠 2px 保底，小额看不出量级。
+     v5.33.3：**该侧金额为 0 时不再画柱** —— 原实现 hOf(0) 也返回 2px（外加 CSS 的
+     `min-height:2px`），于是「只有支出的一天」右侧仍多出一根 2px 绿柱，看起来像当天有收入。
+     现在金额为 0 时整根 `<i>` 不输出（彻底不占位；.lg-daybar 本身定宽 16px，横轴对齐不变）。 */
+  const hOf = v => v > 0 ? Math.max(2, 56 * Math.sqrt(v / maxv)) : 0;
   box.innerHTML = days.sort().map(d => {
     const ei = Math.round((expByDay[d] || 0) * 100) / 100, ii = Math.round((incByDay[d] || 0) * 100) / 100;
-    const he = Math.max(2, 56 * ei / maxv), hi = Math.max(2, 56 * ii / maxv);
+    const he = hOf(ei), hi = hOf(ii);
+    const barE = he > 0 ? '<i class="exp" style="height:' + he + 'px"></i>' : '';
+    const barI = hi > 0 ? '<i class="inc" style="height:' + hi + 'px"></i>' : '';
     return '<div class="lg-daybar" title="' + d + ' 收' + lgFmtMoney(ii) + ' 支' + lgFmtMoney(ei) + '">' +
-      '<div class="bi"><i class="exp" style="height:' + he + 'px"></i><i class="inc" style="height:' + hi + 'px"></i></div>' +
+      '<div class="bi">' + barE + barI + '</div>' +
       '<small>' + parseInt(d.slice(8), 10) + '</small></div>';
   }).join('');
 }
@@ -924,19 +942,29 @@ function lgGroupBarSVG(labels, arrA, arrB, colorA, colorB){
   const W = Math.max(280, n * 46), H = 190, padL = 40, padB = 34, padT = 30, padR = 10;   /* v5.9.0：顶部留白放大数值标注 */
   const cw = W - padL - padR, ch = H - padT - padB;
   const max = Math.max(1, ...arrA, ...arrB);
+  /* v5.33.2：柱高由**线性比例**改为**开方缩放**（ratio = √(v/max)）。
+     背景：用户实测「6400 元与 25 元同图」时，线性比例下 25/6400 = 0.39%，
+     126px 的绘图区里柱高只有 0.49px ⇒ 小额被完全压平，图形完全读不出量级差异。
+     开方后 25 元 = 6.25%（约 8px，清晰可见），6400 元仍满高 —— 保留「谁大谁小」的
+     单调性与直观对比，同时**不追求严格线性**（用户明确不需要这种精确对比）。
+     ⚠️ 刻度随之改为**开方刻度**：第 i 条网格线标注值 = max·t²（t = 1 - i/4），
+     与柱高公式互逆，因此网格线与柱顶严格对齐，不会产生误导。 */
+  const ratio = function(v){ return Math.sqrt(Math.max(0, v) / max); };
   const gw = cw / n;
   const fs = Math.max(7.5, Math.min(11, gw * 0.26));    /* 数值字号随柱间距自适应 */
   const cLa = wbDarken(colorA, .66), cLb = wbDarken(colorB, .66);
   let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="display:block">';
   for(let i = 0; i <= 4; i++){
-    const y = padT + ch * i / 4, v = Math.round(max * (1 - i / 4));
+    const t = 1 - i / 4;                                 /* 归一化高度：1（顶）→ 0（底） */
+    const y = padT + ch * (1 - t);
+    const v = Math.round(max * t * t);                   /* 开方刻度：值 = max·t²（与柱高互逆） */
     svg += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#eee"/>';
     svg += '<text x="' + (padL - 5) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10" fill="#9aa49a">' + wbMoneyShort(v) + '</text>';
   }
   for(let i = 0; i < n; i++){
     const gx = padL + gw * i, bw = Math.min(gw * 0.34, 22);
     const xa = gx + gw * 0.5 - bw - 1, xb = gx + gw * 0.5 + 1;
-    const ha = ch * (arrA[i] || 0) / max, hb = ch * (arrB[i] || 0) / max;
+    const ha = ch * ratio(arrA[i] || 0), hb = ch * ratio(arrB[i] || 0);
     svg += '<rect x="' + xa + '" y="' + (padT + ch - ha) + '" width="' + bw + '" height="' + ha + '" rx="2" fill="' + colorA + '"/>';
     svg += '<rect x="' + xb + '" y="' + (padT + ch - hb) + '" width="' + bw + '" height="' + hb + '" rx="2" fill="' + colorB + '"/>';
     /* 数值直接标在柱顶：B（收入）比 A（支出）再抬高约一个字高，避免相邻两数字重叠；0 值不标以减噪 */
